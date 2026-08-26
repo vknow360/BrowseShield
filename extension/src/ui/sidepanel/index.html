@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShieldBrowse Dashboard</title>
+  <link rel="stylesheet" href="./index.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <span class="shield-icon">🛡️</span>
+      <h1>ShieldBrowse</h1>
+    </div>
+    <span id="status-badge" class="badge ready">Ready</span>
+  </header>
+
+  <main class="content">
+    <section class="card">
+      <h2>📡 Active Page Connection</h2>
+      <p class="desc">Live DOM state extracted by Content Script:</p>
+      <pre id="output-box" class="code-box">Waiting for webpage scan...</pre>
+    </section>
+
+    <section class="card">
+      <h2>🔒 Privacy Pipeline</h2>
+      <p class="desc">Real-time PII detection and token preview will display here.</p>
+    </section>
+  </main>
+
+  <script type="module" src="./index.js"></script>
+</body>
+</html>
