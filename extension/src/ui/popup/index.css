@@ -1,0 +1,36 @@
+body {
+  width: 220px;
+  margin: 0;
+  padding: 16px;
+  background: #0f172a;
+  color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  text-align: center;
+}
+
+.popup-container h3 {
+  margin: 0 0 4px 0;
+  color: #38bdf8;
+}
+
+.popup-container p {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0 0 14px 0;
+}
+
+button {
+  width: 100%;
+  padding: 8px 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
