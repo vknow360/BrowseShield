@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ShieldBrowse Dashboard</title>
   <link rel="stylesheet" href="./index.css" />
 </head>
+
 <body>
   <header class="header">
     <div class="logo">
@@ -16,18 +18,27 @@
   </header>
 
   <main class="content">
+    <!-- PII Detection Overview -->
     <section class="card">
-      <h2>📡 Active Page Connection</h2>
-      <p class="desc">Live DOM state extracted by Content Script:</p>
-      <pre id="output-box" class="code-box">Waiting for webpage scan...</pre>
+      <div class="card-header">
+        <h2>🔒 Detected Sensitive Data (PII)</h2>
+        <span id="pii-count-badge" class="count-badge">0 Found</span>
+      </div>
+      <p class="desc">Client-side mathematical checksum & regex detection:</p>
+
+      <div id="pii-list" class="pii-list-container">
+        <p class="empty-state">No PII detected on active page.</p>
+      </div>
     </section>
 
+    <!-- Raw Data Stream (Collapsible or secondary) -->
     <section class="card">
-      <h2>🔒 Privacy Pipeline</h2>
-      <p class="desc">Real-time PII detection and token preview will display here.</p>
+      <h2>📡 Live DOM Stream</h2>
+      <pre id="output-box" class="code-box">Waiting for webpage scan...</pre>
     </section>
   </main>
 
   <script type="module" src="./index.js"></script>
 </body>
+
 </html>
