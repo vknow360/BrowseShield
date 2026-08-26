@@ -64,15 +64,105 @@ body {
   margin-bottom: 14px;
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
 .card h2 {
   font-size: 0.9rem;
-  margin: 0 0 6px 0;
+  margin: 0;
 }
 
 .desc {
   font-size: 0.8rem;
   color: var(--text-muted);
   margin: 0 0 10px 0;
+}
+
+.count-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #334155;
+  color: #94a3b8;
+}
+
+.count-badge.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.pii-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.pii-item {
+  background: #090d16;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.pii-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.pii-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.pii-badge.tag-aadhaar { background: #f97316; color: #fff; }
+.pii-badge.tag-pan { background: #8b5cf6; color: #fff; }
+.pii-badge.tag-email { background: #3b82f6; color: #fff; }
+.pii-badge.tag-phone { background: #10b981; color: #fff; }
+.pii-badge.tag-person { background: #ec4899; color: #fff; }
+.pii-badge.tag-credit_card { background: #ef4444; color: #fff; }
+.pii-badge.tag-ifsc { background: #14b8a6; color: #fff; }
+.pii-badge.tag-pincode { background: #eab308; color: #000; }
+.pii-badge.tag-password { background: #dc2626; color: #fff; }
+.pii-badge.tag-date_of_birth { background: #06b6d4; color: #fff; }
+.pii-badge.tag-address { background: #64748b; color: #fff; }
+.pii-badge.tag-city { background: #475569; color: #fff; }
+.pii-badge.tag-state { background: #475569; color: #fff; }
+
+.pii-source {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.pii-item-body {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.pii-label {
+  color: var(--text-muted);
+}
+
+.pii-value {
+  font-family: 'Fira Code', monospace;
+  font-weight: 600;
+  color: #f8fafc;
 }
 
 .code-box {
@@ -86,6 +176,13 @@ body {
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
-  max-height: 480px;
+  max-height: 240px;
   overflow-y: auto;
+}
+
+.empty-state {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 12px 0;
 }
