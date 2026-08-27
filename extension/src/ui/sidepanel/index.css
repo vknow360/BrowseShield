@@ -56,6 +56,18 @@ body {
   border: 1px solid var(--accent-green);
 }
 
+.badge.gate-pass {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+}
+
+.badge.gate-blocked {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -185,4 +197,44 @@ body {
   color: var(--text-muted);
   text-align: center;
   padding: 12px 0;
+}
+
+.task-input {
+  width: calc(100% - 20px);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  background: #090d16;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: #f8fafc;
+  font-size: 0.8rem;
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 8px;
+  background: var(--accent-blue);
+  color: #0f172a;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.primary-btn:hover {
+  opacity: 0.9;
+}
+
+.primary-btn:disabled {
+  background: var(--border-color);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.agent-status-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  text-align: center;
 }

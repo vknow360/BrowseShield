@@ -7,6 +7,12 @@ import {
     isValidIFSC,
     isValidPincode
 } from './regex.js';
+import { detectSemanticPII, initNERPipeline } from './ner-pipeline.js';
+
+// Call this early in the content script lifecycle
+export async function initDetectors() {
+  await initNERPipeline();
+}
 
 const LABEL_PATTERNS = {
     PERSON: ['name', 'full name', 'patient name', 'beneficiary', 'nominee', 'contact person'],
@@ -14,16 +20,17 @@ const LABEL_PATTERNS = {
     ADDRESS: ['address', 'street', 'locality', 'house no', 'flat no'],
     CITY: ['city', 'district', 'town'],
     STATE: ['state', 'province'],
-    PASSWORD: ['password', 'pwd', 'passcode']
+    PASSWORD: ['password', 'pwd', 'passcode'],
+    AADHAAR: ['aadhaar', 'adhar', 'uidai']
 };
 
 
 /**
  * Inspects a single DOM node's value and metadata to detect PII.
  * @param {Object} node Extracted node from dom-walker
- * @returns {Object|null} Detection result or null if not PII
+ * @returns {Promise<Object|null>} Detection result or null if not PII
  */
-export function detectFieldPII(node) {
+export async function detectFieldPII(node) {
     const value = String(node.value || '').trim();
     const label = String(node.label || '').toLowerCase();
     const type = String(node.type || '').toLowerCase();
@@ -70,6 +77,10 @@ export function detectFieldPII(node) {
     if (LABEL_PATTERNS.PERSON.some((kw) => label.includes(kw)) || autocomplete === 'name') {
         return { isPII: true, entityType: 'PERSON', confidence: 0.85, source: 'dom-heuristic' };
     }
+    // Aadhaar check (fallback for fake data)
+    if (LABEL_PATTERNS.AADHAAR.some((kw) => label.includes(kw))) {
+        return { isPII: true, entityType: 'AADHAAR', confidence: 0.85, source: 'dom-heuristic' };
+    }
     // DOB check
     if (LABEL_PATTERNS.DATE_OF_BIRTH.some((kw) => label.includes(kw)) || type === 'date' || autocomplete === 'bday') {
         return { isPII: true, entityType: 'DATE_OF_BIRTH', confidence: 0.85, source: 'dom-heuristic' };
@@ -84,6 +95,25 @@ export function detectFieldPII(node) {
     if (LABEL_PATTERNS.STATE.some((kw) => label.includes(kw))) {
         return { isPII: true, entityType: 'STATE', confidence: 0.75, source: 'dom-heuristic' };
     }
+  
+    // LAYER 3: Local semantic detection for free-text (names / addresses / medical)
+    // Do not run semantic NER on buttons to prevent false positive names (e.g., "Clear All Fields" -> PERSON)
+    if (node.tagName === 'BUTTON') {
+        return null;
+    }
+
+    const semanticEntities = await detectSemanticPII(value);
+    if (semanticEntities && semanticEntities.length > 0) {
+        // Return the first detected entity for this field
+        const primaryEntity = semanticEntities[0];
+        return {
+            isPII: true,
+            entityType: primaryEntity.entityType,
+            confidence: primaryEntity.confidence,
+            source: 'semantic-local'
+        };
+    }
+  
     // Not recognized as PII
     return null;
 }
@@ -91,12 +121,12 @@ export function detectFieldPII(node) {
 /**
  * Scans an array of extracted nodes and tags each with its PII classification.
  */
-export function scanPageForPII(nodes) {
-    return nodes.map((node) => {
-        const piiResult = detectFieldPII(node);
+export async function scanPageForPII(nodes) {
+    return Promise.all(nodes.map(async (node) => {
+        const piiResult = await detectFieldPII(node);
         return {
             ...node,
             pii: piiResult // will be null or { isPII: true, entityType: '...', ... }
         };
-    });
+    }));
 }

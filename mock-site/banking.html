@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banking Portal | ShieldBrowse Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">🛡️ ShieldBrowse Demo Sites</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="healthcare.html">Healthcare</a>
+      <a href="banking.html" class="active">Banking</a>
+      <a href="government.html">Government</a>
+      <a href="adversarial.html" class="danger">Adversarial</a>
+    </div>
+  </nav>
+
+  <main class="demo-container">
+    <div class="page-header">
+      <h1>🏦 Global Trust Bank - Wire Transfer</h1>
+      <p>Fill out the recipient details below.</p>
+    </div>
+
+    <form id="banking-form" class="mock-form">
+      <div class="form-group">
+        <label for="pan-number">Sender PAN Number</label>
+        <input type="text" id="pan-number" placeholder="Enter your PAN" />
+      </div>
+
+      <div class="form-group">
+        <label for="credit-card">Card Number to Debit</label>
+        <input type="text" id="credit-card" autocomplete="cc-number" placeholder="16-digit card number" />
+      </div>
+
+      <div class="form-group">
+        <label for="ifsc-code">Recipient Branch IFSC</label>
+        <input type="text" id="ifsc-code" placeholder="e.g. HDFC0001234" />
+      </div>
+
+      <div class="form-group">
+        <label for="amount">Transfer Amount ($)</label>
+        <input type="number" id="amount" placeholder="1000" />
+      </div>
+
+      <button type="submit" class="submit-btn">Authorize Transfer</button>
+    </form>
+    
+    <div class="test-data-helpers">
+      <h3>Quick Fill (For Testing)</h3>
+      <button onclick="fillBankingData()">Fill Valid Banking PII</button>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    function fillBankingData() {
+      document.getElementById('pan-number').value = 'ABCDE1234F';
+      document.getElementById('credit-card').value = '4111222233334444'; // Valid Visa Test Card
+      document.getElementById('ifsc-code').value = 'SBIN0000001';
+      document.getElementById('amount').value = '50000';
+      
+      // Dispatch events to trigger extension scanning
+      ['pan-number', 'credit-card', 'ifsc-code', 'amount'].forEach(id => {
+        document.getElementById(id).dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
+  </script>
+</body>
+</html>

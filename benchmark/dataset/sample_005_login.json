@@ -1,0 +1,48 @@
+{
+  "sampleId": "sample_005_login",
+  "pageUrl": "https://mock-portal.local/login",
+  "pageTitle": "Account Sign In",
+  "groundTruth": [
+    {
+      "text": "rajesh.kumar@corp.in",
+      "entityType": "EMAIL",
+      "box": [140, 110, 200, 34]
+    },
+    {
+      "text": "S3cur3P@ssw0rd",
+      "entityType": "PASSWORD",
+      "box": [140, 160, 200, 34]
+    },
+    {
+      "text": "Remember me",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Checkbox label, not PII",
+      "box": [140, 210, 200, 24]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "Work Email",
+      "value": "rajesh.kumar@corp.in",
+      "type": "email",
+      "autocomplete": "email",
+      "box": [140, 110, 200, 34]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Password",
+      "value": "S3cur3P@ssw0rd",
+      "type": "password",
+      "box": [140, 160, 200, 34]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Remember me",
+      "value": "",
+      "type": "checkbox",
+      "box": [140, 210, 200, 24]
+    }
+  ]
+}

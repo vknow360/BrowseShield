@@ -1,11 +1,14 @@
 /// <reference types="chrome" />
 
-// src/ui/popup/index.js
+import browser from "webextension-polyfill";
+import './index.css';
 
 document.getElementById('open-panel-btn')?.addEventListener('click', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
-    chrome.sidePanel.open({ tabId: tab.id });
+    if (browser.sidePanel) {
+      browser.sidePanel.open({ tabId: tab.id });
+    }
     window.close();
   }
 });

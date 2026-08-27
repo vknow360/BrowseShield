@@ -38,6 +38,16 @@ export default defineManifest({
   side_panel: {
     default_path: 'src/ui/sidepanel/index.html',
   },
+  sidebar_action: {
+    default_panel: 'src/ui/sidepanel/index.html',
+    default_title: 'ShieldBrowse'
+  },
+  browser_specific_settings: {
+    gecko: {
+      id: 'shieldbrowse@example.com',
+      strict_min_version: '109.0'
+    }
+  },
   content_security_policy: {
     extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   }

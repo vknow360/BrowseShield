@@ -1,0 +1,80 @@
+{
+  "sampleId": "sample_002_banking",
+  "pageUrl": "https://mock-bank.local/transfer",
+  "pageTitle": "Wire Transfer",
+  "groundTruth": [
+    {
+      "text": "9876543210123452",
+      "entityType": "CREDIT_CARD",
+      "nodeIndex": 0,
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "HDFC0001234",
+      "entityType": "IFSC",
+      "nodeIndex": 1,
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "Version 1.0.4",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Software version, not an Aadhaar or account number",
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "Card Number",
+      "value": "9876543210123452",
+      "type": "text",
+      "autocomplete": "cc-number",
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Branch IFSC Code",
+      "value": "HDFC0001234",
+      "type": "text",
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "App Version",
+      "value": "Version 1.0.4",
+      "type": "text",
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    }
+  ]
+}
