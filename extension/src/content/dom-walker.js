@@ -35,6 +35,10 @@ export function extractPageStructure(root = document.body) {
     const tag = node.tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') {
       const rect = node.getBoundingClientRect();
+      
+      // Skip elements that are visually hidden (e.g., inside display: none)
+      if (rect.width === 0 && rect.height === 0) continue;
+
       const label = findLabelForInput(node);
 
       // Unique CSS selector for agent targeting
@@ -42,6 +46,7 @@ export function extractPageStructure(root = document.body) {
         ? `#${node.id}`
         : `${tag.toLowerCase()}[name="${node.name || ''}"]`;
 
+      const dpr = window.devicePixelRatio || 1;
       interactiveNodes.push({
         id: node.id || null,
         name: node.name || null,
@@ -52,12 +57,12 @@ export function extractPageStructure(root = document.body) {
         placeholder: node.placeholder || '',
         autocomplete: node.autocomplete || '',
         selector: selector,
-        box: {
-          x: Math.round(rect.x),
-          y: Math.round(rect.y),
-          width: Math.round(rect.width),
-          height: Math.round(rect.height)
-        }
+        box: [
+          Math.round(rect.x * dpr),
+          Math.round(rect.y * dpr),
+          Math.round(rect.width * dpr),
+          Math.round(rect.height * dpr)
+        ]
       });
     }
   }

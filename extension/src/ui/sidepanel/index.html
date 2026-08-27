@@ -18,6 +18,16 @@
   </header>
 
   <main class="content">
+    <!-- Agent Control Panel -->
+    <section class="card">
+      <div class="card-header">
+        <h2>🤖 Agent Task</h2>
+      </div>
+      <input type="text" id="task-instruction" class="task-input" placeholder="e.g., Fill out this form" value="Fill out this form" />
+      <button id="run-agent-btn" class="primary-btn">Run Agent</button>
+      <div id="agent-status" class="agent-status-text">Idle</div>
+    </section>
+
     <!-- PII Detection Overview -->
     <section class="card">
       <div class="card-header">
@@ -31,9 +41,12 @@
       </div>
     </section>
 
-    <!-- Raw Data Stream (Collapsible or secondary) -->
+    <!-- What Server Sees (Sanitized Payload) -->
     <section class="card">
-      <h2>📡 Live DOM Stream</h2>
+      <div class="card-header">
+        <h2>📡 What the server sees</h2>
+        <span id="gate-badge" class="badge ready">🔒 GATE: IDLE</span>
+      </div>
       <pre id="output-box" class="code-box">Waiting for webpage scan...</pre>
     </section>
   </main>

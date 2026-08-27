@@ -1,0 +1,60 @@
+{
+  "sampleId": "sample_004_government",
+  "pageUrl": "https://mock-gov.local/kyc",
+  "pageTitle": "e-KYC Verification",
+  "groundTruth": [
+    {
+      "text": "2341 8765 4323",
+      "entityType": "AADHAAR",
+      "box": [120, 120, 180, 32]
+    },
+    {
+      "text": "ABCPD1234K",
+      "entityType": "PAN",
+      "box": [120, 180, 180, 32]
+    },
+    {
+      "text": "applicant@mail.com",
+      "entityType": "EMAIL",
+      "box": [120, 240, 180, 32]
+    },
+    {
+      "text": "Ref No 2024",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Reference number, not PII",
+      "box": [120, 300, 180, 32]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "Aadhaar Number",
+      "value": "2341 8765 4323",
+      "type": "text",
+      "box": [120, 120, 180, 32]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "PAN Card",
+      "value": "ABCPD1234K",
+      "type": "text",
+      "box": [120, 180, 180, 32]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Email",
+      "value": "applicant@mail.com",
+      "type": "email",
+      "autocomplete": "email",
+      "box": [120, 240, 180, 32]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Application Reference",
+      "value": "Ref No 2024",
+      "type": "text",
+      "box": [120, 300, 180, 32]
+    }
+  ]
+}

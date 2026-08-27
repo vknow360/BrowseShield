@@ -1,0 +1,36 @@
+{
+  "sampleId": "sample_006_social",
+  "pageUrl": "https://mock-social.local/message",
+  "pageTitle": "New Message",
+  "groundTruth": [
+    {
+      "text": "Please contact Priya Sharma about the delivery",
+      "entityType": "PERSON",
+      "note": "Free-text name detected by semantic NER, not a structured field",
+      "box": [160, 130, 260, 60]
+    },
+    {
+      "text": "The weather is nice today",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Ordinary sentence, no PII",
+      "box": [160, 210, 260, 60]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "TEXTAREA",
+      "label": "Message",
+      "value": "Please contact Priya Sharma about the delivery",
+      "type": "textarea",
+      "box": [160, 130, 260, 60]
+    },
+    {
+      "tagName": "TEXTAREA",
+      "label": "Notes",
+      "value": "The weather is nice today",
+      "type": "textarea",
+      "box": [160, 210, 260, 60]
+    }
+  ]
+}

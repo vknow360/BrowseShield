@@ -68,10 +68,10 @@ User opens a web page
 
 1. **Real PII never leaves the browser.** The server only sees tokens like `[[PERSON_1]]`.
 2. **The agent still works.** Unlike naive redaction (blur everything), our token scheme lets the agent reference and use PII values through tokens.
-3. **Lightweight.** Total client-side models: ~40-45MB. No LLM runs in the browser.
-4. **Hybrid perception.** DOM extraction for structured content (near-perfect accuracy, zero cost). Vision models only for image/canvas regions.
-5. **Enforceable privacy boundary.** Privacy Gate blocks outbound requests if unsanitized PII remains. Action Safety Gate validates every VLM-returned action before execution.
-6. **Benchmarked.** We measure precision/recall per PII category, not just "watch the demo."
+3. **Lightweight (by design).** No LLM runs in the browser; only small CV/NER models. Combined footprint is an engineering **target of ~40 MB** — treat this as a target until the built extension is measured (see Claims Discipline in Section 20).
+4. **Hybrid perception.** DOM extraction for structured content (exact for the DOM it can read, near-zero cost). Vision models run only for image/canvas regions that the DOM can't expose.
+5. **Enforceable privacy boundary.** The Privacy Gate blocks outbound requests if unsanitized PII remains, running in the service worker immediately before the network call. The Action Safety Gate validates every VLM-returned action before execution.
+6. **Benchmarked (with real numbers).** We measure precision/recall per PII category on a labelled set — we never fabricate accuracy or latency figures for the pitch.
 
 ---
 
@@ -197,7 +197,7 @@ The PS says "a local ViT reads the user's screen." Most teams will take a screen
 | Content Type | Our Approach | Why |
 |---|---|---|
 | **Standard web content** (text, forms, buttons, links) | Extract directly from the DOM (the page's HTML structure) | DOM gives us the **exact text** with zero OCR error. It's instant (no ML needed). It gives us element types, labels, and positions for free. |
-| **Non-DOM content** (images, canvas, PDFs, iframes) | Process through the vision pipeline (ViT + OCR + face detection) | DOM can't "read" pixels in images. We need actual computer vision here. |
+| **Non-DOM content** (images, canvas, PDFs, iframes) | Process through the vision pipeline (on-device CV + OCR + face detection) | DOM can't "read" pixels in images. We need actual computer vision here. |
 | **Verification layer** | Run YOLOv8-nano on a screenshot to cross-validate DOM extraction | Catches dynamic/canvas-rendered content the DOM walker might miss. Satisfies the PS requirement of "ViT reads the screen." |
 
 **The framing for judges:**
@@ -213,7 +213,9 @@ The PS says "a local ViT reads the user's screen." Most teams will take a screen
 
 Sets up the Chrome extension infrastructure: manifest configuration, content script injection, service worker messaging, and side panel registration.
 
-### 3.2 manifest.json — The Extension's Configuration
+### 3.2 The Extension's Configuration (`manifest.config.js` via @crxjs)
+
+> **How this repo actually declares the manifest:** this project does **not** ship a static `manifest.json`. It uses `@crxjs/vite-plugin` with a `manifest.config.js` that calls `defineManifest({...})`; Vite generates the real `manifest.json` into `dist/` at build time, rewriting entry paths to the hashed bundles. So the entry points below map to the real source files — `service_worker` → `src/background/index.js`, content script → `src/content/index.js`, side panel → `src/ui/sidepanel/index.html`, popup → `src/ui/popup/`. The JSON below is the **conceptual** manifest (the object you pass to `defineManifest`); keep field values in sync with `manifest.config.js`.
 
 ```jsonc
 {
@@ -632,6 +634,8 @@ Runs computer vision models inside the browser to:
 | **Tesseract.js** | OCR — extract text from image regions | ~2 MB core + language data | WASM (built-in) |
 | **MediaPipe Face Detector** | Detect face bounding boxes in images | ~5 MB | MediaPipe Tasks WASM/WebGPU |
 
+> **Note on sizes:** The per-model sizes above are the published/expected footprints for these architectures and the **~40 MB combined figure is an engineering target**, not a measured build. Confirm the real bundle size (`ls -la` on the built `dist/`) before quoting any number in the pitch.
+
 ### 5.3 When the Vision Pipeline Runs
 
 ```
@@ -639,18 +643,18 @@ Page loaded
     │
     ├── DOM Walker extracts structure (ALWAYS runs, instant)
     │
-    ├── YOLOv8-nano runs on a screenshot (ALWAYS runs, ~100ms)
+    ├── YOLOv8-nano runs on a screenshot (ALWAYS runs, target ~100ms — measure)
     │   └── Cross-validates DOM extraction
     │       └── If discrepancies found → flag for review
     │
-    ├── MobileNet classifies screen type (ALWAYS runs, ~30ms)
+    ├── MobileNet classifies screen type (ALWAYS runs, target ~30ms — measure)
     │   └── Output: "form_page" / "data_table" / "login_page" / etc.
     │
     ├── IF image regions exist on the page:
-    │   ├── Tesseract.js OCR on each image region (~500ms-2s per region)
+    │   ├── Tesseract.js OCR on each image region (target ~500ms–2s per region — measure)
     │   │   └── Extract text → feed into PII detector
     │   │
-    │   └── MediaPipe Face Detector on each image region (~50ms per region)
+    │   └── MediaPipe Face Detector on each image region (target ~50ms per region — measure)
     │       └── Return face bounding boxes → feed into redaction layer
     │
     └── ALL results merged into unified perception output
@@ -2387,20 +2391,22 @@ The side panel is the **user-facing dashboard** that serves as:
 │  │ ]}                              │    │
 │  └─────────────────────────────────┘    │
 ├─────────────────────────────────────────┤
-│  ⚡ Performance                          │
+│  ⚡ Performance (live, measured)         │
 │  ┌─────────────────────────────────┐    │
-│  │ DOM Extraction:    5ms          │    │
-│  │ PII Detection:   120ms          │    │
-│  │ Tokenization:     8ms           │    │
-│  │ Server Response: 450ms          │    │
-│  │ Action Execute:   15ms          │    │
+│  │ DOM Extraction:     — ms        │    │
+│  │ PII Detection:      — ms        │    │
+│  │ Tokenization:       — ms        │    │
+│  │ Server Response:    — ms        │    │
+│  │ Action Execute:     — ms        │    │
 │  │ ─────────────────────           │    │
-│  │ Total:           598ms          │    │
+│  │ Total:              — ms        │    │
 │  │                                 │    │
-│  │ Models loaded:    ~42 MB        │    │
-│  │ Memory usage:    ~85 MB         │    │
+│  │ Models loaded:      — MB        │    │
+│  │ Memory usage:       — MB        │    │
 │  │ GPU:             WebGPU ✅      │    │
 │  └─────────────────────────────────┘    │
+│  (all values filled from real runtime    │
+│   timers/perf API — never hardcoded)     │
 ├─────────────────────────────────────────┤
 │  📜 Action Log                          │
 │  ┌─────────────────────────────────┐    │
@@ -2708,7 +2714,7 @@ STEP 14: LOOP → back to STEP 2 (re-capture, re-detect, re-send)
 | Layer | Technology | Version | Purpose | Size/Cost |
 |---|---|---|---|---|
 | **Extension** | Chrome MV3 | — | Extension framework | — |
-| **Build tool** | Vite | 5.x | Bundle extension JS/CSS | — |
+| **Build tool** | Vite + @crxjs/vite-plugin | 5.x | Bundle MV3 extension; manifest via `manifest.config.js` (`defineManifest`) | — |
 | **DOM Extraction** | Vanilla JS | — | Walk DOM, extract nodes | 0 MB |
 | **Client CV** | YOLOv8-nano | ONNX q8 | UI element detection | ~6 MB |
 | **Screen Classifier** | MobileNet-v3-small | ONNX q8 | Page type classification | ~3 MB |
@@ -2721,7 +2727,9 @@ STEP 14: LOOP → back to STEP 2 (re-capture, re-detect, re-send)
 | **Server VLM** | Qwen2.5-VL-3B via Ollama | latest | Reasoning over sanitized context | ~2 GB model |
 | **Server Infra** | AWS EC2 g4dn.xlarge | — | GPU for VLM inference | ~$0.50/hr |
 | **Mock Site** | Vite + vanilla HTML/CSS/JS | — | Demo hospital form | — |
-| **Total Client Models** | — | — | — | **~40-45 MB** |
+| **Total Client Models** | — | — | — | **target ~40 MB** |
+
+> The **Size/Cost** column lists expected footprints for these architectures, not measured bundle sizes. The **~40 MB total is a target**; measure the built `dist/` and use the real figure in any pitch (see Claims Discipline in Section 20).
 
 ---
 
@@ -2729,47 +2737,43 @@ STEP 14: LOOP → back to STEP 2 (re-capture, re-detect, re-send)
 
 ```
 shieldbrowse/
-├── extension/                    # Chrome extension (MV3)
-│   ├── manifest.json             # Extension config
-│   ├── background.js             # Service worker: messaging, network calls, Privacy Gate check
-│   ├── content.js                # Content script: DOM walking, PII detection, action execution
-│   ├── sidepanel.html            # Side panel UI
-│   ├── sidepanel.js              # Side panel logic
-│   ├── sidepanel.css             # Side panel styles
-│   ├── popup.html                # Popup UI (minimal: start/stop, settings)
-│   ├── popup.js
-│   ├── popup.css
-│   ├── icons/
-│   │   ├── icon16.png
-│   │   ├── icon48.png
-│   │   └── icon128.png
-│   ├── src/                      # Source modules (bundled by Vite)
-│   │   ├── dom-walker.js         # DOM extraction logic
-│   │   ├── vision-pipeline.js    # Lightweight CV + screenshot processing
-│   │   ├── ocr.js                # Tesseract.js OCR
-│   │   ├── face-detector.js      # MediaPipe face detection
-│   │   ├── pii-detector.js       # Main PII detection orchestrator
-│   │   ├── pii-regex.js          # Regex/checksum patterns
-│   │   ├── pii-ner.js            # NER model wrapper
-│   │   ├── pii-dom-rules.js      # DOM attribute heuristics
-│   │   ├── pii-semantic.js       # Keyword/context rules
-│   │   ├── tokenizer.js          # Reversible token scheme (typed + opaque mode)
-│   │   ├── privacy-policy.js     # ⭐ NEW: Per-entity tokenization policy + opaque token config
-│   │   ├── privacy-gate.js       # ⭐ NEW: Fail-closed outbound PII inspection
-│   │   ├── action-safety-gate.js # ⭐ NEW: Whitelist-based action validation
-│   │   ├── image-redactor.js     # Face blur, text blackout
-│   │   ├── action-executor.js    # Execute server actions on page
-│   │   ├── network.js            # Server communication (with Privacy Gate integration)
-│   │   ├── agent-loop.js         # Main capture→detect→send→execute loop
-│   │   ├── metrics.js            # Performance timing & resource tracking
-│   │   └── config.js             # Server URL, demo mode flag, settings
-│   ├── models/                   # ONNX model files (downloaded/bundled)
-│   │   ├── yolov8n.onnx          # YOLOv8-nano (~6 MB)
-│   │   ├── mobilenet-v3.onnx     # MobileNet classifier (~3 MB)
-│   │   ├── indian-pii-ner.onnx   # Fine-tuned NER model (~25 MB)
-│   │   └── blaze_face.tflite     # MediaPipe face detector (~5 MB)
-│   ├── wasm/                     # WASM binaries for ONNX Runtime
-│   └── vite.config.js            # Vite build configuration
+├── extension/                        # Chrome extension (MV3), built with Vite + @crxjs
+│   ├── manifest.config.js            # @crxjs defineManifest() — the MV3 manifest (NOT a static manifest.json)
+│   ├── vite.config.js                # Vite build config (loads @crxjs/vite-plugin)
+│   ├── index.html                    # dev entry (if present)
+│   ├── icons/                        # icon16.png / icon48.png / icon128.png
+│   ├── src/                          # Source, organized by domain (bundled by Vite)
+│   │   ├── background/
+│   │   │   └── index.js              # [EXISTS] Service worker / message hub.
+│   │   │                             #          Will call Privacy Gate, then network, immediately before fetch.
+│   │   ├── content/
+│   │   │   ├── index.js              # [EXISTS] Orchestrator: extract → detect → (tokenize → gate) → sendMessage
+│   │   │   └── dom-walker.js         # [EXISTS] extractPageStructure() + findLabelForInput()
+│   │   ├── core/
+│   │   │   ├── detector/
+│   │   │   │   ├── index.js          # [EXISTS] detectFieldPII() + scanPageForPII() (Layers 1 & 3)
+│   │   │   │   └── regex.js          # [EXISTS] Aadhaar/Verhoeff, PAN, phone, email, card/Luhn, IFSC, pincode
+│   │   │   ├── tokenizer/
+│   │   │   │   ├── tokenizer.js      # [EXISTS — currently EMPTY] Reversible token scheme (see plans/NEXT_FEATURES.md)
+│   │   │   │   ├── privacy-policy.js # [PLANNED] Per-entity typed/opaque token policy + thresholds
+│   │   │   │   ├── privacy-gate.js   # [PLANNED] Fail-closed outbound inspection (invoked from SW before network)
+│   │   │   │   └── action-safety-gate.js # [PLANNED] Whitelist-based action validation
+│   │   │   ├── vision/               # [PLANNED] vision-pipeline.js, ocr.js, face-detector.js
+│   │   │   ├── ner/                  # [PLANNED] NER model wrapper (Layer 2)
+│   │   │   ├── semantic/             # [PLANNED] Keyword/context rules (Layer 5)
+│   │   │   ├── redactor/             # [PLANNED] Face blur, text blackout
+│   │   │   └── network/              # [PLANNED] Server communication client
+│   │   ├── ui/
+│   │   │   ├── popup/                # [EXISTS] Minimal popup (opens the side panel)
+│   │   │   └── sidepanel/            # [EXISTS] index.html / index.js / index.css
+│   │   └── utils/
+│   │       └── debounce.js           # [EXISTS]
+│   ├── models/                       # [PLANNED] Bundled model assets (yolov8n / mobilenet-v3 / NER / blaze_face)
+│   └── wasm/                         # [PLANNED] Local WASM for ONNX Runtime (bundle it; don't depend on a CDN)
+│
+│   # REALITY CHECK: tree above = actual src/ layout on disk. [EXISTS] = built; [PLANNED] = not yet.
+│   # Privacy modules live under core/, but the Privacy Gate is CALLED FROM background/index.js
+│   # as the last step before fetch() — placement (not just presence) makes the boundary enforceable.
 │
 ├── server/                       # FastAPI server
 │   ├── main.py                   # FastAPI app, /agent/action endpoint
@@ -2828,7 +2832,26 @@ shieldbrowse/
 
 ## 19. Implementation Schedule
 
-### Phase 1: Internal SIH PoC (Aug 26 → Sept 3)
+### 19.0 Build Order Principle (read before the calendar)
+
+The dates below are **targets, and the plan is milestone-gated, not date-gated**: a day is only "done" when its milestone's exit check passes. Build in this order — **the enforceable privacy boundary comes before any agent intelligence or vision work.** Do not skip ahead to vision models or multi-step agent loops until the boundary is proven.
+
+**Milestones (in strict dependency order):**
+
+- **A — Shell.** MV3 extension loads via `manifest.config.js`/@crxjs; content script, service worker, and side panel talk to each other. *Exit: a round-trip message is logged in the panel.*
+- **B — Perception (DOM).** DOM walker extracts fields + labels on the mock site. *Exit: all form fields appear in the panel.*
+- **C — Detection.** Regex/checksum + DOM-attribute PII layers tag fields. *Exit: Aadhaar/PAN/phone/email/card detected on the mock site with no obvious misses.*
+- **D — Tokenization.** Reversible typed tokens + `chrome.storage.session` map + rehydration. *Exit: tokenize → rehydrate round-trips losslessly (unit-tested).*
+- **E — 🔒 Privacy Gate (MANDATORY BOUNDARY).** Fail-closed outbound inspection, called **in the service worker immediately before `fetch()`**. *Exit — "Proof of Boundary": with the gate on, a payload still containing raw PII is **blocked**, and the network audit shows **no raw PII ever leaves the browser**. No agent, server, or vision work proceeds until this passes.*
+- **F — Server round-trip.** FastAPI receives **only tokens**, returns an action JSON. *Exit: server logs contain tokens only, never raw PII.*
+- **G — 🔒 Action Safety Gate + execution.** Every VLM-returned action is validated against a whitelist **before** it touches the page; then rehydrate locally and execute. *Exit: a disallowed/malformed action is rejected; one field fills E2E.*
+- **H — Vision / NER / benchmarks / adversarial.** Only after A–G: CV pipeline, fine-tuned NER, PIIBench-mini with **measured** P/R/F1, prompt-injection fixtures, WebGPU vs WASM timings.
+
+> **Two gates are not optional features — they are the project.** If time runs short, cut vision (H) before cutting either gate (E, G). A demo without vision still proves the thesis; a demo without the gates does not.
+
+### Phase 1: Internal SIH PoC (target Aug 26 → Sept 3)
+
+> **Status note (as of Aug 27):** Milestones A–B are done and C is largely in place; **D (tokenizer) is the current front** and is behind the original Day-3 target — see `plans/NEXT_FEATURES.md` for the D→E build. Treat the day columns as target sequencing, not fixed dates.
 
 > **Goal**: Win the internal round with a working core demo + polished pitch.
 > **Scope**: DOM extraction + regex PII + token scheme + mock server + action execution + side panel.

@@ -1,0 +1,104 @@
+{
+  "sampleId": "sample_001_healthcare",
+  "pageUrl": "https://mock-hospital.local/patient/intake",
+  "pageTitle": "Patient Intake Form",
+  "groundTruth": [
+    {
+      "text": "Dr. Sarah Jenkins",
+      "entityType": "PERSON",
+      "nodeIndex": 0,
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "9876543210",
+      "entityType": "PHONE",
+      "nodeIndex": 1,
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "Type 2 Diabetes",
+      "entityType": "MEDICAL",
+      "nodeIndex": 2,
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "Founded in 1923",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Organization founding year, should not be detected as PII",
+      "box": [
+        250,
+        250,
+        150,
+        30
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "Attending Physician Name",
+      "value": "Dr. Sarah Jenkins",
+      "type": "text",
+      "autocomplete": "name",
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Emergency Contact Number",
+      "value": "9876543210",
+      "type": "tel",
+      "autocomplete": "tel",
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Pre-existing condition",
+      "value": "Type 2 Diabetes",
+      "type": "text",
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Hospital founded year",
+      "value": "Founded in 1923",
+      "type": "text",
+      "box": [
+        250,
+        250,
+        150,
+        30
+      ]
+    }
+  ]
+}

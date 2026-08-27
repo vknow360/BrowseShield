@@ -1,0 +1,104 @@
+{
+  "sampleId": "ecommerce_003",
+  "url": "https://shop.example.com/checkout",
+  "nodes": [
+    {
+      "id": "email",
+      "type": "text",
+      "label": "Email Address",
+      "value": "shopper@example.com",
+      "selector": "#email",
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "id": "cc",
+      "type": "text",
+      "label": "Credit Card",
+      "value": "4532111122223336",
+      "selector": "#cc",
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "id": "pin",
+      "type": "text",
+      "label": "Pincode",
+      "value": "560034",
+      "selector": "#pin",
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    },
+    {
+      "id": "note",
+      "type": "textarea",
+      "label": "Gift Note",
+      "value": "Happy birthday John Doe!",
+      "selector": "#note",
+      "box": [
+        250,
+        250,
+        150,
+        30
+      ]
+    }
+  ],
+  "groundTruth": [
+    {
+      "text": "shopper@example.com",
+      "entityType": "EMAIL",
+      "isHardNegative": false,
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "4532111122223336",
+      "entityType": "CREDIT_CARD",
+      "isHardNegative": false,
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "560034",
+      "entityType": "PINCODE",
+      "isHardNegative": false,
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "John Doe",
+      "entityType": "PERSON",
+      "isHardNegative": false,
+      "box": [
+        250,
+        250,
+        150,
+        30
+      ]
+    }
+  ]
+}

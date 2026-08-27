@@ -5,12 +5,20 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "build:firefox": "vite build --mode firefox",
+    "lint": "web-ext lint -s dist"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.4.0",
     "@types/chrome": "^0.1.43",
     "vite": "^8.0.0",
-    "vite-plugin-zip-pack": "^1.2.4"
+    "vite-plugin-zip-pack": "^1.2.4",
+    "web-ext": "^10.6.0"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.1",
+    "onnxruntime-web": "^1.29.0",
+    "webextension-polyfill": "^0.12.0"
   }
 }

@@ -19,7 +19,20 @@ export const DEMO_PROFILES = [
     memberId: "MEM-88421",
     emergencyContactName: "Priya Sharma",
     emergencyContactPhone: "+91 98765 43219",
-    relation: "Spouse"
+    relation: "Spouse",
+    // Step 2
+    hospitalName: "Manipal Hospital, Old Airport Road",
+    admissionDate: "2026-08-20",
+    diagnosis: "Acute Appendicitis (Laparoscopic Appendectomy)",
+    physicianName: "Dr. Arvind Swaminathan",
+    treatmentCost: "145000",
+    preExisting: "None",
+    // Step 3
+    accountHolderName: "Rahul Sharma",
+    bankName: "HDFC Bank",
+    accountNumber: "50100492817263",
+    ifscCode: "HDFC0000053",
+    branchName: "Koramangala 5th Block Branch"
   },
   {
     id: "profile-2",
@@ -39,7 +52,20 @@ export const DEMO_PROFILES = [
     memberId: "MEM-44910",
     emergencyContactName: "Venkatesh Iyer",
     emergencyContactPhone: "+91 94441 98765",
-    relation: "Father"
+    relation: "Father",
+    // Step 2
+    hospitalName: "Apollo Hospital, Greams Road",
+    admissionDate: "2026-08-18",
+    diagnosis: "Dengue Fever with Thrombocytopenia",
+    physicianName: "Dr. M. K. Sundaram",
+    treatmentCost: "78000",
+    preExisting: "Asthma",
+    // Step 3
+    accountHolderName: "Ananya Iyer",
+    bankName: "State Bank of India",
+    accountNumber: "30918274650",
+    ifscCode: "SBIN0001234",
+    branchName: "Adyar Main Branch"
   },
   {
     id: "profile-3",
@@ -59,6 +85,19 @@ export const DEMO_PROFILES = [
     memberId: "MEM-33109",
     emergencyContactName: "Harpreet Kaur",
     emergencyContactPhone: "+91 98110 55439",
-    relation: "Spouse"
+    relation: "Spouse",
+    // Step 2
+    hospitalName: "Max Super Speciality Hospital, Patparganj",
+    admissionDate: "2026-08-22",
+    diagnosis: "Knee Arthroscopy (Ligament Reconstruction)",
+    physicianName: "Dr. Rajeshwar Gill",
+    treatmentCost: "210000",
+    preExisting: "Hypertension",
+    // Step 3
+    accountHolderName: "Vikramjit Singh",
+    bankName: "ICICI Bank",
+    accountNumber: "000701582910",
+    ifscCode: "ICIC0000007",
+    branchName: "Preet Vihar Branch"
   }
 ];

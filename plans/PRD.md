@@ -15,6 +15,7 @@
 ---
 
 ## 📖 Table of Contents
+0. [How We Talk About Results (Claims Policy)](#0-how-we-talk-about-results-claims-policy--read-first)
 1. [What's the Problem?](#1-whats-the-problem)
 2. [What's Our Solution?](#2-whats-our-solution)
 3. [How Does It Work? (Simple Explanation)](#3-how-does-it-work-simple-explanation)
@@ -27,6 +28,36 @@
 10. [Judge Q&A — Questions They'll Ask](#10-judge-qa--questions-theyll-ask)
 11. [Glossary — Technical Terms Simplified](#11-glossary--technical-terms-simplified)
 12. [Visual Assets & Diagrams Needed](#12-visual-assets--diagrams-needed)
+
+---
+
+## 0. How We Talk About Results (Claims Policy — Read First)
+
+Judges reward honesty and punish unverifiable claims. Every statement in the PPT and demo must fall into one of four buckets, and we should say which one we mean:
+
+| Word | Meaning | Example |
+|---|---|---|
+| **Measured** | Backed by an actual test run with numbers we can reproduce | "Measured PII recall on PIIBench-mini: 0.9x" |
+| **Implemented** | Working in the current build (you can see it in the demo) | "Privacy Gate is implemented and blocks the leak live" |
+| **Designed** | Specified and architected, but not yet validated end-to-end | "Opaque tokenization is designed for medical/financial fields" |
+| **Planned** | Future work, not built yet | "Firefox port is planned" |
+
+**Hard rules:**
+- **No fabricated numbers.** If a benchmark hasn't run, say "Benchmark under execution" — never invent accuracy, latency, or memory figures.
+- Model sizes (~40 MB) and latencies are **engineering targets** until we measure the built extension. Label them as such.
+- **Never claim**: "100% secure", "zero leakage guaranteed", "perfect PII detection", or "DPDP compliant / guaranteed compliance". These are indefensible.
+- The privacy objective is to prevent *known* raw sensitive values from being sent to the server, demonstrated on our tests — not a mathematical guarantee against every unknown case.
+
+### Honest Limitations (say these before a judge finds them)
+
+Owning limitations is a credibility win, not a weakness:
+- PII detection is not perfect; **false negatives exist and we report them** per category.
+- Token *labels* (e.g., `[[MEDICAL_1]]`) can leak the category — that's exactly why opaque `[[VALUE_N]]` mode exists.
+- Cross-origin iframes may be inaccessible due to browser security.
+- OCR can fail on poor-quality images.
+- WASM can be slower than WebGPU where GPU is unavailable.
+- The architecture still uses **server-side reasoning** — the claim is that raw sensitive context stays local, not that everything runs offline.
+- Browser/platform side channels are outside the MVP security boundary.
 
 ---
 
@@ -154,7 +185,7 @@ Think of it like a **spy movie**:
 | **Small AI Models** | In YOUR browser (yes, AI can run locally!) | Detect faces, recognize names, understand images |
 | **AI Server** | On our server (AWS cloud or local machine) | Thinks about what action to take next (click, type, scroll) |
 
-**Key point for the pitch**: The small AI models running in the browser are only ~40 MB total (smaller than a single photo). The heavy AI (the "thinking" part) runs on the server, but it NEVER sees your real data.
+**Key point for the pitch**: The small AI models running in the browser have a **target footprint of roughly 40 MB total** (an engineering target, not yet a measured build — see the Claims Policy in Section 0). The heavy AI (the "thinking" part) runs on the server, but it NEVER sees your real data.
 
 ---
 
@@ -203,17 +234,17 @@ We built **PIIBench-mini**: 50 annotated test cases across healthcare, banking, 
 > **⚠️ CRITICAL**: Only show **real measured results** in the PPT. If benchmark hasn't been run yet, write "Benchmark under execution" — NOT fabricated numbers.
 
 #### 5️⃣ Extremely Lightweight
-Our AI models running in the browser total only **~40 MB** — smaller than many mobile apps. Most other teams trying to run AI in the browser will need 200-500 MB of models, making the browser slow and laggy.
+Our browser-side AI models have a **target footprint of roughly 40 MB** — an engineering target we will confirm by measuring the final build, not a benchmarked result. That is far smaller than approaches that run a full model in the browser (often 200-500 MB), which make the browser slow and laggy.
 
 We achieve this by being smart about **what runs where**: tiny, specialized models in the browser (just for detecting personal data), and the big AI brain on the server (but it NEVER sees your real data).
 
-#### 6️⃣ DPDP Act Compliance Report
+#### 6️⃣ DPDP-Aligned Audit Report (Engineering Evidence)
 India's **Digital Personal Data Protection Act 2023** requires organizations to handle personal data carefully. Our system can generate an **audit report** showing:
 - What personal data was detected
 - What was done to protect it
-- That nothing leaked to the server (verified by Privacy Gate)
+- That no known raw PII leaked to the server in the tested runs (verified by the Privacy Gate)
 
-This is relevant for ISRO and government organizations.
+This maps our controls to DPDP principles like data minimization. **Frame it as engineering evidence, not a legal compliance certificate** — do not claim "DPDP compliant" or "guaranteed compliance". This is relevant for ISRO and government organizations.
 
 ---
 
@@ -264,13 +295,13 @@ Show the precision/recall table. Point out specific numbers.
 
 ### The Rubric (100 points)
 
-| Criterion | Weight | What It Means | Our Strength |
+| Criterion | Weight | What It Means | Why Our Architecture Targets This |
 |---|---|---|---|
-| **Accuracy of visual context from screen** | 25% | Can the system correctly understand what's on the screen? | ⭐⭐⭐⭐⭐ — Our DOM extraction gives near-perfect accuracy for text/forms. Vision AI handles images. |
-| **Recall and precision for PII detection** | 20% | Does it find ALL the personal data? Does it avoid false alarms? | ⭐⭐⭐⭐⭐ — Multi-layer detector + benchmark numbers to prove it. |
-| **Precision of redaction** | 20% | Does it redact correctly without breaking the page context? | ⭐⭐⭐⭐⭐ — Reversible tokens preserve context. Hard-negative tests prove precision. |
-| **Client-side resource utilization** | 20% | How lightweight is it? Does it slow down the browser? | ⭐⭐⭐⭐ — Only ~40 MB of models. No LLM in the browser. |
-| **End-to-end latency** | 15% | How fast is the complete pipeline? | ⭐⭐⭐⭐ — DOM extraction is instant. PII detection ~120ms. Total ~600ms per cycle. |
+| **Accuracy of visual context from screen** | 25% | Can the system correctly understand what's on the screen? | DOM/accessibility extraction reads text and forms directly (no OCR error); the vision pass handles image/canvas regions. Report measured accuracy — do not claim "near-perfect". |
+| **Recall and precision for PII detection** | 20% | Does it find ALL the personal data? Does it avoid false alarms? | Multi-layer (5-layer) detector for defense-in-depth; PIIBench-mini produces the per-category numbers. Show measured P/R/F1, or "Benchmark under execution". |
+| **Precision of redaction** | 20% | Does it redact correctly without breaking the page context? | Reversible tokens preserve context; hard-negative cases test precision. Report measured redaction precision/over-redaction. |
+| **Client-side resource utilization** | 20% | How lightweight is it? Does it slow down the browser? | No LLM in the browser; only small specialized models (target footprint ~40 MB, to be confirmed by measuring the build). |
+| **End-to-end latency** | 15% | How fast is the complete pipeline? | DOM-first design avoids OCR on most content; vision runs only where needed. Report measured per-stage and total latency — do not pre-fill numbers. |
 
 ### Key Insight for the Pitch
 **65% of the score is about the PRIVACY part (PII detection + redaction), not about how smart the AI agent is.** Many teams will focus on building an impressive AI agent and treat privacy as an afterthought. We do the opposite — our **enforceable privacy boundary** IS the product.
@@ -327,7 +358,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 >
 > Server: FastAPI, Qwen2.5-VL-3B via Ollama, constrained Action JSON output
 >
-> **Show the full processing pipeline diagram** (from PLAN.md Section 2.1)
+> **Show the full processing pipeline diagram** (see the Architecture section of PLAN.md)
 >
 > **New security layers**:
 > - 🔒 Privacy Gate: Blocks outbound requests if unsanitized sensitive content remains
@@ -338,7 +369,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 #### Slide 4: FEASIBILITY AND VIABILITY
 > **Feasibility Through Lightweight Local Models + Measurable Controls**
 >
-> Why feasible: ~40-45 MB client footprint, WebGPU/WASM browser inference, DOM-first extraction, modular architecture
+> Why feasible: ~40-45 MB *target* client footprint (confirm by measuring the build), WebGPU/WASM browser inference, DOM-first extraction, modular architecture
 >
 > **Key Risks → Engineering Mitigation** (show as table):
 > - PII detector misses → 5-layer defense-in-depth + benchmarked recall
@@ -412,6 +443,8 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > **"Our architecture combines local privacy enforcement with functional browser-agent execution."**
 >
 > **⚠️ Do NOT say**: "We're the only system..." — that's unnecessarily absolute and a judge can attack it.
+>
+> **⚠️ On the comparison table**: the competitor columns reflect these tools' *default/typical* behavior as of the project date and their capabilities evolve. Present them as "to our knowledge, as configured by default", not as fixed facts, and be ready to concede a cell if a judge knows a specific product detail. The honest, defensible framing is about our *architecture*, not about what competitors can't do.
 
 ---
 
@@ -442,7 +475,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > **Answer**: *"Qwen2.5-VL-3B, deployed via Ollama. It's fully open-source, open-weights, and can run on a single consumer GPU (4-6 GB VRAM). For today's demo, it's running on an AWS EC2 instance, but we also have it running locally on a laptop (CPU-only, slower) to prove offline deployability."*
 
 ### Q9: "How does this relate to India's DPDP Act?"
-> **Answer**: *"The DPDP Act 2023 mandates data minimization — collect only what's necessary — and purpose limitation — use data only for its stated purpose. ShieldBrowse enforces both automatically: we send only the minimum data needed (tokenized structure, not raw PII), and we generate an audit trail that proves compliance."*
+> **Answer**: *"The DPDP Act 2023 mandates data minimization — collect only what's necessary — and purpose limitation — use data only for its stated purpose. ShieldBrowse's architecture supports both: we send only the minimum data needed (tokenized structure, not raw PII), and we generate an audit trail as engineering evidence. To be precise, that's evidence supporting DPDP principles — not a legal compliance certification, which is out of scope for an MVP."*
 
 ---
 
@@ -484,8 +517,8 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 | **Before/After Screenshot** | Side-by-side: real form data vs. tokenized version | Slide 3 |
 | **5-Layer Detector Visual** | Stacked layers showing Regex → NER → DOM Rules → Face Detection → Context | Slide 5 |
 | **Benchmark Table** | Per-entity precision/recall/F1 table | Slide 9 |
-| **Latency Chart** | Stacked bar chart showing time per pipeline stage | Slide 9 |
-| **Resource Chart** | Bar chart showing model sizes (6MB + 3MB + 25MB + 2MB + 5MB = ~40MB) | Slide 9 |
+| **Latency Chart** | Stacked bar chart showing time per pipeline stage — populate with **measured** values only | Slide 9 |
+| **Resource Chart** | Bar chart of model sizes (target footprint ~40 MB; label as target until the build is measured) | Slide 9 |
 | **Network Tab Screenshot** | Chrome DevTools showing tokenized payload in the network request | Demo moment |
 | **Side Panel Screenshot** | The extension's side panel showing detected PII and metrics | Demo moment |
 | **Comparison Table** | ShieldBrowse vs. competitors (from Section 9) | Slide showing differentiation |

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Government Portal | ShieldBrowse Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">🛡️ ShieldBrowse Demo Sites</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="healthcare.html">Healthcare</a>
+      <a href="banking.html">Banking</a>
+      <a href="government.html" class="active">Government</a>
+      <a href="adversarial.html" class="danger">Adversarial</a>
+    </div>
+  </nav>
+
+  <main class="demo-container">
+    <div class="page-header">
+      <h1>🏛️ Citizen Services Portal</h1>
+      <p>Address update request form.</p>
+    </div>
+
+    <form id="gov-form" class="mock-form">
+      <div class="form-group">
+        <label for="aadhaar">Aadhaar Number (UIDAI)</label>
+        <input type="text" id="aadhaar" placeholder="12-digit Aadhaar" />
+      </div>
+
+      <div class="form-group">
+        <label for="address">Full Residential Address</label>
+        <textarea id="address" autocomplete="street-address" placeholder="Enter your full address"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="pincode">PIN Code</label>
+        <input type="text" id="pincode" autocomplete="postal-code" placeholder="6-digit PIN" />
+      </div>
+
+      <div class="form-group">
+        <label for="city">City / District</label>
+        <input type="text" id="city" placeholder="City name" />
+      </div>
+
+      <button type="submit" class="submit-btn">Submit Request</button>
+    </form>
+    
+    <div class="test-data-helpers">
+      <h3>Quick Fill (For Testing)</h3>
+      <button onclick="fillGovData()">Fill Valid Gov PII</button>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    function fillGovData() {
+      // Use a valid Aadhaar generated via Verhoeff algorithm
+      document.getElementById('aadhaar').value = '123456789018'; // Matches Verhoeff
+      document.getElementById('address').value = 'Flat 402, Sunshine Apartments, MG Road';
+      document.getElementById('pincode').value = '560001';
+      document.getElementById('city').value = 'Bangalore';
+      
+      ['aadhaar', 'address', 'pincode', 'city'].forEach(id => {
+        document.getElementById(id).dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
+  </script>
+</body>
+</html>
