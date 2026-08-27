@@ -6,6 +6,12 @@
 
 > **👋 Hey PPT team!** This document explains our project in simple, non-technical terms. Use this to understand what we're building, why it matters, and how to present it to judges. No coding knowledge needed.
 
+> **⚠️ IMPORTANT:** This PRD is aligned with the updated PLAN.md architecture. Key changes from previous versions:
+> - **Do NOT use fabricated benchmark numbers** (no "98% Aadhaar accuracy" — use real measured results only)
+> - **Do NOT claim** "We are the only system..." — say "Our architecture combines..."
+> - The core narrative is now **"enforceable privacy boundary"**, not just "privacy-preserving browser agent"
+> - Two new enforcement layers: **Privacy Gate** (blocks unsanitized data) and **Action Safety Gate** (validates VLM actions)
+
 ---
 
 ## 📖 Table of Contents
@@ -70,7 +76,7 @@ How do we give AI the ability to help WITHOUT giving it access to our private da
 
 ### ShieldBrowse — In One Sentence
 
-> **ShieldBrowse is a browser extension that lets an AI assistant help you with web tasks, while ensuring your personal data NEVER leaves your computer.**
+> **ShieldBrowse is a browser extension that enforces a privacy boundary between your browser and the AI server — the AI can reason over your browser context without receiving your sensitive values.**
 
 ### The Key Insight
 
@@ -154,14 +160,14 @@ Think of it like a **spy movie**:
 
 ## 4. The "Wow Factor" — What Makes Us Special
 
-### Our 5 Differentiators (Use These in the Pitch)
+### Our 6 Differentiators (Use These in the Pitch)
 
-#### 1️⃣ Reversible Token Scheme (Our #1 Innovation)
+#### 1️⃣ Reversible Token Scheme with Opaque Mode
 **Problem with naive privacy approaches**: If you just blur out all personal data, the AI becomes useless — it can't tell you to "type your email" if it doesn't even know there's an email to type.
 
 **Our solution**: Instead of blurring, we **replace** data with meaningful code names. The AI knows "there's an email to type" (it sees [[EMAIL_1]]), but it doesn't know the actual email. Our browser extension knows the real value and types it in locally.
 
-**Why this is novel**: No existing browser AI agent does this. Not ChatGPT, not Claude, not any academic research paper we found.
+**Opaque mode**: For extra-sensitive categories (medical, financial), even the type is hidden — the server sees `[[VALUE_17]]` instead of `[[MEDICAL_1]]`, so it can't even tell the data was medical.
 
 #### 2️⃣ Multi-Layer PII Detection (Defense-in-Depth)
 We don't rely on a single method to find personal data. We use **5 layers**:
@@ -176,28 +182,38 @@ We don't rely on a single method to find personal data. We use **5 layers**:
 
 If one layer misses something, another layer catches it. This is called **defense-in-depth** — the same strategy used in cybersecurity.
 
-#### 3️⃣ Benchmarked Performance (We Have Numbers)
+#### 3️⃣ Enforceable Privacy Boundary (Two Safety Gates)
+Most teams will say "we sanitize data before sending it." That's aspirational. We **enforce** it with two gates:
+
+**Privacy Gate** 🔒 — Sits between the tokenizer and the network. Before ANY data leaves the browser, it scans the outbound payload for raw PII. If it finds even one unsanitized value → the request is **physically blocked**. Fail-closed.
+
+**Action Safety Gate** ⛔ — Sits between the server's response and browser execution. Every action the AI returns is validated against a whitelist (click, type, scroll, select, done). Dangerous patterns (eval, javascript:, script injection) are rejected. The AI cannot directly control the browser.
+
+**Why this matters for judges**: This is the difference between "we try to protect data" and "we enforce that unprotected data cannot leave."
+
+#### 4️⃣ Benchmarked Performance (Real Measured Numbers)
 Most teams will say "look, it works!" and show a demo.
 
-We will show a **table of numbers**: for each type of personal data (Aadhaar, names, emails...), we measured exactly how accurately our system detects it:
-- Aadhaar detection: 98% accurate
-- Email detection: 95% accurate
-- Name detection: 82% accurate
+We built **PIIBench-mini**: 50 annotated test cases across healthcare, banking, and government scenarios, including hard negatives (data that looks like PII but isn't). We measure:
+- Precision, Recall, F1 **per PII category**
+- Confusion matrix (what was misclassified as what)
+- Latency per pipeline stage
+- False negative report (what was missed)
 
-**This is the difference between "trust us" and "here's the proof."**
+> **⚠️ CRITICAL**: Only show **real measured results** in the PPT. If benchmark hasn't been run yet, write "Benchmark under execution" — NOT fabricated numbers.
 
-#### 4️⃣ Extremely Lightweight
+#### 5️⃣ Extremely Lightweight
 Our AI models running in the browser total only **~40 MB** — smaller than many mobile apps. Most other teams trying to run AI in the browser will need 200-500 MB of models, making the browser slow and laggy.
 
-We achieve this by being smart about **what runs where**: tiny, specialized models in the browser (just for detecting personal data), and the big AI brain on the server (just for thinking).
+We achieve this by being smart about **what runs where**: tiny, specialized models in the browser (just for detecting personal data), and the big AI brain on the server (but it NEVER sees your real data).
 
-#### 5️⃣ DPDP Act Compliance Report
+#### 6️⃣ DPDP Act Compliance Report
 India's **Digital Personal Data Protection Act 2023** requires organizations to handle personal data carefully. Our system can generate an **audit report** showing:
 - What personal data was detected
 - What was done to protect it
-- That nothing leaked to the server
+- That nothing leaked to the server (verified by Privacy Gate)
 
-This is relevant for ISRO and government organizations. No other team will think of this angle.
+This is relevant for ISRO and government organizations.
 
 ---
 
@@ -206,29 +222,41 @@ This is relevant for ISRO and government organizations. No other team will think
 ### Moment 1: "The Network Tab Proof" (Most Important!)
 During the live demo, open Chrome DevTools → Network Tab. Click on the request being sent to the server. **Show the judges the actual data being sent.** They will see:
 ```
-{ "name": "[[PERSON_1]]", "email": "[[EMAIL_1]]", "aadhaar": "[[AADHAAR_1]]" }
+Original:  rahul.sharma@example.com / 2345 6789 0123
+     ↓ LOCAL SANITIZATION
+Sent:      [[EMAIL_1]] / [[AADHAAR_1]]
 ```
 No real data. Just code names.
 
 **Narrate**: *"Let me show you what actually crosses the network. As you can see, the server receives [[PERSON_1]], not 'Rahul Sharma'. The real value never left this browser."*
 
-### Moment 2: "The Side Panel"
+### Moment 2: "The Privacy Gate Block"
+Deliberately trigger a Privacy Gate violation — show what happens when raw PII would leak:
+- The request is **blocked**
+- The console shows `🔒 PRIVACY GATE BLOCKED`
+- The side panel shows the violation
+
+**Narrate**: *"Now let me show you what happens if our tokenizer had a bug. The Privacy Gate caught that raw PII was still in the payload — and blocked the entire request. The data never left the browser."*
+
+### Moment 3: "The Side Panel"
 Show the extension's side panel with:
 - List of all detected personal data (with partially masked values)
 - The "What Server Sees" preview (all code names)
-- Performance metrics (detection time: 120ms, total: 600ms)
+- Performance metrics (detection time, total pipeline time)
 
-**Narrate**: *"Our side panel shows everything our system detected — 7 pieces of personal data across 5 different categories. And here's what the server actually receives — only tokens."*
+**Narrate**: *"Our side panel shows everything our system detected — including which detection layer caught each item. And here's what the server actually receives — only tokens."*
 
-### Moment 3: "The Form Gets Filled Correctly"
+### Moment 4: "The Form Gets Filled Correctly"
 After the AI sends back instructions with code names, show the form being filled with **real values** — even though the server never saw those values.
 
-**Narrate**: *"Watch the magic. The server said 'type [[PERSON_1]] into the name field.' Our extension replaces the token with the real name and types it in — locally. The AI helped fill the form without ever knowing the person's name."*
+**Narrate**: *"The server said 'type [[PERSON_1]] into the name field.' Our extension replaces the token with the real name and types it in — locally. The AI helped fill the form without ever knowing the person's name."*
 
-### Moment 4: "The Benchmark Numbers"
+### Moment 5: "The Benchmark Numbers"
 Show the precision/recall table. Point out specific numbers.
 
-**Narrate**: *"We didn't just build it — we measured it. Our Aadhaar detector has 98% precision. Our name detector has 82% recall. We know exactly where our system is strong and where it has room to improve. We're honest about our limitations."*
+**Narrate**: *"We didn't just build it — we measured it. Here are our actual precision and recall numbers per PII category. We know exactly where our system is strong and where it has room to improve. We're honest about our limitations."*
+
+> **⚠️ Only narrate real measured numbers here. If the benchmark hasn't been run yet, skip this moment and say "Benchmark under execution."**
 
 ---
 
@@ -245,92 +273,121 @@ Show the precision/recall table. Point out specific numbers.
 | **End-to-end latency** | 15% | How fast is the complete pipeline? | ⭐⭐⭐⭐ — DOM extraction is instant. PII detection ~120ms. Total ~600ms per cycle. |
 
 ### Key Insight for the Pitch
-**65% of the score is about the PRIVACY part (PII detection + redaction), not about how smart the AI agent is.** Many teams will focus on building an impressive AI agent and treat privacy as an afterthought. We do the opposite — our privacy pipeline IS the product.
+**65% of the score is about the PRIVACY part (PII detection + redaction), not about how smart the AI agent is.** Many teams will focus on building an impressive AI agent and treat privacy as an afterthought. We do the opposite — our **enforceable privacy boundary** IS the product.
 
 ---
 
 ## 7. Presentation Script & Slide Structure
 
-### Recommended Slide Deck (8-10 minutes)
+### Official SIH 6-Slide Template
 
-#### Slide 1: Title (5 seconds)
-> **ShieldBrowse** — Privacy-Preserving Browser Agent with On-Device PII Detection
-> Team Name | SIH 2026 | ISRO
+The SIH template has exactly 6 sections. We stay strictly within it.
 
-#### Slide 2: The Problem (1 minute)
-> **"AI agents need to see your screen. But your screen shows your life."**
+#### Slide 1: TITLE PAGE
+> **SMART INDIA HACKATHON 2026**
 >
-> Show examples of sensitive data on screens:
-> - Aadhaar number on a government portal
-> - Bank account details during a transaction
-> - Medical diagnosis on a hospital portal
-> - Password being typed
+> Problem Statement ID: 26171
+> Problem Statement Title: On-device Visual Perception for Lightweight Browser Agents
+> Theme: Smart Automation
+> PS Category: Software
+> Team ID: [YOUR TEAM ID]
+> Team Name: [REGISTERED TEAM NAME]
 >
-> *"Every existing browser AI agent — from ChatGPT to Claude to WebVoyager — sends unredacted screenshots to cloud servers. For government organizations like ISRO, this is unacceptable."*
-
-#### Slide 3: Our Solution Overview (1 minute)
-> **"We don't blur. We tokenize."**
+> **ShieldBrowse — Privacy-Preserving On-Device Visual Browser Agent**
 >
-> Show the before/after:
-> - BEFORE: `"Name: Rahul Sharma, Aadhaar: 2345 6789 0123"`
-> - AFTER:  `"Name: [[PERSON_1]], Aadhaar: [[AADHAAR_1]]"`
+> Core proposition: *Perceive locally → protect sensitive context locally → reason remotely on sanitized context → execute safely locally*
 >
-> *"Our browser extension detects every piece of PII, replaces it with a typed token, and sends only the tokenized version to the server. The real values stay in your browser. The AI works with tokens. And when it's time to act, we swap the tokens back — locally."*
+> Team Members: [Names exactly as registered]
 
-#### Slide 4: Architecture Diagram (1 minute)
-> Show the simplified flow diagram.
-> Walk through each step: Capture → Detect → Tokenize → Send → Reason → Return → Rehydrate → Execute
+> **⚠️ Do NOT write**: "AI-powered innovative browser automation"
+> **DO write**: The actual architectural proposition above.
+
+#### Slide 2: IDEA (Proposed Solution)
+> **ShieldBrowse — Privacy Boundary Before AI Reasoning**
 >
-> Emphasize: *"Notice the red line — that's the only network call. Everything else happens locally."*
-
-#### Slide 5: Multi-Layer PII Detection (30 seconds)
-> Show the 5-layer detection system.
-> *"We use defense-in-depth: regex patterns catch structured IDs, AI catches names, DOM rules catch password fields, MediaPipe catches faces, and context rules catch medical data. If one layer misses, another catches it."*
-
-#### Slide 6-8: LIVE DEMO (3-4 minutes)
-> 1. Open the mock hospital form with pre-filled data
-> 2. Click "Start Agent" in ShieldBrowse
-> 3. Show the side panel updating with detected PII
-> 4. Show the Network tab with tokenized payload
-> 5. Watch the form being filled with real values
-> 6. Narrate each step: "Now it detected the Aadhaar number... replaced with [[AADHAAR_1]]... server is thinking... now it's typing the real value back in."
-
-#### Slide 9: Benchmark Results (1 minute)
-> Show the precision/recall table.
-> Show the latency stacked bar chart.
-> Show the resource utilization numbers (~40 MB models).
+> A Chrome MV3 extension locally captures DOM/accessibility information and visual regions.
+> Lightweight on-device models detect UI elements, screen type, text entities, faces and image-based sensitive content.
+> A 5-layer PII pipeline combines Regex/Checksum, multilingual NER, DOM rules, Face Detection and semantic/context rules.
+> Detected PII is tokenized/redacted locally; the server receives sanitized context, never the original values.
+> Qwen2.5-VL-3B via Ollama reasons over sanitized context and returns structured browser actions; real values are rehydrated and entered locally.
 >
-> *"We measured every aspect. Here are our numbers."*
-
-#### Slide 10: DPDP Act Compliance (30 seconds)
-> *"India's Digital Personal Data Protection Act 2023 requires data minimization and purpose limitation. ShieldBrowse generates an audit trail showing what PII was detected, what was redacted, and that nothing leaked. This makes browser agents deployable in government and healthcare settings."*
-
-#### Slide 11: What's Next + Limitations (30 seconds)
-> **Honest limitations:**
-> - Cross-origin iframes can hide PII from our DOM walker (browser security limitation)
-> - NER model may miss unusual names (~82% recall, not 100%)
-> - Field labels could reveal category of redacted data (e.g., "Diagnosis: [[MEDICAL_1]]" tells you it's medical)
+> **Problem → Direct Solution Mapping** (show as table)
 >
-> **Future work:**
-> - More PII categories (vehicle numbers, voter IDs)
-> - Integration with India Stack APIs
-> - Enterprise deployment for government organizations
+> **Key Differentiator**: Privacy is not a post-processing step; it is an enforced local boundary between perception and network transmission.
+>
+> Show the pipeline visual: WEBPAGE → LOCAL PERCEPTION → PII DETECTION → TOKENIZE/REDACT → 🔒 PRIVACY GATE → SANITIZED CONTEXT ONLY → Qwen2.5-VL → ACTION JSON → ⛔ ACTION SAFETY GATE → EXECUTE
 
-#### Slide 12: Thank You + Q&A
-> *"We don't just detect PII — we prove it. Questions?"*
+#### Slide 3: TECHNICAL APPROACH
+> **Hybrid Local Perception + Privacy-Gated Agent Architecture**
+>
+> Client — Browser: Chrome MV3 + Vite + Vanilla JS, ONNX Runtime Web / Transformers.js with WebGPU/WASM
+> - YOLOv8-nano ONNX q8 (~6 MB) — UI/visual element detection
+> - MobileNet-v3-small (~3 MB) — screen classification
+> - Multilingual DistilBERT NER (~25–30 MB) + Tesseract.js + MediaPipe Face Detector
+>
+> Server: FastAPI, Qwen2.5-VL-3B via Ollama, constrained Action JSON output
+>
+> **Show the full processing pipeline diagram** (from PLAN.md Section 2.1)
+>
+> **New security layers**:
+> - 🔒 Privacy Gate: Blocks outbound requests if unsanitized sensitive content remains
+> - ⛔ Action Safety Gate: Validates action schema, target element and permitted action type
+>
+> **⚠️ Do NOT call YOLOv8-nano a "ViT"**. Use "Lightweight On-Device Computer Vision"
+
+#### Slide 4: FEASIBILITY AND VIABILITY
+> **Feasibility Through Lightweight Local Models + Measurable Controls**
+>
+> Why feasible: ~40-45 MB client footprint, WebGPU/WASM browser inference, DOM-first extraction, modular architecture
+>
+> **Key Risks → Engineering Mitigation** (show as table):
+> - PII detector misses → 5-layer defense-in-depth + benchmarked recall
+> - Data leaks through network → Privacy Gate + outbound-request inspection
+> - Token category leaks info → Opaque tokens ([[VALUE_N]]) for sensitive categories
+> - Malicious page manipulates agent → Action Safety Gate + constrained Action JSON
+> - OCR increases latency → DOM-first processing + vision only where required
+> - Browser compute limited → Quantized lightweight ONNX models + WebGPU/WASM
+>
+> **Validation**: PIIBench-mini benchmark with precision/recall/F1/confusion matrix
+>
+> **⚠️ Do NOT put fabricated results.** Write "Benchmark under execution" until real numbers exist.
+
+#### Slide 5: IMPACT AND BENEFITS
+> **AI Assistance Without Exposing Sensitive Browser Context**
+>
+> Target environments: Healthcare, Government, Banking, Enterprise/regulated
+>
+> The agent can still use protected values through local token rehydration.
+> Lightweight client models target browser deployment without requiring an LLM to run locally.
+> The architecture separates what the server needs to reason from what the server is allowed to see.
+>
+> Scalability: Mock hospital workflow → multiple sensitive web workflows → Chrome/Firefox adapters → enterprise/government deployment
+>
+> **⚠️ Do NOT write**: "Completely secure" or "100% privacy guaranteed"
+> **DO write**: "Local privacy enforcement with measurable detection and transmission controls"
+
+#### Slide 6: RESEARCH & REFERENCES
+> Problem: SIH 2026 PS 26171 — On-device Visual Perception for Lightweight Browser Agents
+> Browser-Agent Research: WebVoyager, SeeAct, ShowUI, OS-ATLAS, ScreenAI
+> Privacy/PII: Microsoft Presidio, DPDP Act 2023
+> On-device AI: ONNX Runtime Web, Transformers.js
+> Our artifacts: PIIBench-mini benchmark, ShieldBrowse architecture
 
 ---
 
 ## 8. The Story / Narrative Arc
 
 ### The Pitch in 30 Seconds (Elevator Pitch)
-> *"Browser AI agents are powerful but privacy-hostile — they send your full screen to cloud servers. ShieldBrowse solves this with a client-side extension that detects and tokenizes personal data before it leaves your browser, using a reversible scheme that lets the agent stay fully functional. We benchmarked our detector against a labeled dataset and can show precision/recall per PII category, not just a demo."*
+> *"Browser AI agents are powerful but privacy-hostile — they send your full screen to cloud servers. ShieldBrowse enforces an architectural boundary: local models perceive the page, a 5-layer pipeline detects and tokenizes PII, a Privacy Gate physically blocks any unsanitized data from leaving the browser, and the server reasons only over sanitized tokens. The AI can reason over the user's browser context without receiving the user's sensitive values."*
 
 ### The Emotional Hook (For Opening the Presentation)
-> *"Imagine an ISRO scientist filling out a classified internal form. They want AI help — it's a 40-field form. But the data on that form could compromise national security. Today, they have two choices: fill it manually, or trust a cloud AI with classified data. ShieldBrowse gives them a third choice: AI help, zero data leakage."*
+> *"Imagine an ISRO scientist filling out a classified internal form. They want AI help — it's a 40-field form. But the data on that form could compromise national security. Today, they have two choices: fill it manually, or trust a cloud AI with classified data. ShieldBrowse gives them a third choice: AI help, with an enforceable privacy boundary."*
 
 ### The Technical Credibility Line (For Closing)
-> *"We stand on the shoulders of SeeAct, WebVoyager, and ShowUI for agent architecture, but we solve a problem none of them address — what happens when the screen contains data you can't share with any server, under any circumstances."*
+> *"We designed a browser agent around an enforceable privacy boundary — not privacy as a feature, but privacy as an architectural constraint."*
+
+### The Single Strongest Sentence (should appear on the PPT)
+> **"The AI can reason over the user's browser context without receiving the user's sensitive values."**
 
 ---
 
@@ -343,23 +400,25 @@ Show the precision/recall table. Point out specific numbers.
 | Helps with browser tasks | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No (only detects PII) |
 | Detects PII | ✅ 5-layer detector | ❌ No | ❌ No | ✅ Yes |
 | Runs PII detection locally | ✅ In browser (~40 MB) | ❌ N/A | ❌ N/A | ❌ Server-only (Python) |
-| Privacy-preserving | ✅ Tokens only to server | ❌ Full screenshots to cloud | ❌ Full screenshots to cloud | ✅ But no agent |
+| Enforceable privacy boundary | ✅ Privacy Gate (fail-closed) | ❌ Full screenshots to cloud | ❌ Full screenshots to cloud | ✅ But no agent |
 | Reversible (agent still works) | ✅ Token rehydration | ❌ N/A | ❌ N/A | ❌ Irreversible |
+| Action safety validation | ✅ Action Safety Gate | ❌ N/A | ❌ N/A | ❌ N/A |
+| Opaque tokenization | ✅ [[VALUE_N]] mode | ❌ N/A | ❌ N/A | ❌ N/A |
 | Benchmarked performance | ✅ Per-entity P/R/F1 | ❌ N/A | ❌ N/A | ✅ Has benchmarks |
 | Offline-deployable | ✅ Open-source models | ❌ Cloud-only | ❌ Cloud LLM needed | ✅ But no agent |
 | Indian PII support | ✅ Aadhaar, PAN, Indian names | ❌ Generic | ❌ Generic | Partial |
 
 ### Our Position
-> **"We're the only system that combines privacy-preserving PII detection with a functional browser agent."**
+> **"Our architecture combines local privacy enforcement with functional browser-agent execution."**
 >
-> Others do one or the other. We do both.
+> **⚠️ Do NOT say**: "We're the only system..." — that's unnecessarily absolute and a judge can attack it.
 
 ---
 
 ## 10. Judge Q&A — Questions They'll Ask
 
 ### Q1: "How do you know your redaction actually works?"
-> **Answer**: *"We built a benchmark dataset of 40-50 annotated screenshots with ground-truth PII labels. We measured precision and recall per PII category. Here are our numbers: [show table]. We also include deliberate hard negatives — non-PII data that looks like PII — to prove our precision is real."*
+> **Answer**: *"We built PIIBench-mini — 50 annotated DOM snapshots with ground-truth PII labels across healthcare, banking, and government scenarios. We measured precision and recall per PII category. We also include deliberate hard negatives — non-PII data that looks like PII — to prove our precision is real. And beyond the detector, our Privacy Gate physically blocks any request that still contains raw PII — so even if the detector misses something in a novel scenario, the gate catches the leak."*
 
 ### Q2: "What if your system misses a PII entity?"
 > **Answer**: *"That's why we have defense-in-depth — 5 detection layers. Even if the AI name-recognition model misses a name, our DOM rules layer catches it if the field is labeled 'Name' or has autocomplete='name'. No single layer is relied upon alone. And we honestly report our recall numbers per category."*
@@ -368,13 +427,13 @@ Show the precision/recall table. Point out specific numbers.
 > **Answer**: *"Running a full LLM (like a 3-billion-parameter model) in the browser would need 2-4 GB of memory and take 30+ seconds per response. Instead, we run only tiny specialized models locally (total ~40 MB) for detection, and use the server for the heavy reasoning. This keeps the browser fast while the server never sees real data."*
 
 ### Q4: "Doesn't the field label 'Diagnosis: [[MEDICAL_1]]' leak that it's medical data?"
-> **Answer**: *"Yes — this is a residual information leakage we acknowledge honestly. The server knows the CATEGORY of the data (medical), but not the VALUE (what the diagnosis is). This is a fundamental limitation of any tokenization approach. We document this in our report and suggest future work on label obfuscation."*
+> **Answer**: *"We addressed this. For sensitive categories like medical and financial data, we support opaque tokenization — the server sees [[VALUE_17]] instead of [[MEDICAL_1]]. This way the server can't even tell the data was medical. The opaque mode is configurable per entity type through our Privacy Policy."*
 
 ### Q5: "Is the token map itself a security risk?"
 > **Answer**: *"The token map exists only in the browser's session storage (chrome.storage.session). It's automatically cleared when the browser closes. It's never persisted to disk, never synced to cloud, and never sent over any network. This is a stronger guarantee than any server-side system, because the data never leaves the device at all."*
 
 ### Q6: "Why hybrid DOM+vision instead of pure vision?"
-> **Answer**: *"Three reasons: (1) Speed — DOM extraction is instant, no AI inference needed. (2) Accuracy — DOM gives us exact text with zero OCR error. (3) Resource efficiency — we only run vision models on image regions, not the entire page. Our ViT still runs on every page as a verification layer, satisfying the problem statement's requirement."*
+> **Answer**: *"Three reasons: (1) Speed — DOM extraction is instant, no AI inference needed. (2) Accuracy — DOM gives us exact text with zero OCR error. (3) Resource efficiency — we only run vision models on image regions, not the entire page. Our lightweight computer vision models still run on every page as a verification layer, satisfying the problem statement's requirement."*
 
 ### Q7: "Have you tested on real websites, not just your mock site?"
 > **Answer**: *"Our mock site is designed to exercise every PII category and edge case. Our regex and DOM-rule detectors work on ANY website because they're based on universal HTML patterns (input types, autocomplete attributes, label text). We tested the regex layer against [X] real websites during development."*
@@ -396,7 +455,7 @@ Show the precision/recall table. Point out specific numbers.
 | **Tokenization** | The process of replacing real data with code names | Our core privacy technique |
 | **Rehydration** | Swapping the code name back for the real value ([[PERSON_1]] → "Rahul") | How the browser fills in real data locally |
 | **DOM** | The page's internal structure (like a blueprint of the webpage) | How we read what's on the page without taking screenshots |
-| **ViT (Vision Transformer)** | An AI that understands images (like a robot eye) | Verifies what's on screen, catches things the DOM misses |
+| **Computer Vision (CV) Models** | AI models that understand images (like a robot eye). Note: YOLOv8-nano is a CNN, not a Vision Transformer — do NOT call it a ViT. | Verifies what's on screen, catches things the DOM misses |
 | **NER (Named Entity Recognition)** | AI that reads text and finds names, places, organizations | Catches names and addresses that simple patterns can't |
 | **WebGPU** | Browser technology that uses your graphics card for fast AI | Makes our AI models run 5-10x faster in the browser |
 | **ONNX** | A universal format for AI models (like PDF but for AI) | How we package AI models to run in the browser |
