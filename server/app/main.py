@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.agent_router import router as agent_router
+from dotenv import load_dotenv
+
+load_dotenv()  # Loads variables from .env file
 
 app = FastAPI(title="ShieldBrowse Server")
 

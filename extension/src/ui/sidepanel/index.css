@@ -11,7 +11,8 @@
 body {
   margin: 0;
   padding: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -142,19 +143,58 @@ body {
   color: #0f172a;
 }
 
-.pii-badge.tag-aadhaar { background: #f97316; color: #fff; }
-.pii-badge.tag-pan { background: #8b5cf6; color: #fff; }
-.pii-badge.tag-email { background: #3b82f6; color: #fff; }
-.pii-badge.tag-phone { background: #10b981; color: #fff; }
-.pii-badge.tag-person { background: #ec4899; color: #fff; }
-.pii-badge.tag-credit_card { background: #ef4444; color: #fff; }
-.pii-badge.tag-ifsc { background: #14b8a6; color: #fff; }
-.pii-badge.tag-pincode { background: #eab308; color: #000; }
-.pii-badge.tag-password { background: #dc2626; color: #fff; }
-.pii-badge.tag-date_of_birth { background: #06b6d4; color: #fff; }
-.pii-badge.tag-address { background: #64748b; color: #fff; }
-.pii-badge.tag-city { background: #475569; color: #fff; }
-.pii-badge.tag-state { background: #475569; color: #fff; }
+.pii-badge.tag-aadhaar {
+  background: #f97316;
+  color: #fff;
+}
+.pii-badge.tag-pan {
+  background: #8b5cf6;
+  color: #fff;
+}
+.pii-badge.tag-email {
+  background: #3b82f6;
+  color: #fff;
+}
+.pii-badge.tag-phone {
+  background: #10b981;
+  color: #fff;
+}
+.pii-badge.tag-person {
+  background: #ec4899;
+  color: #fff;
+}
+.pii-badge.tag-credit_card {
+  background: #ef4444;
+  color: #fff;
+}
+.pii-badge.tag-ifsc {
+  background: #14b8a6;
+  color: #fff;
+}
+.pii-badge.tag-pincode {
+  background: #eab308;
+  color: #000;
+}
+.pii-badge.tag-password {
+  background: #dc2626;
+  color: #fff;
+}
+.pii-badge.tag-date_of_birth {
+  background: #06b6d4;
+  color: #fff;
+}
+.pii-badge.tag-address {
+  background: #64748b;
+  color: #fff;
+}
+.pii-badge.tag-city {
+  background: #475569;
+  color: #fff;
+}
+.pii-badge.tag-state {
+  background: #475569;
+  color: #fff;
+}
 
 .pii-source {
   font-size: 0.65rem;
@@ -172,7 +212,7 @@ body {
 }
 
 .pii-value {
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
   font-weight: 600;
   color: #f8fafc;
 }
@@ -182,7 +222,7 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 10px;
-  font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
   font-size: 0.72rem;
   color: #38bdf8;
   overflow-x: auto;
