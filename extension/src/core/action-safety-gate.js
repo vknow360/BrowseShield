@@ -1,7 +1,13 @@
 // action-safety-gate.js — Whitelist-based action validation
 
 const ALLOWED_ACTIONS = new Set([
-  'click', 'type', 'scroll', 'select', 'navigate', 'wait', 'done'
+  "click",
+  "type",
+  "scroll",
+  "select",
+  "navigate",
+  "wait",
+  "done",
 ]);
 
 // Patterns that indicate executable code injection
@@ -9,12 +15,12 @@ const DANGEROUS_PATTERNS = [
   /javascript:/i,
   /eval\s*\(/i,
   /<script/i,
-  /on\w+\s*=/i,       // onclick=, onerror=, etc.
+  /on\w+\s*=/i, // onclick=, onerror=, etc.
   /document\.write/i,
   /window\.location/i, // Direct location manipulation (use 'navigate' action instead)
   /fetch\s*\(/i,
   /XMLHttpRequest/i,
-  /import\s*\(/i
+  /import\s*\(/i,
 ];
 
 /**
@@ -26,8 +32,8 @@ const DANGEROUS_PATTERNS = [
  */
 export function validateAction(action, document) {
   // 1. Must be a valid object with 'action' field
-  if (!action || typeof action !== 'object' || !action.action) {
-    return { valid: false, reason: 'Missing or invalid action field' };
+  if (!action || typeof action !== "object" || !action.action) {
+    return { valid: false, reason: "Missing or invalid action field" };
   }
 
   // 2. Action type must be in whitelist
@@ -36,8 +42,8 @@ export function validateAction(action, document) {
   }
 
   // 3. 'done' and 'wait' don't need target validation
-  if (action.action === 'done') return { valid: true };
-  if (action.action === 'wait') {
+  if (action.action === "done") return { valid: true };
+  if (action.action === "wait") {
     const ms = parseInt(action.value);
     if (isNaN(ms) || ms < 0 || ms > 30000) {
       return { valid: false, reason: `Invalid wait duration: ${action.value}` };
@@ -49,46 +55,58 @@ export function validateAction(action, document) {
   // Note: we can skip the "exist in DOM" check if document is not provided (e.g. for unit tests)
   // or we can allow the executor to handle "Element not found" errors natively.
   // But for strict safety, we check if document is provided.
-  if (!action.target || typeof action.target !== 'string') {
-    return { valid: false, reason: 'Missing target selector' };
+  if (!action.target || typeof action.target !== "string") {
+    return { valid: false, reason: "Missing target selector" };
   }
 
   if (document) {
     try {
       const element = document.querySelector(action.target);
       if (!element) {
-        return { valid: false, reason: `Target not found in DOM: "${action.target}"` };
+        return {
+          valid: false,
+          reason: `Target not found in DOM: "${action.target}"`,
+        };
       }
     } catch (e) {
-      return { valid: false, reason: `Invalid CSS selector: "${action.target}"` };
+      return {
+        valid: false,
+        reason: `Invalid CSS selector: "${action.target}"`,
+      };
     }
   }
 
   // 5. Check all string fields for dangerous patterns
-  const allValues = [
-    action.target, action.value, action.reasoning
-  ].filter(Boolean);
+  const allValues = [action.target, action.value, action.reasoning].filter(
+    Boolean,
+  );
 
   for (const val of allValues) {
     for (const pattern of DANGEROUS_PATTERNS) {
       if (pattern.test(val)) {
         return {
           valid: false,
-          reason: `Dangerous pattern detected in "${val}"`
+          reason: `Dangerous pattern detected in "${val}"`,
         };
       }
     }
   }
 
   // 6. For 'type' actions, value is required
-  if (action.action === 'type' && (action.value === undefined || action.value === null)) {
-    return { valid: false, reason: 'Type action requires a value' };
+  if (
+    action.action === "type" &&
+    (action.value === undefined || action.value === null)
+  ) {
+    return { valid: false, reason: "Type action requires a value" };
   }
 
   // 7. For 'scroll', target can be "window" or a valid selector, and value must be 'up' or 'down'
-  if (action.action === 'scroll') {
-    if (!['up', 'down'].includes(action.value)) {
-      return { valid: false, reason: `Invalid scroll direction: "${action.value}"` };
+  if (action.action === "scroll") {
+    if (!["up", "down"].includes(action.value)) {
+      return {
+        valid: false,
+        reason: `Invalid scroll direction: "${action.value}"`,
+      };
     }
   }
 

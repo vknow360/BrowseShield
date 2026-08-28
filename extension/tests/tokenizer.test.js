@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PIITokenizer, maskValue } from '../src/core/tokenizer/tokenizer.js';
-import { DEFAULT_PRIVACY_POLICY } from '../src/core/tokenizer/privacy-policy.js';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { PIITokenizer, maskValue } from "../src/core/tokenizer/tokenizer.js";
+import { DEFAULT_PRIVACY_POLICY } from "../src/core/tokenizer/privacy-policy.js";
 
 // Mock chrome API
 global.chrome = {
@@ -8,12 +8,12 @@ global.chrome = {
     session: {
       get: vi.fn().mockResolvedValue({}),
       set: vi.fn().mockResolvedValue(),
-      remove: vi.fn().mockResolvedValue()
-    }
-  }
+      remove: vi.fn().mockResolvedValue(),
+    },
+  },
 };
 
-describe('PIITokenizer', () => {
+describe("PIITokenizer", () => {
   let tokenizer;
 
   beforeEach(() => {
@@ -21,84 +21,138 @@ describe('PIITokenizer', () => {
     tokenizer = new PIITokenizer(DEFAULT_PRIVACY_POLICY);
   });
 
-  it('tokenizes nodes and returns a sanitized deep copy', async () => {
+  it("tokenizes nodes and returns a sanitized deep copy", async () => {
     const nodes = [
-      { id: '1', value: 'Rahul', selector: '#name', box: {x: 0, y: 0}, pii: { isPII: true, entityType: 'PERSON', confidence: 0.95, source: 'ner' } },
-      { id: '2', value: 'Ignore', selector: '#ignore', box: {x: 0, y: 0} } // no PII
+      {
+        id: "1",
+        value: "Rahul",
+        selector: "#name",
+        box: { x: 0, y: 0 },
+        pii: {
+          isPII: true,
+          entityType: "PERSON",
+          confidence: 0.95,
+          source: "ner",
+        },
+      },
+      { id: "2", value: "Ignore", selector: "#ignore", box: { x: 0, y: 0 } }, // no PII
     ];
 
     const { sanitizedNodes, tokenMap } = await tokenizer.tokenize(nodes);
-    
-    expect(sanitizedNodes[0].value).toBe('[[PERSON_1]]');
+
+    expect(sanitizedNodes[0].value).toBe("[[PERSON_1]]");
     expect(sanitizedNodes[0].pii).toBeUndefined(); // should be stripped
-    expect(sanitizedNodes[1].value).toBe('Ignore'); // unchanged
-    
-    expect(tokenMap['[[PERSON_1]]']).toEqual(expect.objectContaining({
-      realValue: 'Rahul',
-      entityType: 'PERSON',
-      selector: '#name'
-    }));
+    expect(sanitizedNodes[1].value).toBe("Ignore"); // unchanged
+
+    expect(tokenMap["[[PERSON_1]]"]).toEqual(
+      expect.objectContaining({
+        realValue: "Rahul",
+        entityType: "PERSON",
+        selector: "#name",
+      }),
+    );
   });
 
-  it('deduplicates tokens by realValue', async () => {
+  it("deduplicates tokens by realValue", async () => {
     const nodes = [
-      { id: '1', value: 'test@example.com', selector: '#e1', pii: { isPII: true, entityType: 'EMAIL', confidence: 0.9 } },
-      { id: '2', value: 'test@example.com', selector: '#e2', pii: { isPII: true, entityType: 'EMAIL', confidence: 0.9 } }
+      {
+        id: "1",
+        value: "test@example.com",
+        selector: "#e1",
+        pii: { isPII: true, entityType: "EMAIL", confidence: 0.9 },
+      },
+      {
+        id: "2",
+        value: "test@example.com",
+        selector: "#e2",
+        pii: { isPII: true, entityType: "EMAIL", confidence: 0.9 },
+      },
     ];
 
     const { sanitizedNodes, tokenMap } = await tokenizer.tokenize(nodes);
-    
-    expect(sanitizedNodes[0].value).toBe('[[EMAIL_1]]');
-    expect(sanitizedNodes[1].value).toBe('[[EMAIL_1]]');
+
+    expect(sanitizedNodes[0].value).toBe("[[EMAIL_1]]");
+    expect(sanitizedNodes[1].value).toBe("[[EMAIL_1]]");
     expect(Object.keys(tokenMap).length).toBe(1);
   });
 
-  it('respects opaque token categories (MEDICAL -> VALUE)', async () => {
+  it("respects opaque token categories (MEDICAL -> VALUE)", async () => {
     const nodes = [
-      { id: '1', value: 'Asthma', selector: '#med', pii: { isPII: true, entityType: 'MEDICAL', confidence: 0.9 } }
+      {
+        id: "1",
+        value: "Asthma",
+        selector: "#med",
+        pii: { isPII: true, entityType: "MEDICAL", confidence: 0.9 },
+      },
     ];
 
     const { sanitizedNodes, tokenMap } = await tokenizer.tokenize(nodes);
-    
-    expect(sanitizedNodes[0].value).toBe('[[VALUE_1]]');
-    expect(tokenMap['[[VALUE_1]]'].entityType).toBe('MEDICAL');
+
+    expect(sanitizedNodes[0].value).toBe("[[VALUE_1]]");
+    expect(tokenMap["[[VALUE_1]]"].entityType).toBe("MEDICAL");
   });
 
-  it('respects confidence threshold', async () => {
-    const policy = { ...DEFAULT_PRIVACY_POLICY, confidenceThreshold: 0.90 };
+  it("respects confidence threshold", async () => {
+    const policy = { ...DEFAULT_PRIVACY_POLICY, confidenceThreshold: 0.9 };
     const strictTokenizer = new PIITokenizer(policy);
-    
+
     const nodes = [
-      { id: '1', value: 'MaybeName', selector: '#name', pii: { isPII: true, entityType: 'PERSON', confidence: 0.85 } }
+      {
+        id: "1",
+        value: "MaybeName",
+        selector: "#name",
+        pii: { isPII: true, entityType: "PERSON", confidence: 0.85 },
+      },
     ];
 
     const { sanitizedNodes } = await strictTokenizer.tokenize(nodes);
-    expect(sanitizedNodes[0].value).toBe('MaybeName'); // Not tokenized due to low confidence
+    expect(sanitizedNodes[0].value).toBe("MaybeName"); // Not tokenized due to low confidence
   });
 
-  it('rehydrates strings correctly', async () => {
+  it("rehydrates strings correctly", async () => {
     await tokenizer.tokenize([
-      { id: '1', value: 'Rahul', selector: '#n', pii: { isPII: true, entityType: 'PERSON', confidence: 1 } },
-      { id: '2', value: '01/01/1990', selector: '#d', pii: { isPII: true, entityType: 'DATE_OF_BIRTH', confidence: 1 } },
-      { id: '3', value: 'Diabetic', selector: '#m', pii: { isPII: true, entityType: 'MEDICAL', confidence: 1 } }
+      {
+        id: "1",
+        value: "Rahul",
+        selector: "#n",
+        pii: { isPII: true, entityType: "PERSON", confidence: 1 },
+      },
+      {
+        id: "2",
+        value: "01/01/1990",
+        selector: "#d",
+        pii: { isPII: true, entityType: "DATE_OF_BIRTH", confidence: 1 },
+      },
+      {
+        id: "3",
+        value: "Diabetic",
+        selector: "#m",
+        pii: { isPII: true, entityType: "MEDICAL", confidence: 1 },
+      },
     ]);
 
-    expect(tokenizer.rehydrateString('Type [[PERSON_1]] into name')).toBe('Type Rahul into name');
-    expect(tokenizer.rehydrateString('DOB is [[DATE_OF_BIRTH_1]]')).toBe('DOB is 01/01/1990');
-    expect(tokenizer.rehydrateString('Diagnosis: [[VALUE_1]]')).toBe('Diagnosis: Diabetic');
+    expect(tokenizer.rehydrateString("Type [[PERSON_1]] into name")).toBe(
+      "Type Rahul into name",
+    );
+    expect(tokenizer.rehydrateString("DOB is [[DATE_OF_BIRTH_1]]")).toBe(
+      "DOB is 01/01/1990",
+    );
+    expect(tokenizer.rehydrateString("Diagnosis: [[VALUE_1]]")).toBe(
+      "Diagnosis: Diabetic",
+    );
   });
 });
 
-describe('maskValue', () => {
-  it('masks passwords completely', () => {
-    expect(maskValue('mypass123', 'PASSWORD')).toBe('••••••••');
+describe("maskValue", () => {
+  it("masks passwords completely", () => {
+    expect(maskValue("mypass123", "PASSWORD")).toBe("••••••••");
   });
-  
-  it('masks short strings correctly', () => {
-    expect(maskValue('123', 'PERSON')).toBe('••••');
+
+  it("masks short strings correctly", () => {
+    expect(maskValue("123", "PERSON")).toBe("••••");
   });
-  
-  it('partially masks longer strings', () => {
-    expect(maskValue('rahul@example.com', 'EMAIL')).toBe('ra•••••••••••••om');
+
+  it("partially masks longer strings", () => {
+    expect(maskValue("rahul@example.com", "EMAIL")).toBe("ra•••••••••••••om");
   });
 });

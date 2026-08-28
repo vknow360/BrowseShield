@@ -6,12 +6,16 @@ router = APIRouter()
 
 @router.post("/action", response_model=AgentAction)
 async def get_next_action(request: AgentRequest):
+    import json
     print(f"\n=======================================================")
     print(f"🔒 [FastAPI] Incoming request: '{request.taskInstruction}'")
     print(f"📄 Page: {request.pageTitle} ({request.pageUrl})")
     print(f"🧩 Sanitized DOM elements: {len(request.sanitizedDom)}")
     print(f"🏷️ Token Types: {request.tokenTypes}")
     print(f"=======================================================")
+    print(f"🕵️ DETAILED SANITIZED PAYLOAD RECEIVED FROM EXTENSION:")
+    print(json.dumps(request.sanitizedDom, indent=2))
+    print(f"=======================================================\n")
     try:
         action = await get_next_action_from_vlm(request)
         print(f"🤖 [VLM Output] Action: {action.action} | Target: {action.target} | Value: {action.value}")
