@@ -16,6 +16,8 @@
 0. [How We Talk About Results (Claims Policy)](#0-how-we-talk-about-results-claims-policy--read-first)
 1. [What's the Problem?](#1-whats-the-problem)
 2. [What's Our Solution?](#2-whats-our-solution)
+   - [2.1 Goals and Non-Goals](#21-goals-and-non-goals)
+   - [2.2 Primary Use Cases](#22-primary-use-cases)
 3. [How Does It Work? (Simple Explanation)](#3-how-does-it-work-simple-explanation)
 4. [The "Wow Factor" — What Makes Us Special](#4-the-wow-factor--what-makes-us-special)
 5. [Key Demo Moments to Highlight](#5-key-demo-moments-to-highlight)
@@ -130,6 +132,40 @@ Think of it like a **spy movie**:
 >
 > **That's exactly what ShieldBrowse does.** The "translator" is our AI server. The "code names" are our tokens ([[PERSON_1]], [[EMAIL_1]]). And the "swap back" happens automatically in your browser.
 
+### 2.1 Goals and Non-Goals
+
+**✅ Goals (What we MUST do):**
+- **Understand visual context locally**: Read the DOM and visual layout without server help.
+- **Detect and redact PII locally**: Ensure no raw sensitive values are passed to the network layer.
+- **Generate enforceable boundaries**: Physically block requests containing raw PII via the Privacy Gate.
+- **Execute secure browser actions**: Translate server reasoning into safe, robust DOM updates.
+
+**❌ Non-Goals (What we are NOT trying to do):**
+- **Not a full OS-level agent**: We operate within the browser sandbox, not controlling desktop applications.
+- **Not aiming for 100% zero-shot web automation**: We do not claim perfect navigation on every website on the internet. The focus is proving the *privacy boundary*, not general artificial intelligence.
+- **Not running a 3B+ LLM locally**: We are not trying to cram heavy reasoning models into the browser (which ruins latency). We separate lightweight local perception from remote heavy reasoning.
+
+### 2.2 Primary Use Cases
+
+Our mock-site and real-world testing focus on these specific scenarios:
+
+#### Use Case A: Healthcare Form Assistance
+The agent helps users navigate complex medical portals (like insurance claims). 
+- **It sees**: The form structure, medical labels, layout, and instructions.
+- **It redacts**: Patient IDs, specific medical conditions, and contact info. 
+- **The Result**: The server reasons about a generic "medical form" without knowing the patient's identity.
+
+#### Use Case B: Banking Dashboard
+The agent manages financial layouts.
+- **It sees**: The dashboard layout, navigation buttons, and generic UI structure.
+- **It redacts**: Account balances, account numbers, and credit card details (using Opaque tokens like `[[VALUE_1]]` so even the *type* of data isn't leaked).
+- **The Result**: The AI can guide the user to the "transfer funds" page without knowing how much money they have.
+
+#### Use Case C: Adversarial Validation
+A test mode specifically built to prove our gates work.
+- **The Setup**: We deliberately force the agent to try to inject malicious code or leak PII.
+- **The Result**: The Privacy Gate physically blocks egress, and the Action Safety Gate rejects the malicious instructions, proving our fail-closed architecture.
+
 ---
 
 ## 3. How Does It Work? (Simple Explanation)
@@ -180,7 +216,7 @@ Think of it like a **spy movie**:
 | **Small AI Models** | In YOUR browser (yes, AI can run locally!) | Detect faces, recognize names, understand images |
 | **AI Server** | On our server (AWS cloud or local machine) | Thinks about what action to take next (click, type, scroll) |
 
-**Key point for the pitch**: The small AI models running in the browser have a **measured footprint of roughly 85 MB total** (including WASM binaries). The heavy AI (the "thinking" part) runs on the server, but it NEVER sees your real data.
+**Key point for the pitch**: The small AI models running in the browser have a **measured footprint of ~80 MB total** (including WASM binaries). The heavy AI (the "thinking" part) runs on the server, but it NEVER sees your real data.
 
 ---
 
@@ -214,7 +250,7 @@ Most teams will say "we sanitize data before sending it." That's aspirational. W
 
 **Privacy Gate** 🔒 — Sits between the tokenizer and the network. Before ANY data leaves the browser, it scans the outbound payload for raw PII. If it finds even one unsanitized value → the request is **physically blocked**. Fail-closed.
 
-**Action Safety Gate** ⛔ — Sits between the server's response and browser execution. Every action the AI returns is validated against a whitelist (click, type, scroll, select, done). Dangerous patterns (eval, javascript:, script injection) are rejected. The AI cannot directly control the browser.
+**Action Safety Gate** ⛔ — Sits between the server's response and browser execution. Every action the AI returns is validated against a whitelist (click, type, scroll, select, navigate, wait, done), its target must resolve to a real DOM element, its value field is scanned for code-injection patterns (eval, javascript:, <script>, on*=, document.write, fetch()), and per-action constraints are enforced (e.g. scroll direction ∈ {up,down}, wait ≤ 30s, type requires a value). The AI cannot directly control the browser.
 
 #### 4️⃣ Framework-Resilient Execution (React/Angular Proof)
 Standard browser automation often breaks on modern web apps because React and Angular suppress "synthetic" (bot-generated) clicks and bulk text injection. We built robust native fallbacks:
@@ -226,7 +262,7 @@ Standard browser automation often breaks on modern web apps because React and An
 #### 5️⃣ Benchmarked Performance (Real Measured Numbers)
 Most teams will say "look, it works!" and show a demo.
 
-We built **PIIBench-mini**: 50 annotated test cases across healthcare, banking, and government scenarios, including hard negatives (data that looks like PII but isn't). We measure:
+We built **PIIBench-mini**: 500+ annotated test cases across healthcare, banking, and government scenarios, including hard negatives (data that looks like PII but isn't). We measure:
 - Precision, Recall, F1 **per PII category**
 - Confusion matrix (what was misclassified as what)
 - Latency per pipeline stage
@@ -235,7 +271,7 @@ We built **PIIBench-mini**: 50 annotated test cases across healthcare, banking, 
 > **⚠️ CRITICAL**: Only show **real measured results** in the PPT. If benchmark hasn't been run yet, write "Benchmark under execution" — NOT fabricated numbers.
 
 #### 6️⃣ Extremely Lightweight
-Our browser-side AI models have a **measured footprint of roughly 85 MB** (84.39 MB packaged bundle including WASM). That is far smaller than approaches that run a full model in the browser (often 200-500 MB), which make the browser slow and laggy.
+Our browser-side AI models have a **measured footprint of ~80 MB packaged bundle** (including WASM). That is far smaller than approaches that run a full model in the browser (often 200-500 MB), which make the browser slow and laggy.
 
 We achieve this by being smart about **what runs where**: tiny, specialized models in the browser (just for detecting personal data), and the big AI brain on the server (but it NEVER sees your real data).
 
@@ -246,6 +282,20 @@ India's **Digital Personal Data Protection Act 2023** requires organizations to 
 - That no known raw PII leaked to the server in the tested runs (verified by the Privacy Gate)
 
 This maps our controls to DPDP principles like data minimization. **Frame it as engineering evidence, not a legal compliance certificate** — do not claim "DPDP compliant" or "guaranteed compliance". This is relevant for ISRO and government organizations.
+
+#### 8️⃣ Token Rehydration (The Return Trip)
+A technical deep-dive into how the browser safely injects real values back into the DOM without the server ever knowing them.
+1. **Local State**: The `PIITokenizer` maintains a stateful `tokenMap` in the browser extension's local storage mapping generated tokens (e.g., `[[PERSON_1]]` or `[[VALUE_7]]`) to the real, raw values. This map *never* leaves the client.
+2. **Action Interception**: When the server/VLM decides to interact with a field, it sends back a sanitized JSON payload: `{"action": "type", "value": "[[PERSON_1]]"}`.
+3. **Regex Rehydration**: Before executing the action, the browser's action handler runs `tokenizer.rehydrateString()`, which intercepts the token using a regex (`/\[\[[A-Z_]+_\d+\]\]/g`) and swaps it back to the `realValue`.
+4. **Execution**: The action executor then types the `realValue` into the actual DOM node. If modern frameworks (React/Angular) try to suppress the injection, native fallback events ensure the data binds correctly.
+
+#### 9️⃣ Failure Handling & Edge Cases
+Our architecture degrades gracefully when things go wrong:
+- **Server Unavailable**: The agent halts and the UI shows an error; there is no unsafe fallback.
+- **VLM Hallucinates Malicious Code**: The **Action Safety Gate** strictly type-checks and validates the JSON against a whitelist, rejecting `eval` or script injection.
+- **PII Leak via Detector Miss**: The **Privacy Gate** acts as the ultimate fail-closed mechanism, physically blocking network requests if raw PII slips through.
+- **Target UI Changes**: The action executor implements DOM stabilization (waiting for elements to settle) and fallback mechanisms (like `requestSubmit`) to handle dynamic React/Angular pages safely.
 
 ---
 
@@ -299,7 +349,7 @@ Show the precision/recall table. Point out specific numbers.
 | **Accuracy of visual context from screen** | 25% | Can the system correctly understand what's on the screen? | DOM/accessibility extraction reads text and forms directly (no OCR error); the vision pass handles image/canvas regions. Report measured accuracy — do not claim "near-perfect". |
 | **Recall and precision for PII detection** | 20% | Does it find ALL the personal data? Does it avoid false alarms? | Multi-layer (4-layer) detector for defense-in-depth; PIIBench-mini produces the per-category numbers. Show measured P/R/F1, or "Benchmark under execution". |
 | **Precision of redaction** | 20% | Does it redact correctly without breaking the page context? | Reversible tokens preserve context; hard-negative cases test precision. Report measured redaction precision/over-redaction. |
-| **Client-side resource utilization** | 20% | How lightweight is it? Does it slow down the browser? | No LLM in the browser; only small specialized models (~85 MB total footprint). |
+| **Client-side resource utilization** | 20% | How lightweight is it? Does it slow down the browser? | No LLM in the browser; only small specialized models (~80 MB total footprint). |
 | **End-to-end latency** | 15% | How fast is the complete pipeline? | DOM-first design avoids OCR on most content; vision runs only where needed. Report measured per-stage and total latency — do not pre-fill numbers. |
 
 ### Key Insight for the Pitch
@@ -338,13 +388,13 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > A Chrome MV3 extension locally captures DOM semantics and visual regions.
 > A 4-layer PII pipeline combines Regex/Checksum, DOM heuristics, Local Semantic NER, and Local Face Detection.
 > Detected PII is tokenized/redacted locally; the server receives sanitized context (solid black boxes & opaque tokens), never the original values.
-> Qwen2.5-VL-3B via Ollama reasons over the sanitized context and returns structured browser actions.
+> VLM-agnostic architecture (Llama-4-Scout via Groq API for cloud, Qwen2.5-VL-3B via Ollama for local fallback) reasons over the sanitized context and returns structured browser actions.
 >
 > **Problem → Direct Solution Mapping** (show as table)
 >
 > **Key Differentiator**: Privacy is an enforced local boundary between perception and network transmission, not an afterthought.
 >
-> Pipeline visual: WEBPAGE → LOCAL PERCEPTION (DOM+Vision) → 4-LAYER PII DETECTION → TOKENIZE/REDACT → 🔒 PRIVACY GATE → SANITIZED CONTEXT ONLY → Qwen2.5-VL → ACTION JSON → EXECUTE
+> Pipeline visual: WEBPAGE → LOCAL PERCEPTION (DOM+Vision) → 4-LAYER PII DETECTION → TOKENIZE/REDACT → 🔒 PRIVACY GATE → SANITIZED CONTEXT ONLY → REASONING VLM → ACTION JSON → EXECUTE
 
 #### Slide 3: TECHNICAL APPROACH
 > **Hybrid Local Perception + Privacy-Gated Agent Architecture**
@@ -355,7 +405,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > - Semantic DOM-Heuristics (0 MB) — Instant PII detection
 > - Local Semantic NER (~21 MB) — Person/Org extraction
 >
-> Server: FastAPI, Qwen2.5-VL-3B via Ollama, constrained Action JSON output
+> Server: FastAPI, VLM-agnostic (Llama 4 Scout / Qwen2.5-VL), constrained Action JSON output
 >
 > **New security layers**:
 > - 🔒 Privacy Gate: Physically blocks outbound requests if unsanitized sensitive text remains in the JSON payload.
@@ -364,7 +414,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 #### Slide 4: FEASIBILITY AND VIABILITY
 > **Feasibility Through Lightweight Local Models + Measurable Controls**
 >
-> Why feasible: We compressed a full Vision AI agent into an **~85 MB** packaged extension payload by utilizing quantized models and optimizing the ONNX runtime. A Docker equivalent would be 1.5 GB+.
+> Why feasible: We compressed a full Vision AI agent into an **~80 MB** packaged extension payload by utilizing quantized models and optimizing the ONNX runtime. A Docker equivalent would be 1.5 GB+.
 >
 > **Key Risks → Engineering Mitigation** (show as table):
 > - PII detector misses → Defense-in-depth: Regex + DOM Heuristics + Vision (No OCR lag)
@@ -418,7 +468,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 |---|---|---|---|---|
 | Helps with browser tasks | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No (only detects PII) |
 | Detects PII | ✅ 4-layer detector | ❌ No | ❌ No | ✅ Yes |
-| Runs PII detection locally | ✅ In browser (~85 MB) | ❌ N/A | ❌ N/A | ❌ Server-only (Python) |
+| Runs PII detection locally | ✅ In browser (~80 MB) | ❌ N/A | ❌ N/A | ❌ Server-only (Python) |
 | Enforceable privacy boundary | ✅ Privacy Gate (fail-closed) | ❌ Full screenshots to cloud | ❌ Full screenshots to cloud | ✅ But no agent |
 | Reversible (agent still works) | ✅ Token rehydration | ❌ N/A | ❌ N/A | ❌ Irreversible |
 | Action safety validation | ✅ Anti-injection Prompts | ❌ N/A | ❌ N/A | ❌ N/A |
@@ -441,7 +491,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > **Answer**: *"That's why we have defense-in-depth. If a user inputs a sensitive ID, the DOM rules catch it based on autocomplete/labels. If it's a raw number, Regex catches it. No single layer is relied upon alone."*
 
 ### Q3: "Why not just run the whole AI model in the browser?"
-> **Answer**: *"Running a full LLM (like a 3-billion-parameter model) in the browser would need 4+ GB of memory and take 30+ seconds per response, failing the latency metric. Instead, we run only specialized models locally (YOLO, NER, & BlazeFace, ~85MB total footprint including runtime) for detection, and use the server for the heavy reasoning. This keeps the browser fast while the server never sees real data."*
+> **Answer**: *"Running a full LLM (like a 3-billion-parameter model) in the browser would need 4+ GB of memory and take 30+ seconds per response, failing the latency metric. Instead, we run only specialized models locally (YOLO, NER, & BlazeFace, ~80MB total footprint including runtime) for detection, and use the server for the heavy reasoning. This keeps the browser fast while the server never sees real data."*
 
 ### Q4: "Doesn't the field label 'Diagnosis: [[MEDICAL_1]]' leak that it's medical data?"
 > **Answer**: *"We addressed this. For sensitive categories like medical and financial data, we support opaque tokenization — the server sees [[VALUE_17]] instead of [[MEDICAL_1]]. This way the server can't even tell the data was medical. The opaque mode is configurable per entity type through our Privacy Policy."*
@@ -456,7 +506,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > **Answer**: *"Our mock site is designed to exercise every PII category and edge case. Our regex and DOM-rule detectors work on ANY website because they're based on universal HTML patterns (input types, autocomplete attributes, label text). We tested the regex layer against [X] real websites during development."*
 
 ### Q8: "What open-source model are you using on the server?"
-> **Answer**: *"Qwen2.5-VL-3B, deployed via Ollama. It's fully open-source, open-weights, and can run on a single consumer GPU or CPU. We are explicitly running it locally during this demo to prove 100% offline deployability."*
+> **Answer**: *"Our architecture is VLM-agnostic. For cloud deployment, we use Llama-4-Scout via the Groq OpenAI API for blazing fast reasoning. For 100% offline deployability (like airgapped environments), we fallback to Qwen2.5-VL-3B deployed locally via Ollama. The server dynamically switches based on API availability."*
 
 ### Q9: "How does this relate to India's DPDP Act?"
 > **Answer**: *"The DPDP Act 2023 mandates data minimization — collect only what's necessary — and purpose limitation — use data only for its stated purpose. ShieldBrowse's architecture supports both: we send only the minimum data needed (tokenized structure, not raw PII), and we generate an audit trail as engineering evidence. To be precise, that's evidence supporting DPDP principles — not a legal compliance certification, which is out of scope for an MVP."*

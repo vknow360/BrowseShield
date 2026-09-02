@@ -2,8 +2,9 @@ import os
 import json
 import glob
 
-smoke_dir = os.path.join('data', 'smoke')
-out_path = os.path.join('data', 'hardened_smoke.jsonl')
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+smoke_dir = os.path.join(base_dir, 'data', 'smoke')
+out_path = os.path.join(base_dir, 'data', 'hardened_smoke.jsonl')
 
 files = glob.glob(os.path.join(smoke_dir, '*.json'))
 with open(out_path, 'w', encoding='utf-8') as outfile:

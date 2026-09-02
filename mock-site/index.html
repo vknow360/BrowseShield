@@ -4,17 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ShieldBrowse Demo Dashboard</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="./src/styles.css" />
 </head>
 <body>
   <nav class="top-nav">
     <div class="nav-brand">🛡️ ShieldBrowse Demo Sites</div>
     <div class="nav-links">
       <a href="index.html" class="active">Home</a>
-      <a href="healthcare.html">Healthcare</a>
-      <a href="banking.html">Banking</a>
-      <a href="government.html">Government</a>
-      <a href="adversarial.html" class="danger">Adversarial</a>
+      <a href="./pages/healthcare.html">Healthcare</a>
+      <a href="./pages/banking.html">Banking</a>
+      <a href="./pages/government.html">Government</a>
+      <a href="./pages/adversarial.html" class="danger">Adversarial</a>
     </div>
   </nav>
 
@@ -23,19 +23,19 @@
     <p>Select a scenario above to test the PII Detection and Privacy Gate features.</p>
     
     <div class="scenario-cards">
-      <a href="healthcare.html" class="scenario-card">
+      <a href="./pages/healthcare.html" class="scenario-card">
         <h3>🏥 Healthcare Portal</h3>
         <p>Test detection of Medical conditions, Person names, and Contact numbers.</p>
       </a>
-      <a href="banking.html" class="scenario-card">
+      <a href="./pages/banking.html" class="scenario-card">
         <h3>🏦 Banking Portal</h3>
         <p>Test detection of Credit Cards, IFSC codes, PAN numbers, and Financial amounts.</p>
       </a>
-      <a href="government.html" class="scenario-card">
+      <a href="./pages/government.html" class="scenario-card">
         <h3>🏛️ Government Portal</h3>
         <p>Test detection of Aadhaar numbers, PIN codes, and Address formatting.</p>
       </a>
-      <a href="adversarial.html" class="scenario-card danger-card">
+      <a href="./pages/adversarial.html" class="scenario-card danger-card">
         <h3>⚠️ Adversarial Attack</h3>
         <p>Test the Action Safety Gate and Prompt Injection defenses against malicious input.</p>
       </a>
