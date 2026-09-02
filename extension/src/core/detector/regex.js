@@ -60,8 +60,9 @@ export function isValidEmail(email) {
 }
 
 export function isValidPan(pan) {
+  const clean = String(pan).replace(/[\s-]/g, "").toUpperCase();
   const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-  return panRegex.test(pan);
+  return panRegex.test(clean);
 }
 
 export function isValidCreditCard(numberOrString) {
@@ -93,6 +94,7 @@ export function isValidCreditCard(numberOrString) {
 }
 
 export function isValidIFSC(code) {
+  const clean = String(code).replace(/[\s-]/g, "").toUpperCase();
   const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-  return ifscRegex.test(code);
+  return ifscRegex.test(clean);
 }

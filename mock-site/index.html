@@ -40,6 +40,33 @@
         <p>Test the Action Safety Gate and Prompt Injection defenses against malicious input.</p>
       </a>
     </div>
+
+    <!--
+      Sample user profile shown on the landing page so ShieldBrowse has real
+      PII to redact even before the visitor navigates to a scenario page.
+      These are readonly inputs (still picked up by the DOM walker) filled
+      with synthetic-but-valid Indian PII: Verhoeff-valid Aadhaar, valid PAN,
+      valid IFSC, valid Indian mobile, and a Luhn-valid card. Nothing here
+      matches a real person.
+    -->
+    <section class="scenario-card" style="margin-top:32px;">
+      <h3>👤 Sample Profile Preview</h3>
+      <p style="color:#666;">These fields simulate a signed-in user. ShieldBrowse should tokenize every one of them on load.</p>
+      <div class="form-group"><label for="home-name">Name</label>
+        <input id="home-name" type="text" readonly value="Rahul Sharma" /></div>
+      <div class="form-group"><label for="home-email">Email</label>
+        <input id="home-email" type="email" readonly value="rahul.sharma@example.com" /></div>
+      <div class="form-group"><label for="home-phone">Mobile</label>
+        <input id="home-phone" type="tel" readonly value="+91 98765 43210" /></div>
+      <div class="form-group"><label for="home-aadhaar">Aadhaar</label>
+        <input id="home-aadhaar" type="text" readonly value="2341 2341 2346" /></div>
+      <div class="form-group"><label for="home-pan">PAN</label>
+        <input id="home-pan" type="text" readonly value="ABCDE1234F" /></div>
+      <div class="form-group"><label for="home-ifsc">IFSC</label>
+        <input id="home-ifsc" type="text" readonly value="HDFC0001234" /></div>
+      <div class="form-group"><label for="home-card">Card</label>
+        <input id="home-card" type="text" readonly value="4111 1111 1111 1111" /></div>
+    </section>
   </main>
 </body>
 </html>

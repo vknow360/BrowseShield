@@ -1,0 +1,12 @@
+{
+  "smoke": {
+    "source": "local://smoke",
+    "description": "Local smoke test fixtures moved from benchmark/dataset",
+    "files": []
+  },
+  "presidio": {
+    "source": "hf://microsoft/presidio-research",
+    "revision": "main",
+    "files": []
+  }
+}

@@ -10,7 +10,7 @@ import { PIITokenizer } from "../core/tokenizer/tokenizer.js";
 import { privacyGate } from "../core/tokenizer/privacy-gate.js";
 import { DEFAULT_PRIVACY_POLICY } from "../core/tokenizer/privacy-policy.js";
 import { executeAction } from "./action-executor.js";
-import { scanImagesAndRedact } from "./image-scanner.js";
+import { scanImagesAndRedact, scanCanvasesForOCR } from "./image-scanner.js";
 import browser from "webextension-polyfill";
 
 console.log("[ShieldBrowse] Content script active on:", window.location.href);
@@ -32,8 +32,9 @@ async function scanAndEmit() {
   const { sanitizedNodes } = await tokenizer.tokenize(taggedNodes);
   const tokenizeMs = Math.round(performance.now() - tokenizeStart);
 
-  // Call the vision pipeline for images concurrently
+  // Call the vision pipeline for images and canvases concurrently
   scanImagesAndRedact();
+  scanCanvasesForOCR();
 
   const sanitizedPayload = {
     url: pageStructure.url,

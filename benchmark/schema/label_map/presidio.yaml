@@ -1,0 +1,14 @@
+dataset: microsoft/presidio-research
+version: v1
+mapping:
+  PERSON: PERSON
+  PHONE_NUMBER: PHONE
+  EMAIL_ADDRESS: EMAIL
+  CREDIT_CARD: CREDIT_CARD
+unmapped_out_of_scope:
+  - US_SSN
+  - IP_ADDRESS
+  - LOCATION
+  - DATE_TIME
+  - UK_NHS
+  - ABA_ROUTING_NUMBER

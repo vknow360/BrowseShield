@@ -1,6 +1,7 @@
 /// <reference types="chrome" />
 
 // src/background/index.js
+import "./polyfill.js";
 import browser from "webextension-polyfill";
 import {
   initVisionPipeline,
@@ -103,6 +104,24 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     })();
     return true; // async response
+  } else if (message.type === "OCR_REGION") {
+    (async () => {
+      try {
+        const { ocrRegion } = await import("../core/vision/ocr.js");
+        const response = await fetch(message.payload.dataUri);
+        const blob = await response.blob();
+        const imageBitmap = await createImageBitmap(blob);
+        
+        const results = await ocrRegion(imageBitmap);
+        imageBitmap.close();
+        
+        sendResponse({ status: "success", results });
+      } catch (err) {
+        console.error("[ShieldBrowse SW] OCR failed:", err);
+        sendResponse({ status: "error", error: err.message });
+      }
+    })();
+    return true; // async response
   } else if (message.type === "run-agent") {
     const { sanitizedPayload, taskInstruction, actionHistory, tokenTypes } =
       message.payload;
@@ -164,6 +183,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             );
             screenType = perception.screenType;
             uiBoxes = perception.uiBoxes || [];
+            const piiVisionBoxes = perception.piiVisionBoxes || [];
             timing.perceiveMs = Math.round(performance.now() - tPer);
 
             // DOM boxes are in full-capture device pixels; scale them to the downscaled bitmap.
@@ -193,11 +213,30 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   node.label.includes("[[")
                 ) {
                   piiFieldBoxes.push(boxObj);
+                } else if (
+                  node.pii &&
+                  node.pii.type &&
+                  node.pii.type !== "LABEL_0"
+                ) {
+                  piiFieldBoxes.push(boxObj);
                 }
               }
             });
 
+            // Merge vision-detected PII boxes
+            piiVisionBoxes.forEach(box => {
+              piiFieldBoxes.push({
+                x: box.x * f,
+                y: box.y * f,
+                w: box.w * f,
+                h: box.h * f,
+              });
+            });
+
             const tRed = performance.now();
+            timing.redactPrepMs = Math.round(
+              performance.now() - tPer - timing.perceiveMs,
+            );
             redactedImage = await redactScreenshot(imageBitmap, {
               faceBoxes: perception.faceBoxes,
               piiFieldBoxes,
@@ -228,39 +267,70 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let sanitizedInstruction = taskInstruction;
 
         // 🔒 1. Prompt Tokenization: If the user typed RAW PII in the prompt, tokenize it first!
-        // We do a simple regex pass for common PII types (Aadhaar, Email, Phone)
-        // because we don't have the full NER pipeline in the background script.
+        const { detectSemanticPII, initNERPipeline } = await import("../core/detector/ner-pipeline.js");
+        await initNERPipeline();
+
+        // 1a. Structured Regex Extraction
         const promptRegexes = [
           { type: "AADHAAR", regex: /\b\d{4}\s?\d{4}\s?\d{4}\b/g },
-          {
-            type: "EMAIL",
-            regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
-          },
-          { type: "PHONE", regex: /\b[6-9]\d{9}\b/g },
+          { type: "EMAIL", regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g },
+          { type: "PHONE", regex: /\b(?:\+91|0)?[6-9]\d{9}\b/g },
+          { type: "PAN", regex: /\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b/g },
+          { type: "CREDIT_CARD", regex: /\b(?:\d[ -]*?){13,16}\b/g },
+          { type: "PINCODE", regex: /\b[1-9]\d{5}\b/g },
+          { type: "IFSC", regex: /\b[A-Z]{4}0[A-Z0-9]{6}\b/g }
         ];
 
         let tokensAdded = false;
+        let detectedEntities = [];
+
         for (const { type, regex } of promptRegexes) {
+          const matches = [...sanitizedInstruction.matchAll(regex)];
+          for (const match of matches) {
+            detectedEntities.push({ type, value: match[0].trim() });
+          }
+        }
+
+        // 1b. Semantic NER Extraction (Names, Addresses, Orgs)
+        const semanticEntities = await detectSemanticPII(sanitizedInstruction);
+        for (const ent of semanticEntities) {
+          detectedEntities.push({ type: ent.entityType, value: ent.value });
+        }
+
+        // 1c. Tokenize and Replace
+        // Sort by length descending so we replace longer substrings first (e.g. full name before first name)
+        detectedEntities.sort((a, b) => b.value.length - a.value.length);
+
+        for (const { type, value } of detectedEntities) {
+          if (!value || value.length < 2) continue;
+          
+          let tokenToUse = null;
+          // check if already tokenized
+          for (const [t, data] of Object.entries(tokenMap)) {
+            if (data.realValue === value) {
+              tokenToUse = t;
+              break;
+            }
+          }
+          
+          // generate new token if not found
+          if (!tokenToUse) {
+            counters[type] = (counters[type] || 0) + 1;
+            tokenToUse = `[[${type}_${counters[type]}]]`;
+            tokenMap[tokenToUse] = {
+              realValue: value,
+              entityType: type,
+              confidence: 1.0,
+              source: "prompt-analyzer",
+            };
+            tokensAdded = true;
+          }
+
+          // Replace in instruction
+          const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           sanitizedInstruction = sanitizedInstruction.replace(
-            regex,
-            (match) => {
-              const val = match.trim();
-              // check if already tokenized
-              for (const [t, data] of Object.entries(tokenMap)) {
-                if (data.realValue === val) return t;
-              }
-              // generate new token
-              counters[type] = (counters[type] || 0) + 1;
-              const newToken = `[[${type}_${counters[type]}]]`;
-              tokenMap[newToken] = {
-                realValue: val,
-                entityType: type,
-                confidence: 1.0,
-                source: "prompt-regex",
-              };
-              tokensAdded = true;
-              return newToken;
-            },
+            new RegExp(escaped, "g"),
+            tokenToUse
           );
         }
 
@@ -323,17 +393,19 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         console.log("[ShieldBrowse SW] Sending sanitized request to server...");
         const tNet = performance.now();
-        const response = await fetch("http://localhost:8000/agent/action", {
+        const response = await fetch("http://localhost:8000/agent/plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(reqBody),
         });
 
         if (!response.ok) throw new Error(`Server returned ${response.status}`);
-        const actionJSON = await response.json();
+        const planJSON = await response.json();
 
         // Attach the image downscale factor 'f' so the executor can translate vision coordinates back
-        actionJSON.f = typeof f !== "undefined" ? f : 1;
+        if (planJSON.actions) {
+          planJSON.actions.forEach(a => a.f = typeof f !== "undefined" ? f : 1);
+        }
 
         timing.networkMs = Math.round(performance.now() - tNet);
         timing.totalMs =
@@ -343,11 +415,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           timing.networkMs;
 
         console.log(
-          `[ShieldBrowse SW] Server action received in ${timing.networkMs}ms ` +
+          `[ShieldBrowse SW] Server plan received in ${timing.networkMs}ms ` +
             `(end-to-end ~${timing.totalMs}ms):`,
-          actionJSON,
+          planJSON,
         );
-        sendResponse({ status: "success", action: actionJSON, timing });
+        sendResponse({ status: "success", plan: planJSON, timing });
       } catch (err) {
         console.error("[ShieldBrowse SW] run-agent failed:", err);
         sendResponse({ status: "error", error: err.message });
