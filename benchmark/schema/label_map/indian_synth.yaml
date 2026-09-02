@@ -1,0 +1,9 @@
+dataset: indian_synth
+version: v1
+mapping:
+  PERSON: PERSON
+  PHONE: PHONE
+  AADHAAR: AADHAAR
+  PAN: PAN
+  IFSC: IFSC
+unmapped_out_of_scope: []

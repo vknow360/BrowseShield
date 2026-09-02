@@ -8,6 +8,7 @@ import {
   isValidPincode,
 } from "./regex.js";
 import { detectSemanticPII, initNERPipeline } from "./ner-pipeline.js";
+import { detectMedicalTerms } from "./medical-gazetteer.js";
 
 // Call this early in the content script lifecycle
 export async function initDetectors() {
@@ -96,7 +97,15 @@ export async function detectFieldPII(node) {
   // -------------------------------------------------------------
   // LAYER 1: Mathematical Regex & Checksum Detection (High Precision)
   // -------------------------------------------------------------
-  if (isValidAadharNumber(value)) {
+  const extractAndValidate = (text, regex, validator) => {
+    // Clean common label prefixes that might merge with values in OCR
+    const cleanText = text.replace(/^(pan|aadhaar|adhar|uid|phone|email|dob|pin|pincode|card|ifsc)[\s:-]+/i, "").trim();
+    const matches = cleanText.match(regex);
+    if (!matches) return false;
+    return matches.some((m) => validator(m));
+  };
+
+  if (extractAndValidate(value, /\b(?:\d[\s-]*){12}\b/g, isValidAadharNumber)) {
     return {
       isPII: true,
       entityType: "AADHAAR",
@@ -104,7 +113,7 @@ export async function detectFieldPII(node) {
       source: "checksum-verhoeff",
     };
   }
-  if (isValidPan(value)) {
+  if (extractAndValidate(value, /\b[A-Za-z]{5}[\s-]*[0-9]{4}[\s-]*[A-Za-z]{1}\b/g, isValidPan)) {
     return {
       isPII: true,
       entityType: "PAN",
@@ -112,27 +121,23 @@ export async function detectFieldPII(node) {
       source: "regex-pan",
     };
   }
-  if (isValidEmail(value) || type === "email" || autocomplete === "email") {
-    if (isValidEmail(value)) {
-      return {
-        isPII: true,
-        entityType: "EMAIL",
-        confidence: 0.95,
-        source: "regex-email",
-      };
-    }
+  if (extractAndValidate(value, /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, isValidEmail)) {
+    return {
+      isPII: true,
+      entityType: "EMAIL",
+      confidence: 0.95,
+      source: "regex-email",
+    };
   }
-  if (isValidPhoneNumber(value) || type === "tel" || autocomplete === "tel") {
-    if (isValidPhoneNumber(value)) {
-      return {
-        isPII: true,
-        entityType: "PHONE",
-        confidence: 0.95,
-        source: "regex-phone",
-      };
-    }
+  if (extractAndValidate(value, /(?:\+91[\s-]?)?[6-9](?:[\s-]*\d){9}\b/g, isValidPhoneNumber)) {
+    return {
+      isPII: true,
+      entityType: "PHONE",
+      confidence: 0.95,
+      source: "regex-phone",
+    };
   }
-  if (isValidCreditCard(value)) {
+  if (extractAndValidate(value, /\b(?:\d[\s-]*){13,19}\b/g, isValidCreditCard)) {
     return {
       isPII: true,
       entityType: "CREDIT_CARD",
@@ -140,7 +145,7 @@ export async function detectFieldPII(node) {
       source: "checksum-luhn",
     };
   }
-  if (isValidIFSC(value)) {
+  if (extractAndValidate(value, /\b[A-Za-z]{4}[\s-]*0[\s-]*[A-Za-z0-9]{6}\b/g, isValidIFSC)) {
     return {
       isPII: true,
       entityType: "IFSC",
@@ -149,7 +154,7 @@ export async function detectFieldPII(node) {
     };
   }
   if (
-    isValidPincode(value) &&
+    extractAndValidate(value, /\b[1-9]\d{5}\b/g, isValidPincode) &&
     (label.includes("pin") || autocomplete.includes("postal"))
   ) {
     return {
@@ -161,7 +166,40 @@ export async function detectFieldPII(node) {
   }
 
   // -------------------------------------------------------------
-  // LAYER 2: DOM Attribute & Label Heuristics (Safety Net)
+  // LAYER 2: Local semantic detection & Gazetteer (Free-text)
+  // -------------------------------------------------------------
+  if (node.tagName !== "BUTTON") {
+    // Hard negative guard for short phrases with numbers/years (e.g. "Founded in 1923")
+    const isHardNegative = /^(founded|established)\s+in\s+\d{4}$/i.test(value);
+    
+    if (!isHardNegative) {
+      let allEntities = [];
+      
+      const medicalEntities = detectMedicalTerms(value);
+      if (medicalEntities.length > 0) allEntities.push(...medicalEntities);
+
+      const semanticEntities = await detectSemanticPII(value);
+      if (semanticEntities && semanticEntities.length > 0) {
+        allEntities.push(...semanticEntities);
+      }
+
+      if (allEntities.length > 0) {
+        // Sort by confidence to get the strongest detection
+        allEntities.sort((a, b) => b.confidence - a.confidence);
+        const primaryEntity = allEntities[0];
+        
+        return {
+          isPII: true,
+          entityType: primaryEntity.entityType,
+          confidence: primaryEntity.confidence,
+          source: primaryEntity.source,
+        };
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // LAYER 3: DOM Attribute & Label Heuristics (Safety Net)
   // -------------------------------------------------------------
   if (type === "password") {
     return {
@@ -231,24 +269,6 @@ export async function detectFieldPII(node) {
       entityType: "STATE",
       confidence: 0.75,
       source: "dom-heuristic",
-    };
-  }
-
-  // LAYER 3: Local semantic detection for free-text (names / addresses / medical)
-  // Do not run semantic NER on buttons to prevent false positive names (e.g., "Clear All Fields" -> PERSON)
-  if (node.tagName === "BUTTON") {
-    return null;
-  }
-
-  const semanticEntities = await detectSemanticPII(value);
-  if (semanticEntities && semanticEntities.length > 0) {
-    // Return the first detected entity for this field
-    const primaryEntity = semanticEntities[0];
-    return {
-      isPII: true,
-      entityType: primaryEntity.entityType,
-      confidence: primaryEntity.confidence,
-      source: "semantic-local",
     };
   }
 

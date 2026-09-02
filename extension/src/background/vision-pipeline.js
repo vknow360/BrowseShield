@@ -94,8 +94,8 @@ export async function perceiveScreen(imageBitmap, nodes = []) {
     console.error("[Vision] Error in perceiveScreen:", err);
   }
 
-  const screenType = classifyScreenType(nodes, faceBoxes, uiBoxes);
-  return { screenType, uiBoxes, faceBoxes };
+  const { screenType, piiVisionBoxes } = classifyScreenType(nodes, faceBoxes, uiBoxes);
+  return { screenType, uiBoxes, faceBoxes, piiVisionBoxes };
 }
 
 /**
@@ -113,12 +113,27 @@ export function classifyScreenType(nodes = [], faceBoxes = [], uiBoxes = []) {
   const hasPassword = nodes.some(
     (n) => String(n.type || "").toLowerCase() === "password",
   );
+  
+  // DOM based counters
   const buttons = nodes.filter((n) => n.tagName === "BUTTON").length;
 
-  if (hasPassword && fields.length <= 4) return "login";
-  if (fields.length >= 3) return "form";
-  if (uiBoxes.length >= 8 || buttons >= 4) return "dashboard";
-  return "page";
+  // Vision based counters
+  const visionPasswords = uiBoxes.filter(b => b.className === 'password').length;
+  const visionButtons = uiBoxes.filter(b => b.className === 'button').length;
+  const visionInputs = uiBoxes.filter(b => 
+    ['input', 'email-input', 'first-name', 'last-name', 'phone-num', 'username'].includes(b.className)
+  ).length;
+
+  // Auto-detect PII-sensitive UI elements from vision
+  const PII_CLASSES = new Set(['password', 'email-input', 'phone-num', 'DOB', 'address', 'name', 'first-name', 'last-name', 'otp', 'zip code']);
+  const piiVisionBoxes = uiBoxes.filter(b => PII_CLASSES.has(b.className));
+
+  let screenType = "page";
+  if ((hasPassword || visionPasswords > 0) && (fields.length <= 4 && visionInputs <= 3)) screenType = "login";
+  else if (fields.length >= 3 || visionInputs >= 3) screenType = "form";
+  else if (uiBoxes.length >= 8 || buttons >= 4 || visionButtons >= 4) screenType = "dashboard";
+
+  return { screenType, piiVisionBoxes };
 }
 
 export function detectFaces(imageBitmap) {

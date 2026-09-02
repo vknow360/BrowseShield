@@ -1,0 +1,549 @@
+{
+  "sampleId": "sample_001_healthcare",
+  "pageUrl": "https://mock-hospital.local/patient/intake",
+  "pageTitle": "Patient Intake Form",
+  "groundTruth": [
+    {
+      "text": "Dr. Sarah Jenkins",
+      "entityType": "PERSON",
+      "nodeIndex": 0,
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "9876543210",
+      "entityType": "PHONE",
+      "nodeIndex": 1,
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "Type 2 Diabetes",
+      "entityType": "MEDICAL",
+      "nodeIndex": 2,
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "Founded in 1923",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Organization founding year, should not be detected as PII",
+      "box": [
+        250,
+        250,
+        150,
+        30
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "Attending Physician Name",
+      "value": "Dr. Sarah Jenkins",
+      "type": "text",
+      "autocomplete": "name",
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Emergency Contact Number",
+      "value": "9876543210",
+      "type": "tel",
+      "autocomplete": "tel",
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Pre-existing condition",
+      "value": "Type 2 Diabetes",
+      "type": "text",
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Hospital founded year",
+      "value": "Founded in 1923",
+      "type": "text",
+      "box": [
+        250,
+        250,
+        150,
+        30
+      ]
+    }
+  ]
+}
+{
+  "sampleId": "sample_002_banking",
+  "pageUrl": "https://mock-bank.local/transfer",
+  "pageTitle": "Wire Transfer",
+  "groundTruth": [
+    {
+      "text": "9876543210123452",
+      "entityType": "CREDIT_CARD",
+      "nodeIndex": 0,
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "HDFC0001234",
+      "entityType": "IFSC",
+      "nodeIndex": 1,
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "Version 1.0.4",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Software version, not an Aadhaar or account number",
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "Card Number",
+      "value": "9876543210123452",
+      "type": "text",
+      "autocomplete": "cc-number",
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Branch IFSC Code",
+      "value": "HDFC0001234",
+      "type": "text",
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "App Version",
+      "value": "Version 1.0.4",
+      "type": "text",
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    }
+  ]
+}
+{
+  "sampleId": "ecommerce_003",
+  "url": "https://shop.example.com/checkout",
+  "nodes": [
+    {
+      "id": "email",
+      "type": "text",
+      "label": "Email Address",
+      "value": "shopper@example.com",
+      "selector": "#email",
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "id": "cc",
+      "type": "text",
+      "label": "Credit Card",
+      "value": "4532111122223336",
+      "selector": "#cc",
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "id": "pin",
+      "type": "text",
+      "label": "Pincode",
+      "value": "560034",
+      "selector": "#pin",
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    },
+    {
+      "id": "note",
+      "type": "textarea",
+      "label": "Gift Note",
+      "value": "Happy birthday John Doe!",
+      "selector": "#note",
+      "box": [
+        250,
+        250,
+        150,
+        30
+      ]
+    }
+  ],
+  "groundTruth": [
+    {
+      "text": "shopper@example.com",
+      "entityType": "EMAIL",
+      "isHardNegative": false,
+      "box": [
+        100,
+        100,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "4532111122223336",
+      "entityType": "CREDIT_CARD",
+      "isHardNegative": false,
+      "box": [
+        150,
+        150,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "560034",
+      "entityType": "PINCODE",
+      "isHardNegative": false,
+      "box": [
+        200,
+        200,
+        150,
+        30
+      ]
+    },
+    {
+      "text": "John Doe",
+      "entityType": "PERSON",
+      "isHardNegative": false,
+      "box": [
+        250,
+        250,
+        150,
+        30
+      ]
+    }
+  ]
+}
+{
+  "sampleId": "sample_004_government",
+  "pageUrl": "https://mock-gov.local/kyc",
+  "pageTitle": "e-KYC Verification",
+  "groundTruth": [
+    {
+      "text": "2341 8765 4323",
+      "entityType": "AADHAAR",
+      "box": [120, 120, 180, 32]
+    },
+    {
+      "text": "ABCPD1234K",
+      "entityType": "PAN",
+      "box": [120, 180, 180, 32]
+    },
+    {
+      "text": "applicant@mail.com",
+      "entityType": "EMAIL",
+      "box": [120, 240, 180, 32]
+    },
+    {
+      "text": "Ref No 2024",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Reference number, not PII",
+      "box": [120, 300, 180, 32]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "Aadhaar Number",
+      "value": "2341 8765 4323",
+      "type": "text",
+      "box": [120, 120, 180, 32]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "PAN Card",
+      "value": "ABCPD1234K",
+      "type": "text",
+      "box": [120, 180, 180, 32]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Email",
+      "value": "applicant@mail.com",
+      "type": "email",
+      "autocomplete": "email",
+      "box": [120, 240, 180, 32]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Application Reference",
+      "value": "Ref No 2024",
+      "type": "text",
+      "box": [120, 300, 180, 32]
+    }
+  ]
+}
+{
+  "sampleId": "sample_005_login",
+  "pageUrl": "https://mock-portal.local/login",
+  "pageTitle": "Account Sign In",
+  "groundTruth": [
+    {
+      "text": "rajesh.kumar@corp.in",
+      "entityType": "EMAIL",
+      "box": [140, 110, 200, 34]
+    },
+    {
+      "text": "S3cur3P@ssw0rd",
+      "entityType": "PASSWORD",
+      "box": [140, 160, 200, 34]
+    },
+    {
+      "text": "Remember me",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Checkbox label, not PII",
+      "box": [140, 210, 200, 24]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "Work Email",
+      "value": "rajesh.kumar@corp.in",
+      "type": "email",
+      "autocomplete": "email",
+      "box": [140, 110, 200, 34]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Password",
+      "value": "S3cur3P@ssw0rd",
+      "type": "password",
+      "box": [140, 160, 200, 34]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "Remember me",
+      "value": "",
+      "type": "checkbox",
+      "box": [140, 210, 200, 24]
+    }
+  ]
+}
+{
+  "sampleId": "sample_006_social",
+  "pageUrl": "https://mock-social.local/message",
+  "pageTitle": "New Message",
+  "groundTruth": [
+    {
+      "text": "Please contact Priya Sharma about the delivery",
+      "entityType": "PERSON",
+      "note": "Free-text name detected by semantic NER, not a structured field",
+      "box": [160, 130, 260, 60]
+    },
+    {
+      "text": "The weather is nice today",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Ordinary sentence, no PII",
+      "box": [160, 210, 260, 60]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "TEXTAREA",
+      "label": "Message",
+      "value": "Please contact Priya Sharma about the delivery",
+      "type": "textarea",
+      "box": [160, 130, 260, 60]
+    },
+    {
+      "tagName": "TEXTAREA",
+      "label": "Notes",
+      "value": "The weather is nice today",
+      "type": "textarea",
+      "box": [160, 210, 260, 60]
+    }
+  ]
+}
+{
+  "sampleId": "sample_007_obfuscated",
+  "pageUrl": "https://mock-site.local/obfuscated.html",
+  "pageTitle": "Obfuscated DOM (Hostile)",
+  "groundTruth": [
+    {
+      "text": "Ashutosh Singh",
+      "entityType": "PERSON",
+      "nodeIndex": 0,
+      "box": [10, 10, 100, 30]
+    },
+    {
+      "text": "Bipolar disorder",
+      "entityType": "MEDICAL",
+      "nodeIndex": 1,
+      "box": [10, 50, 100, 30]
+    },
+    {
+      "text": "Founded in 1923",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Hard negative test",
+      "box": [10, 90, 100, 30]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Ashutosh Singh",
+      "type": "text",
+      "box": [10, 10, 100, 30]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Bipolar disorder",
+      "type": "text",
+      "box": [10, 50, 100, 30]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Founded in 1923",
+      "type": "text",
+      "box": [10, 90, 100, 30]
+    }
+  ]
+}
+{
+  "sampleId": "sample_008_canvas",
+  "pageUrl": "https://mock-site.local/canvas-form.html",
+  "pageTitle": "Canvas Form (Hostile)",
+  "groundTruth": [
+    {
+      "text": "Sneha Patel",
+      "entityType": "PERSON",
+      "nodeIndex": 1,
+      "box": [20, 70, 150, 20]
+    },
+    {
+      "text": "9876543210",
+      "entityType": "PHONE",
+      "nodeIndex": 2,
+      "box": [20, 100, 150, 20]
+    },
+    {
+      "text": "1234 5678 9012",
+      "entityType": "AADHAAR",
+      "nodeIndex": 3,
+      "box": [20, 130, 150, 20]
+    },
+    {
+      "text": "ABCDE1234F",
+      "entityType": "PAN",
+      "nodeIndex": 4,
+      "box": [20, 160, 150, 20]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Confidential Profile",
+      "type": "text",
+      "box": [20, 30, 150, 20]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Name: Sneha Patel",
+      "type": "text",
+      "box": [20, 70, 150, 20]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Phone: +91 9876543210",
+      "type": "text",
+      "box": [20, 100, 150, 20]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Aadhaar: 1234 5678 9012",
+      "type": "text",
+      "box": [20, 130, 150, 20]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "PAN: ABCDE1234F",
+      "type": "text",
+      "box": [20, 160, 150, 20]
+    }
+  ]
+}

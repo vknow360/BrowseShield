@@ -1,0 +1,130 @@
+{
+  "base_url": "http://localhost:3000",
+  "extension_path": "E:\\SIH26\\extension\\dist",
+  "total": 7,
+  "succeeded": 7,
+  "failed": 0,
+  "latency": {
+    "navMs": {
+      "p50": 1240,
+      "p95": 2747
+    },
+    "scanMs": {
+      "p50": 13,
+      "p95": 137
+    },
+    "initialScanMs": {
+      "p50": 19,
+      "p95": 327
+    },
+    "endToEndMs": {
+      "p50": 9425,
+      "p95": 11083
+    }
+  },
+  "pageHeapMB": {
+    "p50": 6.11,
+    "p95": 7.68,
+    "max": 7.68
+  },
+  "swHeapMB": {
+    "p50": null,
+    "p95": null,
+    "max": null,
+    "samples": 0
+  },
+  "samples": [
+    {
+      "url": "http://localhost:3000/index.html",
+      "ok": true,
+      "navMs": 1438,
+      "initialScanMs": 93,
+      "scanMs": 2,
+      "endToEndMs": 9597,
+      "pageHeapMB": 6.18,
+      "swHeapMB": null,
+      "piiFound": 6,
+      "piiFoundInitial": 6,
+      "scans": 2
+    },
+    {
+      "url": "http://localhost:3000/healthcare.html",
+      "ok": true,
+      "navMs": 2747,
+      "initialScanMs": 327,
+      "scanMs": 137,
+      "endToEndMs": 11083,
+      "pageHeapMB": 7.68,
+      "swHeapMB": null,
+      "piiFound": 20,
+      "piiFoundInitial": 20,
+      "scans": 2
+    },
+    {
+      "url": "http://localhost:3000/banking.html",
+      "ok": true,
+      "navMs": 1229,
+      "initialScanMs": 19,
+      "scanMs": 10,
+      "endToEndMs": 9400,
+      "pageHeapMB": 6,
+      "swHeapMB": null,
+      "piiFound": 3,
+      "piiFoundInitial": 0,
+      "scans": 2
+    },
+    {
+      "url": "http://localhost:3000/government.html",
+      "ok": true,
+      "navMs": 1243,
+      "initialScanMs": 14,
+      "scanMs": 15,
+      "endToEndMs": 9425,
+      "pageHeapMB": 6.11,
+      "swHeapMB": null,
+      "piiFound": 4,
+      "piiFoundInitial": 0,
+      "scans": 2
+    },
+    {
+      "url": "http://localhost:3000/adversarial.html",
+      "ok": true,
+      "navMs": 1240,
+      "initialScanMs": 16,
+      "scanMs": 11,
+      "endToEndMs": 9395,
+      "pageHeapMB": 6.06,
+      "swHeapMB": null,
+      "piiFound": 1,
+      "piiFoundInitial": 1,
+      "scans": 3
+    },
+    {
+      "url": "http://localhost:3000/obfuscated.html",
+      "ok": true,
+      "navMs": 1170,
+      "initialScanMs": 17,
+      "scanMs": 13,
+      "endToEndMs": 9330,
+      "pageHeapMB": 6,
+      "swHeapMB": null,
+      "piiFound": 1,
+      "piiFoundInitial": 1,
+      "scans": 2
+    },
+    {
+      "url": "http://localhost:3000/canvas-form.html",
+      "ok": true,
+      "navMs": 1171,
+      "initialScanMs": 27,
+      "scanMs": 23,
+      "endToEndMs": 9857,
+      "pageHeapMB": 6.94,
+      "swHeapMB": null,
+      "piiFound": 4,
+      "piiFoundInitial": 0,
+      "scans": 4
+    }
+  ],
+  "generated_at": "2026-09-02T09:53:53.849Z"
+}

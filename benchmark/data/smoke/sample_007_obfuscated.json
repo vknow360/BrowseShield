@@ -1,0 +1,49 @@
+{
+  "sampleId": "sample_007_obfuscated",
+  "pageUrl": "https://mock-site.local/obfuscated.html",
+  "pageTitle": "Obfuscated DOM (Hostile)",
+  "groundTruth": [
+    {
+      "text": "Ashutosh Singh",
+      "entityType": "PERSON",
+      "nodeIndex": 0,
+      "box": [10, 10, 100, 30]
+    },
+    {
+      "text": "Bipolar disorder",
+      "entityType": "MEDICAL",
+      "nodeIndex": 1,
+      "box": [10, 50, 100, 30]
+    },
+    {
+      "text": "Founded in 1923",
+      "entityType": null,
+      "isHardNegative": true,
+      "note": "Hard negative test",
+      "box": [10, 90, 100, 30]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Ashutosh Singh",
+      "type": "text",
+      "box": [10, 10, 100, 30]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Bipolar disorder",
+      "type": "text",
+      "box": [10, 50, 100, 30]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Founded in 1923",
+      "type": "text",
+      "box": [10, 90, 100, 30]
+    }
+  ]
+}

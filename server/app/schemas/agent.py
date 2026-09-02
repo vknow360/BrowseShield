@@ -17,3 +17,8 @@ class AgentAction(BaseModel):
     target: Optional[Any] = None
     value: Optional[str] = None
     reasoning: str = ""
+
+class AgentPlan(BaseModel):
+    actions: List[AgentAction]
+    reasoning: str = ""
+

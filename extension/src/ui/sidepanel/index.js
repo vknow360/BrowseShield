@@ -5,6 +5,7 @@
 import browser from "webextension-polyfill";
 import "./index.css";
 import { maskValue } from "../../core/tokenizer/tokenizer.js";
+import { tryLocalAction } from "../../core/local-agent.js";
 
 const outputBox = document.getElementById("output-box");
 const statusBadge = document.getElementById("status-badge");
@@ -18,8 +19,75 @@ const taskInput = document.getElementById("task-instruction");
 let lastPayload = null;
 let actionHistoryState = [];
 let lastTaskInstruction = "";
+let agentRunning = false;
+
+const MAX_AGENT_STEPS = 20;
+const STEP_SETTLE_MS = 800; // wait after each action for the page to settle
+
+const DOM_STABLE_ACTIONS = new Set(["type", "wait"]);
+
+/**
+ * Runs a single agent cycle: fresh-scan → VLM decision → get action plan.
+ * Returns the array of actions, or throws on failure.
+ */
+async function getPlanFromVLM(taskInstruction) {
+  // 1. Force a fresh scan so DOM + coordinates are current
+  const [activeTab] = await browser.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+  if (activeTab) {
+    await browser.tabs
+      .sendMessage(activeTab.id, { type: "rescan" })
+      .catch(() => {});
+    await new Promise((r) => setTimeout(r, 200));
+  }
+
+  // 2. Get the latest scan from background
+  const bgRes = await browser.runtime
+    .sendMessage({ type: "get-latest-scan" })
+    .catch(() => null);
+  const freshPayload =
+    bgRes?.scanPayload?.sanitizedPayload || lastPayload?.sanitizedPayload;
+  if (!freshPayload) throw new Error("No page data available");
+
+  // 2.5 Intercept locally if possible
+  const localDecision = tryLocalAction(taskInstruction, freshPayload.nodes || []);
+  if (localDecision.canHandle) {
+    console.log("[Local Agent] Handling locally:", localDecision.action);
+    // Add "done" so it doesn't loop infinitely after doing local action
+    return [localDecision.action, { action: "done", reasoning: localDecision.action.reasoning }];
+  }
+
+  // 3. Ask VLM for the next action plan
+  const response = await browser.runtime.sendMessage({
+    type: "run-agent",
+    payload: {
+      sanitizedPayload: freshPayload,
+      tokenTypes: Array.isArray(freshPayload.tokenTypes)
+        ? freshPayload.tokenTypes
+        : Object.keys(freshPayload.tokenTypes || {}),
+      taskInstruction,
+      actionHistory: actionHistoryState,
+    },
+  });
+
+  if (response.status !== "success") {
+    throw new Error(response.error || "VLM request failed");
+  }
+
+  return response.plan.actions || [];
+}
 
 runAgentBtn.addEventListener("click", async () => {
+  // If already running, act as a Stop button
+  if (agentRunning) {
+    agentRunning = false;
+    runAgentBtn.textContent = "▶️ Run Agent";
+    agentStatus.textContent = "⏹️ Stopped by user.";
+    return;
+  }
+
   if (!lastPayload) {
     agentStatus.textContent = "❌ No active page data. Focus a web page first.";
     return;
@@ -27,75 +95,91 @@ runAgentBtn.addEventListener("click", async () => {
 
   const taskInstruction = taskInput.value.trim() || "Fill out this form";
 
+  // Reset history if the task changed
   if (taskInstruction !== lastTaskInstruction) {
     actionHistoryState = [];
     lastTaskInstruction = taskInstruction;
   }
 
-  runAgentBtn.disabled = true;
-  agentStatus.textContent = "⏳ Asking AI (checking Privacy Gate)...";
+  agentRunning = true;
+  runAgentBtn.textContent = "⏹️ Stop Agent";
 
   try {
-    // Force a fresh scan to guarantee perfect scroll coordinates right before screenshot
-    const [activeTab] = await browser.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    if (activeTab) {
-      await browser.tabs
-        .sendMessage(activeTab.id, { type: "rescan" })
-        .catch(() => {});
-      await new Promise((r) => setTimeout(r, 200)); // wait for background to receive ping
-    }
-    const bgRes = await browser.runtime
-      .sendMessage({ type: "get-latest-scan" })
-      .catch(() => null);
-    const freshPayload =
-      bgRes?.scanPayload?.sanitizedPayload || lastPayload.sanitizedPayload;
+    let isTaskDone = false;
+    let consecutiveFailures = 0;
+    const MAX_CONSECUTIVE_FAILURES = 3;
 
-    const response = await browser.runtime.sendMessage({
-      type: "run-agent",
-      payload: {
-        sanitizedPayload: freshPayload,
-        tokenTypes: Array.isArray(freshPayload.tokenTypes)
-          ? freshPayload.tokenTypes
-          : Object.keys(freshPayload.tokenTypes || {}),
-        taskInstruction,
-        actionHistory: actionHistoryState,
-      },
-    });
+    for (let step = 1; step <= MAX_AGENT_STEPS; step++) {
+      if (!agentRunning || isTaskDone) break; // user clicked Stop or task done
 
-    if (response.status === "success") {
-      agentStatus.textContent = `🎯 Action: ${response.action.action}`;
+      agentStatus.textContent = `⏳ Step ${step}/${MAX_AGENT_STEPS} — thinking...`;
 
-      // Prevent infinite loops by keeping the last 3 actions in memory
-      actionHistoryState.push(response.action);
-      if (actionHistoryState.length > 3) {
-        actionHistoryState.shift();
+      const actions = await getPlanFromVLM(taskInstruction);
+      if (actions.length === 0) {
+          agentStatus.textContent = `⚠️ VLM returned empty plan. Stopping.`;
+          break;
       }
 
-      // Dispatch action to active tab's content script
-      const [tab] = await browser.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-      if (tab) {
-        await browser.tabs.sendMessage(tab.id, {
-          type: "execute-action",
-          payload: { action: response.action },
-        });
-        agentStatus.textContent = `✅ Executed: ${response.action.action}`;
-      } else {
-        agentStatus.textContent =
-          "❌ Could not find active tab to execute action.";
+      for (let i = 0; i < actions.length; i++) {
+          if (!agentRunning) break;
+          const action = actions[i];
+
+          // Track action history (keep last 5 for loop detection)
+          actionHistoryState.push(action);
+          if (actionHistoryState.length > 5) {
+            actionHistoryState.shift();
+          }
+
+          if (action.action === "done") {
+            agentStatus.textContent = `✅ Done in ${step} step(s): ${action.reasoning || "Task completed."}`;
+            isTaskDone = true;
+            break;
+          }
+
+          agentStatus.textContent = `🎯 Step ${step}: Executing ${i+1}/${actions.length} (${action.action} → ${typeof action.target === "object" ? `(${action.target.x},${action.target.y})` : action.target || ""})`;
+
+          // Execute the action on the active tab
+          const [tab] = await browser.tabs.query({
+            active: true,
+            currentWindow: true,
+          });
+          if (!tab) throw new Error("No active tab found");
+
+          const execResult = await browser.tabs.sendMessage(tab.id, {
+            type: "execute-action",
+            payload: { action },
+          });
+
+          if (execResult?.status === "error") {
+            consecutiveFailures++;
+            console.warn(`[Agent Loop] Execution error (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, execResult.error);
+            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+              agentStatus.textContent = `❌ ${MAX_CONSECUTIVE_FAILURES} consecutive actions failed. Stopping. Last error: ${execResult.error}`;
+              isTaskDone = true; // break outer loop too
+              break;
+            }
+          } else {
+            consecutiveFailures = 0; // reset on success
+          }
+
+          // Wait for the page to settle before the next action
+          await new Promise((r) => setTimeout(r, STEP_SETTLE_MS));
+
+          // If action mutates DOM, break inner loop to force rescan
+          if (!DOM_STABLE_ACTIONS.has(action.action)) {
+              break;
+          }
       }
-    } else {
-      agentStatus.textContent = `❌ ${response.error || "Unknown error"}`;
+
+      if (step === MAX_AGENT_STEPS && !isTaskDone) {
+        agentStatus.textContent = `⚠️ Reached ${MAX_AGENT_STEPS}-step limit. Click Run to continue.`;
+      }
     }
   } catch (err) {
-    agentStatus.textContent = `❌ Extension Error: ${err.message}`;
+    agentStatus.textContent = `❌ Step failed: ${err.message}`;
   } finally {
-    runAgentBtn.disabled = false;
+    agentRunning = false;
+    runAgentBtn.textContent = "▶️ Run Agent";
   }
 });
 

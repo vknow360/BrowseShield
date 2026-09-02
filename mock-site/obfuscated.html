@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Obfuscated DOM (Hostile)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Obfuscated DOM</h2>
+    <p>This form uses non-standard labels and generic classes to bypass heuristics, testing Semantic NER and Medical Gazetteer.</p>
+    
+    <div class="field-group" style="margin-top: 20px;">
+      <span style="font-weight:bold; display:block; margin-bottom:5px;">Data 1 (Should detect PERSON)</span>
+      <input type="text" style="width:100%; padding:8px;" value="Ashutosh Singh" />
+    </div>
+    
+    <div class="field-group" style="margin-top: 20px;">
+      <span style="font-weight:bold; display:block; margin-bottom:5px;">Data 2 (Should detect MEDICAL)</span>
+      <input type="text" style="width:100%; padding:8px;" value="Bipolar disorder" />
+    </div>
+    
+    <div class="field-group" style="margin-top: 20px;">
+      <span style="font-weight:bold; display:block; margin-bottom:5px;">Data 3 (Hard Negative - Should NOT detect)</span>
+      <input type="text" style="width:100%; padding:8px;" value="Founded in 1923" />
+    </div>
+    
+  </div>
+</body>
+</html>

@@ -48,6 +48,8 @@ export async function executeAction(action, tokenizer) {
       element.dispatchEvent(new Event("change", { bubbles: true }));
       element.dispatchEvent(new Event("blur", { bubbles: true }));
 
+      await sleep(100);
+
       return { success: true, action: actionType, target };
     }
 

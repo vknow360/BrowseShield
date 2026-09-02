@@ -192,9 +192,9 @@ Produced by the real harness in `benchmark/evaluate.js` over the labeled fixture
 | # | Metric (weight) | Measured | How it is measured |
 |---|---|---|---|
 | 1 | **Accuracy of visual context (25%)** | 100% field-region IoU (15 regions) | IoU of perceived sensitive-field regions vs labeled regions |
-| 2 | **PII detection recall & precision (20%)** | Precision 1.00 / Recall 1.00 / F1 1.00 (micro) | Per-entity P/R/F1 across 6 labeled samples incl. hard negatives |
-| 3 | **Redaction precision (20%)** | 100% precision / 100% coverage | Pixel-coverage IoU of redacted vs labeled sensitive regions |
-| 4 | **Client resource utilization (20%)** | Shipped bundle ~73 MB (model weights 12.5 MB, inference wasm 33.8 MB, rest JS) | On-disk size of the built `dist/` artifact |
-| 5 | **End-to-end latency (15%)** | On-device detection ~0.4 ms/sample; capture/perceive/redact/network timed at runtime | Wall-clock in the harness + `background/index.js` stage timers |
+| 2 | **PII detection recall & precision (20%)** | Precision 1.00 / Recall 0.79 / F1 0.88 (micro) | Per-entity P/R/F1 across 6 labeled samples incl. hard negatives |
+| 3 | **Redaction precision (20%)** | 83% precision / 74% coverage | Pixel-coverage IoU of redacted vs labeled sensitive regions |
+| 4 | **Client resource utilization (20%)** | Shipped bundle 84.39 MB (model weights 21.21 MB, inference wasm 33.93 MB, rest JS) | On-disk size of the built `dist/` artifact |
+| 5 | **End-to-end latency (15%)** | On-device detection ~0.53 ms/sample; capture/perceive/redact/network timed at runtime | Wall-clock in the harness + `background/index.js` stage timers |
 
 > **Honesty note:** the resource footprint is dominated by the ONNX Runtime Web (WebGPU) and MediaPipe WASM runtimes required for genuine on-device inference; the model weights themselves are 12.5 MB. Metrics 1–3 are computed on a small labeled fixture set — they demonstrate the harness measures real geometry/detection, not that production accuracy is a perfect 100%. The finale evaluation set (provided by ISRO) should be dropped into `benchmark/dataset/` to reproduce these numbers on judge data.

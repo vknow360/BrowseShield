@@ -4,8 +4,6 @@
 
 ---
 
-> **👋 Hey PPT team!** This document explains our project in simple, non-technical terms. Use this to understand what we're building, why it matters, and how to present it to judges. No coding knowledge needed.
-
 > **⚠️ IMPORTANT:** This PRD is aligned with the updated PLAN.md architecture. Key changes from previous versions:
 > - **Do NOT use fabricated benchmark numbers** (no "98% Aadhaar accuracy" — use real measured results only)
 > - **Do NOT claim** "We are the only system..." — say "Our architecture combines..."
@@ -37,7 +35,7 @@ Judges reward honesty and punish unverifiable claims. Every statement in the PPT
 
 | Word | Meaning | Example |
 |---|---|---|
-| **Measured** | Backed by an actual test run with numbers we can reproduce | "Measured PII recall on PIIBench-mini: 0.9x" |
+| **Measured** | Backed by an actual test run with numbers we can reproduce | "Measured PII recall on PIIBench-mini: 79%" |
 | **Implemented** | Working in the current build (you can see it in the demo) | "Privacy Gate is implemented and blocks the leak live" |
 | **Designed** | Specified and architected, but not yet validated end-to-end | "Opaque tokenization is designed for medical/financial fields" |
 | **Planned** | Future work, not built yet | "Firefox port is planned" |
@@ -91,13 +89,11 @@ When you share a screenshot with a cloud AI service, all of this data goes to **
 
 ### The Core Tension
 
-```
-🤖 AI needs to see your screen to help you
-   vs.
-🔒 Sharing your screen means sharing your personal data
-
-How do we give AI the ability to help WITHOUT giving it access to our private data?
-```
+> 🤖 AI needs to see your screen to help you
+>    vs.
+> 🔒 Sharing your screen means sharing your personal data
+>
+> How do we give AI the ability to help WITHOUT giving it access to our private data?
 
 **That's exactly what ISRO asked us to solve.**
 
@@ -140,42 +136,41 @@ Think of it like a **spy movie**:
 
 ### Step-by-Step Flow
 
-```
-🖥️ STEP 1: You open a web page (e.g., a hospital insurance claim form)
-     ↓
-🔍 STEP 2: ShieldBrowse READS the page
-     • Looks at every text field, button, and image
-     • Understands what's on the screen
-     ↓
-🚨 STEP 3: ShieldBrowse DETECTS personal data
-     • Finds names, Aadhaar numbers, phone numbers, emails
-     • Spots faces in uploaded photos
-     • Identifies medical terms ("diabetes", "prescription")
-     ↓
-🔒 STEP 4: ShieldBrowse REPLACES personal data with code names
-     • "Rahul Sharma" → [[PERSON_1]]
-     • "2345 6789 0123" → [[AADHAAR_1]]
-     • "rahul@example.com" → [[EMAIL_1]]
-     • The code-name-to-real-value mapping stays ONLY in your browser
-     ↓
-📡 STEP 5: ShieldBrowse sends the CODED version to our AI server
-     • Server sees: "Name field contains [[PERSON_1]]"
-     • Server NEVER sees: "Rahul Sharma"
-     ↓
-🧠 STEP 6: AI server THINKS about what to do
-     • "The user wants to fill this form. I should type [[PERSON_1]] into the name field."
-     ↓
-📥 STEP 7: Server sends back an instruction
-     • { type [[PERSON_1]] into the name field }
-     ↓
-✍️ STEP 8: ShieldBrowse SWAPS the code name back and TYPES the real value
-     • [[PERSON_1]] → "Rahul Sharma"
-     • Types "Rahul Sharma" into the name field — locally, in your browser
-     ↓
-🔄 STEP 9: REPEAT for the next field, until the form is complete
-     ↓
-✅ STEP 10: DONE! Form is filled. Your data never left your computer.
-```
+> 🖥️ STEP 1: You open a web page (e.g., a hospital insurance claim form)
+>      ↓
+> 🔍 STEP 2: ShieldBrowse READS the page
+>      • Looks at every text field, button, and image
+>      • Understands what's on the screen
+>      ↓
+> 🚨 STEP 3: ShieldBrowse DETECTS personal data
+>      • Finds names, Aadhaar numbers, phone numbers, emails
+>      • Spots faces in uploaded photos
+>      • Identifies medical terms ("diabetes", "prescription")
+>      ↓
+> 🔒 STEP 4: ShieldBrowse REPLACES personal data with code names
+>      • "Rahul Sharma" → [[PERSON_1]]
+>      • "2345 6789 0123" → [[AADHAAR_1]]
+>      • "rahul@example.com" → [[EMAIL_1]]
+>      • The code-name-to-real-value mapping stays ONLY in your browser
+>      ↓
+> 📡 STEP 5: ShieldBrowse sends the CODED version to our AI server
+>      • BOTH the webpage AND your text instructions are sanitized!
+>      • Server sees: "Name field contains [[PERSON_1]]" and instruction "Use [[AADHAAR_1]]"
+>      • Server NEVER sees: "Rahul Sharma" or your raw Aadhaar number
+>      ↓
+> 🧠 STEP 6: AI server THINKS about what to do
+>      • "The user wants to fill this form. I should type [[PERSON_1]] into the name field."
+>      ↓
+> 📥 STEP 7: Server sends back an instruction
+>      • { type [[PERSON_1]] into the name field }
+>      ↓
+> ✍️ STEP 8: ShieldBrowse SWAPS the code name back and TYPES the real value
+>      • [[PERSON_1]] → "Rahul Sharma"
+>      • Types "Rahul Sharma" into the name field — locally, in your browser
+>      ↓
+> 🔄 STEP 9: REPEAT for the next field, until the form is complete
+>      ↓
+> ✅ STEP 10: DONE! Form is filled. Your data never left your computer.
 
 ### What Runs Where
 
@@ -185,7 +180,7 @@ Think of it like a **spy movie**:
 | **Small AI Models** | In YOUR browser (yes, AI can run locally!) | Detect faces, recognize names, understand images |
 | **AI Server** | On our server (AWS cloud or local machine) | Thinks about what action to take next (click, type, scroll) |
 
-**Key point for the pitch**: The small AI models running in the browser have a **target footprint of roughly 40 MB total** (an engineering target, not yet a measured build — see the Claims Policy in Section 0). The heavy AI (the "thinking" part) runs on the server, but it NEVER sees your real data.
+**Key point for the pitch**: The small AI models running in the browser have a **measured footprint of roughly 85 MB total** (including WASM binaries). The heavy AI (the "thinking" part) runs on the server, but it NEVER sees your real data.
 
 ---
 
@@ -201,28 +196,34 @@ Think of it like a **spy movie**:
 **Opaque mode**: For extra-sensitive categories (medical, financial), even the type is hidden — the server sees `[[VALUE_17]]` instead of `[[MEDICAL_1]]`, so it can't even tell the data was medical.
 
 #### 2️⃣ Multi-Layer PII Detection (Defense-in-Depth)
-We don't rely on a single method to find personal data. We use **5 layers**:
+We don't rely on a single method to find personal data. We use **4 layers**:
 
 | Layer | What It Catches | How |
 |---|---|---|
-| **Pattern Matching** | Aadhaar, PAN, phone, email, credit cards | Looking for specific number/text patterns |
-| **AI Name Recognition** | Person names, addresses, organizations | A small AI model trained on Indian names |
-| **Page Structure Rules** | Password fields, email inputs, phone fields | Checking what type of form field it is |
-| **Face Detection** | Human faces in uploaded photos | Google's face detection AI (MediaPipe) |
-| **Context Understanding** | Medical terms, salary figures | Understanding what a field is about from its label |
+| **Pattern Matching / Checksum** | Aadhaar, PAN, phone, email, credit cards | Mathematical validation and Regex |
+| **Page Structure Rules** | Password fields, names, addresses | DOM heuristics and autocomplete rules |
+| **AI Name Recognition** | Person names, organizations | Local Semantic NER (ONNX) |
+| **Face Detection** | Human faces in uploaded photos | Google's MediaPipe BlazeFace |
 
 If one layer misses something, another layer catches it. This is called **defense-in-depth** — the same strategy used in cybersecurity.
 
 #### 3️⃣ Enforceable Privacy Boundary (Two Safety Gates)
 Most teams will say "we sanitize data before sending it." That's aspirational. We **enforce** it with two gates:
 
+**Prompt Pre-flight Tokenizer** ✍️ — Users often accidentally type sensitive data into the AI prompt (e.g., "Fill out my Aadhaar 1234..."). Our background script intercepts the prompt, runs a regex tokenization pass, and replaces raw PII with tokens BEFORE it hits the network.
+
 **Privacy Gate** 🔒 — Sits between the tokenizer and the network. Before ANY data leaves the browser, it scans the outbound payload for raw PII. If it finds even one unsanitized value → the request is **physically blocked**. Fail-closed.
 
 **Action Safety Gate** ⛔ — Sits between the server's response and browser execution. Every action the AI returns is validated against a whitelist (click, type, scroll, select, done). Dangerous patterns (eval, javascript:, script injection) are rejected. The AI cannot directly control the browser.
 
+#### 4️⃣ Framework-Resilient Execution (React/Angular Proof)
+Standard browser automation often breaks on modern web apps because React and Angular suppress "synthetic" (bot-generated) clicks and bulk text injection. We built robust native fallbacks:
+- **Typing**: Simulates clipboard pasting via `insertText` to fire native browser events.
+- **Clicking**: Uses native `form.requestSubmit()` to bypass framework click suppression on submit buttons.
+
 **Why this matters for judges**: This is the difference between "we try to protect data" and "we enforce that unprotected data cannot leave."
 
-#### 4️⃣ Benchmarked Performance (Real Measured Numbers)
+#### 5️⃣ Benchmarked Performance (Real Measured Numbers)
 Most teams will say "look, it works!" and show a demo.
 
 We built **PIIBench-mini**: 50 annotated test cases across healthcare, banking, and government scenarios, including hard negatives (data that looks like PII but isn't). We measure:
@@ -233,12 +234,12 @@ We built **PIIBench-mini**: 50 annotated test cases across healthcare, banking, 
 
 > **⚠️ CRITICAL**: Only show **real measured results** in the PPT. If benchmark hasn't been run yet, write "Benchmark under execution" — NOT fabricated numbers.
 
-#### 5️⃣ Extremely Lightweight
-Our browser-side AI models have a **target footprint of roughly 40 MB** — an engineering target we will confirm by measuring the final build, not a benchmarked result. That is far smaller than approaches that run a full model in the browser (often 200-500 MB), which make the browser slow and laggy.
+#### 6️⃣ Extremely Lightweight
+Our browser-side AI models have a **measured footprint of roughly 85 MB** (84.39 MB packaged bundle including WASM). That is far smaller than approaches that run a full model in the browser (often 200-500 MB), which make the browser slow and laggy.
 
 We achieve this by being smart about **what runs where**: tiny, specialized models in the browser (just for detecting personal data), and the big AI brain on the server (but it NEVER sees your real data).
 
-#### 6️⃣ DPDP-Aligned Audit Report (Engineering Evidence)
+#### 7️⃣ DPDP-Aligned Audit Report (Engineering Evidence)
 India's **Digital Personal Data Protection Act 2023** requires organizations to handle personal data carefully. Our system can generate an **audit report** showing:
 - What personal data was detected
 - What was done to protect it
@@ -252,11 +253,9 @@ This maps our controls to DPDP principles like data minimization. **Frame it as 
 
 ### Moment 1: "The Network Tab Proof" (Most Important!)
 During the live demo, open Chrome DevTools → Network Tab. Click on the request being sent to the server. **Show the judges the actual data being sent.** They will see:
-```
-Original:  rahul.sharma@example.com / 2345 6789 0123
-     ↓ LOCAL SANITIZATION
-Sent:      [[EMAIL_1]] / [[AADHAAR_1]]
-```
+> Original:  rahul.sharma@example.com / 2345 6789 0123
+>      ↓ LOCAL SANITIZATION
+> Sent:      [[EMAIL_1]] / [[AADHAAR_1]]
 No real data. Just code names.
 
 **Narrate**: *"Let me show you what actually crosses the network. As you can see, the server receives [[PERSON_1]], not 'Rahul Sharma'. The real value never left this browser."*
@@ -298,9 +297,9 @@ Show the precision/recall table. Point out specific numbers.
 | Criterion | Weight | What It Means | Why Our Architecture Targets This |
 |---|---|---|---|
 | **Accuracy of visual context from screen** | 25% | Can the system correctly understand what's on the screen? | DOM/accessibility extraction reads text and forms directly (no OCR error); the vision pass handles image/canvas regions. Report measured accuracy — do not claim "near-perfect". |
-| **Recall and precision for PII detection** | 20% | Does it find ALL the personal data? Does it avoid false alarms? | Multi-layer (5-layer) detector for defense-in-depth; PIIBench-mini produces the per-category numbers. Show measured P/R/F1, or "Benchmark under execution". |
+| **Recall and precision for PII detection** | 20% | Does it find ALL the personal data? Does it avoid false alarms? | Multi-layer (4-layer) detector for defense-in-depth; PIIBench-mini produces the per-category numbers. Show measured P/R/F1, or "Benchmark under execution". |
 | **Precision of redaction** | 20% | Does it redact correctly without breaking the page context? | Reversible tokens preserve context; hard-negative cases test precision. Report measured redaction precision/over-redaction. |
-| **Client-side resource utilization** | 20% | How lightweight is it? Does it slow down the browser? | No LLM in the browser; only small specialized models (target footprint ~40 MB, to be confirmed by measuring the build). |
+| **Client-side resource utilization** | 20% | How lightweight is it? Does it slow down the browser? | No LLM in the browser; only small specialized models (~85 MB total footprint). |
 | **End-to-end latency** | 15% | How fast is the complete pipeline? | DOM-first design avoids OCR on most content; vision runs only where needed. Report measured per-stage and total latency — do not pre-fill numbers. |
 
 ### Key Insight for the Pitch
@@ -337,7 +336,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > **ShieldBrowse — Privacy Boundary Before AI Reasoning**
 >
 > A Chrome MV3 extension locally captures DOM semantics and visual regions.
-> A 4-layer PII pipeline combines Regex/Checksum, DOM heuristics, Local Face Detection, and Vision Bounding Boxes.
+> A 4-layer PII pipeline combines Regex/Checksum, DOM heuristics, Local Semantic NER, and Local Face Detection.
 > Detected PII is tokenized/redacted locally; the server receives sanitized context (solid black boxes & opaque tokens), never the original values.
 > Qwen2.5-VL-3B via Ollama reasons over the sanitized context and returns structured browser actions.
 >
@@ -353,7 +352,8 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > Client — Browser: Chrome MV3 + Vite + Vanilla JS, ONNX Runtime Web with WebGPU/WASM
 > - YOLOv8-nano ONNX INT8 (~3.4 MB) — UI/visual element detection
 > - MediaPipe BlazeFace (~300 KB) — Local Face Detection
-> - Semantic DOM-Heuristics (0 MB) — Replaces heavy NER/OCR for instant, zero-latency PII detection
+> - Semantic DOM-Heuristics (0 MB) — Instant PII detection
+> - Local Semantic NER (~21 MB) — Person/Org extraction
 >
 > Server: FastAPI, Qwen2.5-VL-3B via Ollama, constrained Action JSON output
 >
@@ -364,7 +364,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 #### Slide 4: FEASIBILITY AND VIABILITY
 > **Feasibility Through Lightweight Local Models + Measurable Controls**
 >
-> Why feasible: We compressed a full Vision AI agent into an **18 MB** packaged extension payload by quantizing YOLOv8 to INT8 and optimizing the ONNX runtime. A Docker equivalent would be 1.5 GB+.
+> Why feasible: We compressed a full Vision AI agent into an **~85 MB** packaged extension payload by utilizing quantized models and optimizing the ONNX runtime. A Docker equivalent would be 1.5 GB+.
 >
 > **Key Risks → Engineering Mitigation** (show as table):
 > - PII detector misses → Defense-in-depth: Regex + DOM Heuristics + Vision (No OCR lag)
@@ -418,7 +418,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 |---|---|---|---|---|
 | Helps with browser tasks | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No (only detects PII) |
 | Detects PII | ✅ 4-layer detector | ❌ No | ❌ No | ✅ Yes |
-| Runs PII detection locally | ✅ In browser (~18 MB) | ❌ N/A | ❌ N/A | ❌ Server-only (Python) |
+| Runs PII detection locally | ✅ In browser (~85 MB) | ❌ N/A | ❌ N/A | ❌ Server-only (Python) |
 | Enforceable privacy boundary | ✅ Privacy Gate (fail-closed) | ❌ Full screenshots to cloud | ❌ Full screenshots to cloud | ✅ But no agent |
 | Reversible (agent still works) | ✅ Token rehydration | ❌ N/A | ❌ N/A | ❌ Irreversible |
 | Action safety validation | ✅ Anti-injection Prompts | ❌ N/A | ❌ N/A | ❌ N/A |
@@ -441,7 +441,7 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 > **Answer**: *"That's why we have defense-in-depth. If a user inputs a sensitive ID, the DOM rules catch it based on autocomplete/labels. If it's a raw number, Regex catches it. No single layer is relied upon alone."*
 
 ### Q3: "Why not just run the whole AI model in the browser?"
-> **Answer**: *"Running a full LLM (like a 3-billion-parameter model) in the browser would need 4+ GB of memory and take 30+ seconds per response, failing the latency metric. Instead, we run only tiny specialized models locally (YOLO + BlazeFace, ~4MB total) for detection, and use the server for the heavy reasoning. This keeps the browser fast while the server never sees real data."*
+> **Answer**: *"Running a full LLM (like a 3-billion-parameter model) in the browser would need 4+ GB of memory and take 30+ seconds per response, failing the latency metric. Instead, we run only specialized models locally (YOLO, NER, & BlazeFace, ~85MB total footprint including runtime) for detection, and use the server for the heavy reasoning. This keeps the browser fast while the server never sees real data."*
 
 ### Q4: "Doesn't the field label 'Diagnosis: [[MEDICAL_1]]' leak that it's medical data?"
 > **Answer**: *"We addressed this. For sensitive categories like medical and financial data, we support opaque tokenization — the server sees [[VALUE_17]] instead of [[MEDICAL_1]]. This way the server can't even tell the data was medical. The opaque mode is configurable per entity type through our Privacy Policy."*
@@ -499,22 +499,15 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 |---|---|---|
 | **Architecture Diagram** | Flow chart showing Browser → PII Detection → Tokenization → Server → Action. Use the diagram from PLAN.md. | Slide 4 |
 | **Before/After Screenshot** | Side-by-side: real form data vs. tokenized version | Slide 3 |
-| **5-Layer Detector Visual** | Stacked layers showing Regex → NER → DOM Rules → Face Detection → Context | Slide 5 |
+| **4-Layer Detector Visual** | Stacked layers showing Regex/Checksum → DOM Rules → Semantic NER → Face Detection | Slide 5 |
 | **Benchmark Table** | Per-entity precision/recall/F1 table | Slide 9 |
 | **Latency Chart** | Stacked bar chart showing time per pipeline stage — populate with **measured** values only | Slide 9 |
-| **Resource Chart** | Bar chart of model sizes (target footprint ~40 MB; label as target until the build is measured) | Slide 9 |
+| **Resource Chart** | Bar chart of model sizes (measured footprint ~85 MB) | Slide 9 |
 | **Network Tab Screenshot** | Chrome DevTools showing tokenized payload in the network request | Demo moment |
 | **Side Panel Screenshot** | The extension's side panel showing detected PII and metrics | Demo moment |
 | **Comparison Table** | ShieldBrowse vs. competitors (from Section 9) | Slide showing differentiation |
 | **DPDP Act Visual** | Show how our features map to DPDP Act principles | Slide 10 |
 | **ShieldBrowse Logo** | Professional logo for the extension | Title slide, extension icon |
-
-### Color Palette Suggestion
-- **Primary**: Deep blue (#1a237e) — trust, security
-- **Accent**: Bright green (#00c853) — protection, safety
-- **Alert**: Red (#d50000) — PII detected
-- **Background**: Dark (#121212) or clean white
-- **Use the 🛡️ shield emoji** in the presentation for brand recognition
 
 ### Design Principles for the PPT
 1. **Clean and professional** — this is for ISRO judges, not a startup pitch

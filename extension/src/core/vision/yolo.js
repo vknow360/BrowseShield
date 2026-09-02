@@ -3,6 +3,14 @@ import * as ort from "onnxruntime-web";
 const TARGET_SIZE = 640;
 const CHANNEL_SIZE = TARGET_SIZE * TARGET_SIZE;
 
+export const UI_CLASSES = [
+  "DOB", "address", "age input", "age", "button", "checkbox", "city", "company", "country dropdown", 
+  "country input", "date", "day dropdown", "doc-upload", "dropdown", "email-input", "emp id", "first-name", 
+  "gender dropdown", "gender", "input", "job role", "last-name", "message", "month dropdown", "name", "otp", 
+  "password", "phone-num", "redio button", "region", "reminder checkbox", "state dropdown", "state input-", 
+  "state", "terms checkbox", "username", "web url-", "year dropdown", "zip code"
+];
+
 // Reused across calls to avoid re-allocating the letterbox canvas/buffer every frame.
 let yoloCanvas = null;
 let yoloCtx = null;
@@ -130,6 +138,7 @@ export function postprocessYOLO(
           h: height,
           conf: maxConf,
           classId: maxClass,
+          className: UI_CLASSES[maxClass] || `class_${maxClass}`,
         });
       }
     }

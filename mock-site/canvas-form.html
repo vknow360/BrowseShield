@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas Form (Hostile)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Canvas PII Test</h2>
+    <p>The PII below is rendered in a canvas element, bypassing standard DOM walkers.</p>
+    <canvas id="piiCanvas" width="500" height="200" style="border:1px solid #ccc; border-radius: 8px; margin-top: 20px;"></canvas>
+  </div>
+  <script>
+    window.addEventListener('load', () => {
+      const canvas = document.getElementById('piiCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 500, 200);
+      
+      ctx.fillStyle = '#333333';
+      ctx.font = 'bold 18px Arial';
+      ctx.fillText('Confidential Profile', 20, 30);
+      
+      ctx.font = '16px Courier New';
+      ctx.fillText('Name: Sneha Patel', 20, 70);
+      ctx.fillText('Phone: +91 9876543210', 20, 100);
+      ctx.fillText('Aadhaar: 1234 5678 9012', 20, 130);
+      ctx.fillText('PAN: ABCDE1234F', 20, 160);
+    });
+  </script>
+</body>
+</html>

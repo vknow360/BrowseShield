@@ -1,0 +1,68 @@
+{
+  "sampleId": "sample_008_canvas",
+  "pageUrl": "https://mock-site.local/canvas-form.html",
+  "pageTitle": "Canvas Form (Hostile)",
+  "groundTruth": [
+    {
+      "text": "Sneha Patel",
+      "entityType": "PERSON",
+      "nodeIndex": 1,
+      "box": [20, 70, 150, 20]
+    },
+    {
+      "text": "9876543210",
+      "entityType": "PHONE",
+      "nodeIndex": 2,
+      "box": [20, 100, 150, 20]
+    },
+    {
+      "text": "1234 5678 9012",
+      "entityType": "AADHAAR",
+      "nodeIndex": 3,
+      "box": [20, 130, 150, 20]
+    },
+    {
+      "text": "ABCDE1234F",
+      "entityType": "PAN",
+      "nodeIndex": 4,
+      "box": [20, 160, 150, 20]
+    }
+  ],
+  "nodes": [
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Confidential Profile",
+      "type": "text",
+      "box": [20, 30, 150, 20]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Name: Sneha Patel",
+      "type": "text",
+      "box": [20, 70, 150, 20]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Phone: +91 9876543210",
+      "type": "text",
+      "box": [20, 100, 150, 20]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "Aadhaar: 1234 5678 9012",
+      "type": "text",
+      "box": [20, 130, 150, 20]
+    },
+    {
+      "tagName": "INPUT",
+      "label": "",
+      "value": "PAN: ABCDE1234F",
+      "type": "text",
+      "box": [20, 160, 150, 20]
+    }
+  ]
+}

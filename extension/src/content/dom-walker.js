@@ -42,8 +42,18 @@ function extractNodesRecursively(root, interactiveNodes) {
     ) {
       const rect = node.getBoundingClientRect();
 
-      // Skip elements that are visually hidden (e.g., inside display: none)
-      if (rect.width === 0 && rect.height === 0) continue;
+      // Skip zero-box elements ONLY when they cannot carry PII. A hidden field
+      // (display:none, visibility:hidden, type="hidden", or otherwise 0x0) with
+      // a non-empty `value` is a real threat surface: an adversarial site can
+      // stash user data there hoping the agent's DOM read will leak it while
+      // the on-screen redactor turns a blind eye. Same for IMG whose src is
+      // set but whose layout box hasn't been resolved yet.
+      const hiddenButHasValue =
+        rect.width === 0 &&
+        rect.height === 0 &&
+        ((tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") &&
+          (node.value || node.type === "hidden"));
+      if (rect.width === 0 && rect.height === 0 && !hiddenButHasValue) continue;
 
       const label =
         tag === "IMG" ? node.alt || node.id || "" : findLabelForInput(node);

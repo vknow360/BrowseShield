@@ -75,3 +75,11 @@ graft/
 server/debug_images/
 extension/public/models/ner/
 *.onnx
+
+# Agent and IDE configs
+.claude/
+.gemini/
+.junie/
+.agents/
+opencode.json
+.mcp.json
