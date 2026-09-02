@@ -6,6 +6,7 @@ import browser from "webextension-polyfill";
 import "./index.css";
 import { maskValue } from "../../core/tokenizer/tokenizer.js";
 import { tryLocalAction } from "../../core/local-agent.js";
+import { generateAuditReport, downloadReport } from "../../core/audit/report-generator.js";
 
 const outputBox = document.getElementById("output-box");
 const statusBadge = document.getElementById("status-badge");
@@ -20,6 +21,7 @@ let lastPayload = null;
 let actionHistoryState = [];
 let lastTaskInstruction = "";
 let agentRunning = false;
+let sessionBlockCount = 0;
 
 const MAX_AGENT_STEPS = 20;
 const STEP_SETTLE_MS = 800; // wait after each action for the page to settle
@@ -244,6 +246,7 @@ function renderScanPayload(payload) {
 
 function renderViolationPayload(payload) {
   if (!payload) return;
+  sessionBlockCount++;
   if (gateBadge) {
     const violationsCount = payload.violations?.length || 0;
     gateBadge.textContent = `🔒 GATE: BLOCKED (${violationsCount})`;
@@ -265,6 +268,14 @@ browser.runtime.onMessage.addListener((message) => {
     renderViolationPayload(message.payload);
   }
 });
+
+const exportAuditBtn = document.getElementById("export-audit-btn");
+if (exportAuditBtn) {
+  exportAuditBtn.addEventListener("click", () => {
+    const markdown = generateAuditReport(lastPayload, sessionBlockCount);
+    downloadReport(markdown);
+  });
+}
 
 // On side panel startup: get latest cached scan and request active tab to rescan
 (async function initPanel() {
