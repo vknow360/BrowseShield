@@ -68,15 +68,17 @@ export async function redactScreenshot(
     }
   }
 
-  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.8 });
+  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.88 });
   return blobToDataURL(blob);
 }
 
-function blobToDataURL(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+async function blobToDataURL(blob) {
+  const buffer = await blob.arrayBuffer();
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return `data:${blob.type};base64,${btoa(binary)}`;
 }

@@ -115,7 +115,8 @@ export async function scanCanvasesForOCR() {
 
 function injectSyntheticOCRNodes(sourceEl, results) {
   const rect = sourceEl.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
+  const scaleX = rect.width / (sourceEl.width || 1);
+  const scaleY = rect.height / (sourceEl.height || 1);
 
   results.forEach((res) => {
     const hiddenInput = document.createElement("input");
@@ -126,10 +127,10 @@ function injectSyntheticOCRNodes(sourceEl, results) {
     
     // Position it invisibly over the exact text location so the walker finds its box
     hiddenInput.style.position = "absolute";
-    hiddenInput.style.left = `${rect.left + window.scrollX + (res.box.x0 / dpr)}px`;
-    hiddenInput.style.top = `${rect.top + window.scrollY + (res.box.y0 / dpr)}px`;
-    hiddenInput.style.width = `${(res.box.x1 - res.box.x0) / dpr}px`;
-    hiddenInput.style.height = `${(res.box.y1 - res.box.y0) / dpr}px`;
+    hiddenInput.style.left = `${rect.left + window.scrollX + (res.box.x0 * scaleX)}px`;
+    hiddenInput.style.top = `${rect.top + window.scrollY + (res.box.y0 * scaleY)}px`;
+    hiddenInput.style.width = `${(res.box.x1 - res.box.x0) * scaleX}px`;
+    hiddenInput.style.height = `${(res.box.y1 - res.box.y0) * scaleY}px`;
     hiddenInput.style.opacity = "0";
     hiddenInput.style.pointerEvents = "none";
     hiddenInput.style.zIndex = "-9999";

@@ -1,39 +1,22 @@
 /// <reference types="chrome" />
 import { DEFAULT_PRIVACY_POLICY, generateToken } from "./privacy-policy.js";
 
-import browser from "webextension-polyfill";
-
-const STORAGE_KEYS = { MAP: "tokenMap", COUNTERS: "tokenCounters" };
-
+// Centralized tokenizer for ShieldBrowse.
+// State (tokenMap, counters) is owned by the background script (agent-loop).
 export class PIITokenizer {
   constructor(policy = DEFAULT_PRIVACY_POLICY) {
     this.policy = policy;
-    this.counters = {}; // { PERSON: 1, EMAIL: 1, VALUE: 2, ... }
-    this.tokenMap = {}; // { '[[PERSON_1]]': { realValue, entityType, selector, confidence, source } }
+    this.counters = {};
+    this.tokenMap = {};
   }
 
-  // Restore across service-worker/page reloads. Safe if storage empty.
-  async initialize() {
-    try {
-      const s = await browser.storage.local.get([
-        STORAGE_KEYS.MAP,
-        STORAGE_KEYS.COUNTERS,
-      ]);
-      this.tokenMap = s[STORAGE_KEYS.MAP] || {};
-      this.counters = s[STORAGE_KEYS.COUNTERS] || {};
-    } catch (e) {
-      console.warn(
-        "[ShieldBrowse] tokenizer.initialize failed (access level?):",
-        e,
-      );
-    }
+  loadState(tokenMap = {}, counters = {}) {
+    this.tokenMap = tokenMap;
+    this.counters = counters;
   }
 
-  async persist() {
-    await browser.storage.local.set({
-      [STORAGE_KEYS.MAP]: this.tokenMap,
-      [STORAGE_KEYS.COUNTERS]: this.counters,
-    });
+  getState() {
+    return { tokenMap: this.tokenMap, counters: this.counters };
   }
 
   _findExistingToken(realValue) {
@@ -43,32 +26,40 @@ export class PIITokenizer {
     return null;
   }
 
-  // nodes: output of scanPageForPII (each may have node.pii = {isPII, entityType, confidence, source})
-  // returns { sanitizedNodes, tokenMap }  — tokenMap is LOCAL ONLY, never sent
-  async tokenize(nodes) {
-    const sanitizedNodes = nodes.map((n) => {
-      const copy = {
-        ...n,
-        box: Array.isArray(n.box) ? [...n.box] : n.box ? { ...n.box } : null,
-      };
-      delete copy.pii; // do not ship detector internals to the server view
-
-      const pii = n.pii;
+  // 1. Extract candidates from tagged DOM nodes without modifying them or the tokenMap
+  static extractNodeCandidates(nodes, confidenceThreshold) {
+    const candidates = [];
+    for (const n of nodes) {
+      if (!n.pii || !n.pii.isPII) continue;
+      if ((n.pii.confidence ?? 0) < confidenceThreshold) continue;
+      
       const realValue = String(n.value ?? "").trim();
-      if (!pii || !pii.isPII) return copy;
-      if ((pii.confidence ?? 0) < this.policy.confidenceThreshold) return copy;
-      if (realValue.length === 0) return copy; // nothing to tokenize (incl. empty password fields the detector still flags)
+      if (realValue.length === 0) continue;
+      
+      candidates.push({
+        realValue,
+        entityType: n.pii.entityType,
+        selector: n.selector,
+        confidence: n.pii.confidence,
+        source: n.pii.source
+      });
+    }
+    return candidates;
+  }
 
-      let token = this._findExistingToken(realValue);
+  // 2. Add raw candidates (from DOM and prompt) to the token map
+  assignTokens(candidates) {
+    let tokensAdded = false;
+    for (const c of candidates) {
+      if (!c.realValue || c.realValue.length < 2) continue;
+      
+      let token = this._findExistingToken(c.realValue);
       if (!token) {
-        // Find if we already have a token for this exact input field
+        // Find if we already have a token for this exact input field (DOM candidates only)
         let existingTokenForField = null;
-        if (n.selector) {
+        if (c.selector) {
           for (const [t, data] of Object.entries(this.tokenMap)) {
-            if (
-              data.selector === n.selector &&
-              data.entityType === pii.entityType
-            ) {
+            if (data.selector === c.selector && data.entityType === c.entityType) {
               existingTokenForField = t;
               break;
             }
@@ -77,58 +68,105 @@ export class PIITokenizer {
 
         if (existingTokenForField) {
           token = existingTokenForField;
-          this.tokenMap[token].realValue = realValue;
+          this.tokenMap[token].realValue = c.realValue;
           this.tokenMap[token].confidence = Math.max(
             this.tokenMap[token].confidence,
-            pii.confidence,
+            c.confidence || 1.0,
           );
         } else {
-          token = generateToken(pii.entityType, this.counters, this.policy);
+          token = generateToken(c.entityType, this.counters, this.policy);
           this.tokenMap[token] = {
-            realValue,
-            entityType: pii.entityType,
-            selector: n.selector, // real node field name (NOT cssSelector)
-            confidence: pii.confidence,
-            source: pii.source,
+            realValue: c.realValue,
+            entityType: c.entityType,
+            selector: c.selector || null,
+            confidence: c.confidence || 1.0,
+            source: c.source || "prompt-analyzer",
           };
-        }
-      }
-      copy.value = token;
-      return copy;
-    });
-
-    // 2. Global scrubbing pass: sanitize ANY occurrence of known PII across all nodes, labels, and placeholders
-    for (const [token, data] of Object.entries(this.tokenMap)) {
-      const val = data.realValue;
-      if (!val || val.length < 2) continue;
-      const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-      for (const node of sanitizedNodes) {
-        if (typeof node.value === "string") {
-          node.value = node.value.replace(new RegExp(escaped, "gi"), token);
-        }
-        if (typeof node.label === "string") {
-          node.label = node.label.replace(new RegExp(escaped, "gi"), token);
-        }
-        if (typeof node.placeholder === "string") {
-          node.placeholder = node.placeholder.replace(
-            new RegExp(escaped, "gi"),
-            token,
-          );
+          tokensAdded = true;
         }
       }
     }
+    return tokensAdded;
+  }
 
-    await this.persist();
-    return { sanitizedNodes, tokenMap: this.tokenMap };
+  // 3. Sanitize text/nodes using the current tokenMap
+  sanitizeNodes(nodes) {
+    const sanitizedNodes = nodes.map((n) => {
+      const copy = {
+        ...n,
+        box: Array.isArray(n.box) ? [...n.box] : n.box ? { ...n.box } : null,
+      };
+      delete copy.pii; // do not ship detector internals to the server view
+      return copy;
+    });
+
+    // Global scrubbing pass: sanitize ANY occurrence of known PII across all nodes, labels, and placeholders
+    // Sort by length descending to replace longest strings first (e.g. full name before first name)
+    const sortedTokens = Object.entries(this.tokenMap).sort(
+      (a, b) => b[1].realValue.length - a[1].realValue.length
+    );
+
+    for (const [token, data] of sortedTokens) {
+      const val = data.realValue;
+      if (!val || val.length < 2) continue;
+      const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "gi");
+
+      for (const node of sanitizedNodes) {
+        let replaced = false;
+        
+        if (typeof node.value === "string") {
+          const newVal = node.value.replace(regex, token);
+          if (newVal !== node.value) {
+            node.value = newVal;
+            replaced = true;
+          }
+        }
+        if (typeof node.label === "string") {
+          const newLabel = node.label.replace(regex, token);
+          if (newLabel !== node.label) {
+            node.label = newLabel;
+            replaced = true;
+          }
+        }
+        if (typeof node.placeholder === "string") {
+          const newPlaceholder = node.placeholder.replace(regex, token);
+          if (newPlaceholder !== node.placeholder) {
+            node.placeholder = newPlaceholder;
+            replaced = true;
+          }
+        }
+        
+        if (replaced) {
+          node.hasPII = true;
+        }
+      }
+    }
+    return sanitizedNodes;
+  }
+
+  sanitizeString(text) {
+    let sanitized = String(text || "");
+    const sortedTokens = Object.entries(this.tokenMap).sort(
+      (a, b) => b[1].realValue.length - a[1].realValue.length
+    );
+
+    for (const [token, data] of sortedTokens) {
+      const val = data.realValue;
+      if (!val || val.length < 2) continue;
+      const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      // Use word boundaries for prompt sanitization if applicable to avoid nested replace
+      const prefix = /^[\w]/.test(val) ? "\\b" : "";
+      const suffix = /[\w]$/.test(val) ? "\\b" : "";
+      sanitized = sanitized.replace(new RegExp(`${prefix}${escaped}${suffix}`, "gi"), token);
+    }
+    return sanitized;
   }
 
   rehydrate(token) {
     return this.tokenMap[token]?.realValue ?? token;
   }
 
-  // Matches typed ([[EMAIL_1]], [[DATE_OF_BIRTH_2]]) AND opaque ([[VALUE_7]]).
-  // [A-Z_]+ greedily takes the type incl. internal underscores; _\d+ pins the counter.
   rehydrateString(str) {
     return String(str).replace(/\[\[[A-Z_]+_\d+\]\]/g, (m) =>
       this.rehydrate(m),
@@ -144,15 +182,6 @@ export class PIITokenizer {
       confidence: d.confidence,
       source: d.source,
     }));
-  }
-
-  async clear() {
-    this.tokenMap = {};
-    this.counters = {};
-    await browser.storage.local.remove([
-      STORAGE_KEYS.MAP,
-      STORAGE_KEYS.COUNTERS,
-    ]);
   }
 }
 

@@ -11,6 +11,9 @@ export default defineConfig({
       "@": `${path.resolve(__dirname, "src")}`,
     },
   },
+  build: {
+    modulePreload: false,
+  },
   plugins: [
     crx({ manifest }),
     zip({ outDir: "release", outFileName: `crx-${name}-${version}.zip` }),

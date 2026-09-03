@@ -20,18 +20,18 @@ export async function initVisionPipeline() {
         modelAssetPath: browser.runtime.getURL(
           "models/blaze_face_short_range.tflite",
         ),
-        delegate: "GPU",
+        delegate: "CPU",
       },
       runningMode: "IMAGE",
     });
 
-    ort.env.wasm.numThreads = 4;
+    ort.env.wasm.numThreads = typeof SharedArrayBuffer !== "undefined" ? 4 : 1;
     ort.env.wasm.wasmPaths = browser.runtime.getURL("wasm/");
 
     try {
       yoloSession = await ort.InferenceSession.create(
         browser.runtime.getURL("models/yolov8n.onnx"),
-        { executionProviders: ["webgpu", "wasm"] },
+        { executionProviders: ["wasm"] },
       );
       console.log("[Vision] YOLOv8-nano loaded");
     } catch (e) {
@@ -76,6 +76,9 @@ export async function perceiveScreen(imageBitmap, nodes = []) {
         imageBitmap.height,
       );
       tensor.dispose();
+      if (outputTensor && typeof outputTensor.dispose === 'function') {
+        outputTensor.dispose();
+      }
     }
 
     if (faceDetector) {

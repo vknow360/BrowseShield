@@ -77,19 +77,7 @@ export async function detectFieldPII(node) {
   const autocomplete = String(node.autocomplete || "").toLowerCase();
   const id = String(node.id || "").toLowerCase();
 
-  if (node.tagName === "IMG") {
-    if (
-      LABEL_PATTERNS.IMAGE.some((kw) => label.includes(kw) || id.includes(kw))
-    ) {
-      return {
-        isPII: true,
-        entityType: "IMAGE",
-        confidence: 0.95,
-        source: "dom-heuristic",
-      };
-    }
-    return null; // Skip text-based checks for non-PII images
-  }
+
 
   // If node has no value, skip value-based matching (unless it's a password type)
   if (!value && type !== "password") return null;
@@ -212,7 +200,8 @@ export async function detectFieldPII(node) {
   // Name check (label matching or autocomplete)
   if (
     LABEL_PATTERNS.PERSON.some((kw) => label.includes(kw)) ||
-    autocomplete === "name"
+    autocomplete === "name" ||
+    (node.dataset?.syntheticOcr === "true" && LABEL_PATTERNS.PERSON.some((kw) => value.toLowerCase().includes(kw)))
   ) {
     return {
       isPII: true,
@@ -222,7 +211,10 @@ export async function detectFieldPII(node) {
     };
   }
   // Aadhaar check (fallback for fake data)
-  if (LABEL_PATTERNS.AADHAAR.some((kw) => label.includes(kw))) {
+  if (
+    LABEL_PATTERNS.AADHAAR.some((kw) => label.includes(kw)) ||
+    (node.dataset?.syntheticOcr === "true" && LABEL_PATTERNS.AADHAAR.some((kw) => value.toLowerCase().includes(kw)))
+  ) {
     return {
       isPII: true,
       entityType: "AADHAAR",
@@ -234,7 +226,8 @@ export async function detectFieldPII(node) {
   if (
     LABEL_PATTERNS.DATE_OF_BIRTH.some((kw) => label.includes(kw)) ||
     type === "date" ||
-    autocomplete === "bday"
+    autocomplete === "bday" ||
+    (node.dataset?.syntheticOcr === "true" && LABEL_PATTERNS.DATE_OF_BIRTH.some((kw) => value.toLowerCase().includes(kw)))
   ) {
     return {
       isPII: true,
@@ -246,7 +239,8 @@ export async function detectFieldPII(node) {
   // Address check
   if (
     LABEL_PATTERNS.ADDRESS.some((kw) => label.includes(kw)) ||
-    autocomplete.includes("address")
+    autocomplete.includes("address") ||
+    (node.dataset?.syntheticOcr === "true" && LABEL_PATTERNS.ADDRESS.some((kw) => value.toLowerCase().includes(kw)))
   ) {
     return {
       isPII: true,
