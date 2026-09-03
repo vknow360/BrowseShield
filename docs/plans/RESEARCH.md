@@ -83,7 +83,7 @@ A **Vision Transformer** is a type of AI model that "looks at" images and unders
 3. Feed each patch into a Transformer model (similar to how words are fed into a text AI)
 4. The model outputs: what objects are in the image, where they are (bounding boxes), or a classification of the overall image
 
-**For our project**: We'll use a tiny ViT model (YOLOv8-nano, ~6MB) that runs inside the browser to detect UI elements (buttons, text fields, images) in screenshots. This is the "reads the user's screen" part the PS requires.
+**For our project**: We'll use a tiny ViT model (YOLOv8-nano, ~45MB) that runs inside the browser to detect UI elements (buttons, text fields, images) in screenshots. This is the "reads the user's screen" part the PS requires.
 
 ### 2.2 What is ONNX Runtime Web?
 
@@ -291,7 +291,7 @@ Most competing teams will build an impressive "AI clicks buttons for you" demo a
 | **Accuracy (25%)** | Hybrid DOM+Vision: DOM gives ~100% accuracy for text/form fields (no OCR error). ViT only for image regions. Report both separately. | Others use pure screenshot → OCR → errors compound. Our DOM path is near-perfect. |
 | **PII Recall/Precision (20%)** | Multi-layer detector: regex (structured PII) + NER (names/addresses) + DOM heuristics (safety net) + MediaPipe (faces). Report per-entity-type metrics. | Others use a single regex or a generic filter. Our multi-layer approach catches more and we have numbers to prove it. |
 | **Redaction Precision (20%)** | Reversible token scheme: precise text replacement (not blurry overlays). Hard-negative tests to prove we don't over-redact. | Others over-redact (destroy context) or under-redact (leak PII). We have a benchmark showing neither. |
-| **Resource Use (20%)** | Total client-side models: ~40-45MB. No LLM runs client-side. Only tiny specialized models (YOLOv8-nano 6MB, MobileNet 3MB, NER 25MB, Tesseract, MediaPipe). | Others might try to run a VLM in the browser (200MB+). We keep it lightweight by design. |
+| **Resource Use (20%)** | Total client-side models: ~75-80MB. No LLM runs client-side. Only tiny specialized models (YOLOv8-nano 45MB, MobileNet 3MB, NER 29MB, Tesseract, MediaPipe). | Others might try to run a VLM in the browser (200MB+). We keep it lightweight by design. |
 | **Latency (15%)** | DOM extraction is instant (~5ms). Regex is instant. NER is fast (~50-200ms). Only image regions need heavy vision processing. Stacked bar chart showing time per stage. | Others process entire screenshots through a ViT every cycle. We skip vision for most content. |
 
 ### 5.4 The Benchmark Advantage
@@ -334,12 +334,12 @@ This is the difference between "trust us" and "here's the data." Judges strongly
 
 | Model | Purpose | Format | Size | Inference Time |
 |---|---|---|---|---|
-| YOLOv8-nano | UI element detection | ONNX (q8) | ~6 MB | ~50-100ms (WebGPU), ~200-500ms (WASM) |
+| YOLOv8-nano | UI element detection | ONNX | ~45 MB | ~50-100ms (WebGPU), ~200-500ms (WASM) |
 | MobileNet-v3-small | Screen state classification | ONNX (q8) | ~3 MB | ~20-50ms |
-| distilbert-NER (fine-tuned) | Named entity recognition | ONNX (q8) | ~25-30 MB | ~50-200ms |
+| distilbert-NER (fine-tuned) | Named entity recognition | ONNX (q8) | ~29 MB | ~50-200ms |
 | Tesseract.js core | OCR engine | WASM | ~2 MB + lang data | ~500ms-2s per image region |
 | MediaPipe Face Detector | Face bounding boxes | WASM/WebGPU | ~5 MB | ~30-100ms |
-| **TOTAL** | | | **~40-45 MB** | |
+| **TOTAL** | | | **~75-80 MB** | |
 
 ---
 

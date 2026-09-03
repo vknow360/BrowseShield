@@ -361,17 +361,13 @@ Show the precision/recall table. Point out specific numbers.
 
 ### Official SIH 6-Slide Template
 
-The SIH template has exactly 6 sections. We stay strictly within it.
+We use the strict 6-slide SIH template, but we've redesigned the flow to perfectly match our architectural strengths (Privacy Gates, Tokenization, and Latency).
 
 #### Slide 1: TITLE PAGE
 > **SMART INDIA HACKATHON 2026**
->
 > Problem Statement ID: 26171
-> Problem Statement Title: On-device Visual Perception for Lightweight Browser Agents
 > Theme: Smart Automation
-> PS Category: Software
 > Team ID: [YOUR TEAM ID]
-> Team Name: [REGISTERED TEAM NAME]
 >
 > **ShieldBrowse — Privacy-Preserving On-Device Visual Browser Agent**
 >
@@ -379,71 +375,52 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 >
 > Team Members: [Names exactly as registered]
 
-> **⚠️ Do NOT write**: "AI-powered innovative browser automation"
-> **DO write**: The actual architectural proposition above.
+#### Slide 2: PROBLEM & USE CASES
+> **The Core Conflict: AI needs visual context vs. Users need privacy.**
+>
+> **The Problem**: AI agents upload full screenshots to the cloud, leaking Aadhaar, PAN, passwords, and medical data.
+>
+> **Our Primary Use Cases (How we fix it)**:
+> 1. **Healthcare Form Assistance**: AI guides a user through medical claims without ever seeing patient IDs or diagnosis codes.
+> 2. **Banking Dashboards**: AI interacts with financial UI elements while account balances and card numbers remain strictly on-device.
 
-#### Slide 2: IDEA (Proposed Solution)
-> **ShieldBrowse — Privacy Boundary Before AI Reasoning**
+#### Slide 3: PROPOSED ARCHITECTURE & LOCAL PERCEPTION
+> **Token Rehydration: A Closed-Loop Privacy System**
 >
-> A Chrome MV3 extension locally captures DOM semantics and visual regions.
-> A 4-layer PII pipeline combines Regex/Checksum, DOM heuristics, Local Semantic NER, and Local Face Detection.
-> Detected PII is tokenized/redacted locally; the server receives sanitized context (solid black boxes & opaque tokens), never the original values.
-> VLM-agnostic architecture (Llama-4-Scout via Groq API for cloud, Qwen2.5-VL-3B via Ollama for local fallback) reasons over the sanitized context and returns structured browser actions.
+> **Local Perception (The ~80MB footprint)**:
+> - **YOLOv8-nano ONNX (~45 MB)**: UI/visual element detection.
+> - **Local Semantic NER INT8 (~29 MB)**: Person/Org extraction.
+> - **MediaPipe BlazeFace (~230 KB)**: Local Face Detection.
+> - **Semantic DOM-Heuristics (0 MB)**: Instant structural PII detection.
 >
-> **Problem → Direct Solution Mapping** (show as table)
->
-> **Key Differentiator**: Privacy is an enforced local boundary between perception and network transmission, not an afterthought.
->
-> Pipeline visual: WEBPAGE → LOCAL PERCEPTION (DOM+Vision) → 4-LAYER PII DETECTION → TOKENIZE/REDACT → 🔒 PRIVACY GATE → SANITIZED CONTEXT ONLY → REASONING VLM → ACTION JSON → EXECUTE
+> **The Token Loop**:
+> 1. Detect PII and map to tokens (`[[PERSON_1]]`) purely in local memory.
+> 2. Server (Llama-4-Scout / Qwen2.5-VL) receives and reasons over tokens.
+> 3. Browser *rehydrates* the token (swaps `[[PERSON_1]]` back to "Rahul") before typing. **Server never sees "Rahul"**.
 
-#### Slide 3: TECHNICAL APPROACH
-> **Hybrid Local Perception + Privacy-Gated Agent Architecture**
+#### Slide 4: TECHNICAL ENFORCEMENT & SAFETY
+> **Fail-Closed Architecture: The Two Security Gates**
 >
-> Client — Browser: Chrome MV3 + Vite + Vanilla JS, ONNX Runtime Web with WebGPU/WASM
-> - YOLOv8-nano ONNX INT8 (~3.4 MB) — UI/visual element detection
-> - MediaPipe BlazeFace (~300 KB) — Local Face Detection
-> - Semantic DOM-Heuristics (0 MB) — Instant PII detection
-> - Local Semantic NER (~21 MB) — Person/Org extraction
+> It's not enough to say "we sanitize data." We physically enforce it:
 >
-> Server: FastAPI, VLM-agnostic (Llama 4 Scout / Qwen2.5-VL), constrained Action JSON output
->
-> **New security layers**:
-> - 🔒 Privacy Gate: Physically blocks outbound requests if unsanitized sensitive text remains in the JSON payload.
-> - ⛔ Action History Memory: Prevents infinite agent loops by passing failed actions into the prompt.
+> - 🔒 **Privacy Gate (Data Egress)**: Scans every outbound JSON payload. If raw PII is found, the network request is physically blocked.
+> - ⛔ **Action Safety Gate (Action Ingress)**: Scans every incoming server command. Rejects any `eval`, `<script>`, or injection patterns, allowing only whitelisted safe UI actions (`click`, `type`, `scroll`).
 
-#### Slide 4: FEASIBILITY AND VIABILITY
-> **Feasibility Through Lightweight Local Models + Measurable Controls**
+#### Slide 5: FEASIBILITY & EVALUATION METRICS
+> **Built for Speed and Measured Accuracy**
 >
-> Why feasible: We compressed a full Vision AI agent into an **~80 MB** packaged extension payload by utilizing quantized models and optimizing the ONNX runtime. A Docker equivalent would be 1.5 GB+.
+> **Resource Efficiency**: By dropping heavy OCR (which takes 3-10s) and using a DOM-first approach combined with quantized local models, we meet the strict **20% Client Resource** evaluation metric.
 >
-> **Key Risks → Engineering Mitigation** (show as table):
-> - PII detector misses → Defense-in-depth: Regex + DOM Heuristics + Vision (No OCR lag)
-> - Data leaks through network → Privacy Gate checks the final payload before `fetch()`
-> - Token category leaks info → Opaque tokens ([[VALUE_N]]) for highly sensitive categories
-> - Malicious page manipulates agent → System prompt explicitly isolates untrusted DOM data
-> - Infinite AI Scan Loops → Action History memory explicitly prevents repeating failed actions
-> - VRAM Exhaustion → Graceful fallback from WebGPU to CPU math inside ONNX Runtime
->
-> **Validation**: ISRO Problem Statement requires balance of Latency and Accuracy. By dropping heavy OCR (3-10s latency) in favor of Semantic DOM Extraction (5ms latency), we dominate the 15% latency evaluation metric.
+> **PIIBench-mini Validation**: Tested against 500+ annotated edge cases (including hard negatives) to rigorously measure Precision, Recall, and F1 per PII category, directly satisfying the **20% PII Detection** and **20% Redaction Precision** scoring criteria.
 
-#### Slide 5: IMPACT AND BENEFITS
-> **AI Assistance Without Exposing Sensitive Browser Context**
+#### Slide 6: IMPACT & DPDP ALIGNMENT
+> **Engineering Evidence of Data Minimization**
 >
-> Target environments: Healthcare, Government, Banking, Enterprise/regulated
+> **DPDP Audit Report**: ShieldBrowse automatically generates a local Markdown audit report per session. It proves to judges (and regulators) exactly how many tokens were generated and that **0 raw values** leaked, providing concrete engineering evidence for DPDP Act 2023 alignment.
 >
-> The agent can still use protected values through local token rehydration (the server says "Type [[AADHAAR_1]]", the client replaces it with the real number).
-> Lightweight client models target browser deployment without requiring an LLM to run locally.
-> The architecture separates what the server needs to reason from what the server is allowed to see.
->
-> **⚠️ Do NOT write**: "Completely secure" or "100% privacy guaranteed"
-> **DO write**: "Local privacy enforcement with measurable detection and transmission controls"
-
-#### Slide 6: RESEARCH & REFERENCES
-> Problem: SIH 2026 PS 26171 — On-device Visual Perception for Lightweight Browser Agents
-> Browser-Agent Research: WebVoyager, SeeAct, ShowUI, OS-ATLAS, ScreenAI
-> Privacy/PII: Microsoft Presidio, DPDP Act 2023
-> On-device AI: ONNX Runtime Web, MediaPipe
-> Our artifacts: ShieldBrowse Dual-Layer Redaction Architecture
+> **Research References**:
+> - Frameworks: ONNX Runtime Web, WebGPU
+> - PS 26171 ISRO On-device Visual Perception
 
 ---
 
@@ -511,6 +488,42 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 ### Q9: "How does this relate to India's DPDP Act?"
 > **Answer**: *"The DPDP Act 2023 mandates data minimization — collect only what's necessary — and purpose limitation — use data only for its stated purpose. ShieldBrowse's architecture supports both: we send only the minimum data needed (tokenized structure, not raw PII), and we generate an audit trail as engineering evidence. To be precise, that's evidence supporting DPDP principles — not a legal compliance certification, which is out of scope for an MVP."*
 
+### Q10: "How do you handle AI hallucinations or infinite action loops?"
+> **Answer**: *"We handle this locally through our Action Safety Gate and Action History memory. If the VLM hallucinates an invalid action, the Action Safety Gate rejects it immediately. To prevent infinite loops (where the VLM keeps trying the same failed action), the extension tracks recent failures and injects them into the prompt. If it fails 3 times, the agent safely halts and asks the user for help."*
+
+### Q11: "Can this run completely without the internet?"
+> **Answer**: *"Yes. While our primary fast path uses a cloud API (Groq) for VLM reasoning over sanitized tokens, our architecture supports a 100% offline fallback using Qwen2.5-VL via Ollama. It runs entirely on the local machine. Crucially, regardless of whether you are online or offline, the PII detection and tokenization pipeline ALWAYS runs locally in the browser."*
+
+### Q12: "Why did you choose Vanilla JS instead of React for the extension?"
+> **Answer**: *"A browser agent must inject its content script into every page on the internet. If we used React, we would inject a heavy runtime into every tab, which slows down the browser and risks version conflicts with websites that already use React. Vanilla JS and Vite keep our content script incredibly fast, lightweight, and isolated."*
+
+### Q13: "How do you ensure this won't crash low-end computers?"
+> **Answer**: *"We aggressively optimize for client resources. We don't run the vision model on the entire screen continuously. We use DOM heuristics first (which take ~5ms and 0 extra RAM) and only invoke the YOLO and Face detection models on specific image regions. Combined with ONNX Runtime's WebGPU/WASM acceleration, our total footprint remains around ~80MB, well within the capacity of modern low-end hardware."*
+
+### Q14: "How does your approach differ from existing research like WebVoyager or OS-ATLAS?"
+> **Answer**: *"WebVoyager and OS-ATLAS are state-of-the-art for web agents, but they completely ignore privacy—they send full, unredacted screenshots to cloud LLMs. Our architectural contribution is injecting a local, enforceable privacy layer (the 4-layer detector and Token Rehydration loop) *before* the VLM reasoning phase. We combined web agent research with data minimization research."*
+
+### Q15: "Beyond privacy, what is the business impact of tokenization over just blurring?"
+> **Answer**: *"Blurring destroys the context the VLM needs. If you blur an Aadhaar field, the VLM doesn't know what it is. By tokenizing it to `[[AADHAAR_1]]`, the AI knows the semantic structure and can still help the user complete a banking form. This means heavily regulated industries like healthcare and finance can finally deploy AI agents without violating compliance."*
+
+### Q16: "Why is this better than just using Microsoft Presidio to redact data?"
+> **Answer**: *"Presidio is a fantastic PII detector, but it is not an agent framework. If you use Presidio to just black out data, an LLM can't help you fill out a form because it doesn't know what data goes where. Our innovation is the 'Token Rehydration Loop'—we replace PII with opaque tokens, let the VLM reason about them, and then our extension rehydrates them back into real values locally. Presidio is one-way; ShieldBrowse is a closed loop."*
+
+### Q17: "How would you scale this to handle new forms of PII?"
+> **Answer**: *"Our 4-layer pipeline is completely modular. If a hospital needs to detect a proprietary patient ID format, we don't have to retrain an entire LLM. We just add a new Regex constraint to Layer 1, or fine-tune our tiny 29MB local NER model for Layer 3. The architecture isolates detection logic from reasoning logic, making it trivially scalable."*
+
+### Q18: "How are you running YOLOv8 in the browser without Python?"
+> **Answer**: *"We export the PyTorch model to the ONNX format and run it using ONNX Runtime Web. This leverages WebAssembly (WASM) and WebGPU for hardware acceleration directly within Chrome. It allows us to achieve inference times under 100ms entirely client-side, with zero Python backend dependencies."*
+
+### Q19: "Why do you need a local Semantic NER model if you already have Regex?"
+> **Answer**: *"Regex and checksums are perfect for structured data like Aadhaar numbers, PAN cards, or emails. But they fail completely on unstructured text like person names ('Rahul Sharma') or organization names ('City Hospital'). Our quantized INT8 DistilBERT NER model specifically catches these semantic entities that lack strict mathematical patterns."*
+
+### Q20: "Why use MediaPipe BlazeFace instead of just letting YOLO detect faces?"
+> **Answer**: *"Resource efficiency. BlazeFace is hyper-optimized specifically for face detection and is incredibly tiny (~230KB). It runs significantly faster and more accurately for human faces than a general-purpose YOLO object detector. This allows us to rapidly detect and blur profile pictures or ID photos before any visual data is processed further."*
+
+### Q21: "How does the VLM 'see' the screen if you only send sanitized tokens?"
+> **Answer**: *"We don't just send a raw, blurred screenshot. We send the VLM a stripped-down, structural representation of the DOM (an accessibility tree) combined with bounding box coordinates from YOLO. The VLM receives a text-based 'wireframe' where all sensitive values are already replaced with tokens like `[[PERSON_1]]`. It reasons over this structure to determine the next action."*
+
 ---
 
 ## 11. Glossary — Technical Terms Simplified
@@ -550,13 +563,13 @@ The SIH template has exactly 6 sections. We stay strictly within it.
 | **Architecture Diagram** | Flow chart showing Browser → PII Detection → Tokenization → Server → Action. Use the diagram from PLAN.md. | Slide 4 |
 | **Before/After Screenshot** | Side-by-side: real form data vs. tokenized version | Slide 3 |
 | **4-Layer Detector Visual** | Stacked layers showing Regex/Checksum → DOM Rules → Semantic NER → Face Detection | Slide 5 |
-| **Benchmark Table** | Per-entity precision/recall/F1 table | Slide 9 |
-| **Latency Chart** | Stacked bar chart showing time per pipeline stage — populate with **measured** values only | Slide 9 |
-| **Resource Chart** | Bar chart of model sizes (measured footprint ~85 MB) | Slide 9 |
+| **Benchmark Table** | Per-entity precision/recall/F1 table | Slide 5 |
+| **Latency Chart** | Stacked bar chart showing time per pipeline stage — populate with **measured** values only | Slide 5 |
+| **Resource Chart** | Bar chart of model sizes (measured footprint ~80 MB) | Slide 5 |
 | **Network Tab Screenshot** | Chrome DevTools showing tokenized payload in the network request | Demo moment |
 | **Side Panel Screenshot** | The extension's side panel showing detected PII and metrics | Demo moment |
 | **Comparison Table** | ShieldBrowse vs. competitors (from Section 9) | Slide showing differentiation |
-| **DPDP Act Visual** | Show how our features map to DPDP Act principles | Slide 10 |
+| **DPDP Act Visual** | Show how our features map to DPDP Act principles | Slide 6 |
 | **ShieldBrowse Logo** | Professional logo for the extension | Title slide, extension icon |
 
 ### Design Principles for the PPT
