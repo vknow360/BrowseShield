@@ -42,7 +42,7 @@ export function validateOutboundPayload(payload, tokenMap) {
 
   for (const [token, data] of Object.entries(tokenMap)) {
     const v = data?.realValue;
-    if (!v || typeof v !== "string" || v.trim().length <= 2) continue;
+    if (!v || typeof v !== "string" || v.trim().length < 4) continue;
 
     const hit = STRUCTURED_TYPES.has(data.entityType)
       ? combinedText.includes(v)

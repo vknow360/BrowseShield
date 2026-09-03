@@ -5,7 +5,6 @@
 import browser from "webextension-polyfill";
 import "./index.css";
 import { maskValue } from "../../core/tokenizer/tokenizer.js";
-import { tryLocalAction } from "../../core/local-agent.js";
 import { generateAuditReport, downloadReport } from "../../core/audit/report-generator.js";
 
 const outputBox = document.getElementById("output-box");
@@ -18,178 +17,78 @@ const agentStatus = document.getElementById("agent-status");
 const taskInput = document.getElementById("task-instruction");
 
 let lastPayload = null;
-let actionHistoryState = [];
-let lastTaskInstruction = "";
 let agentRunning = false;
 let sessionBlockCount = 0;
 
-const MAX_AGENT_STEPS = 20;
-const STEP_SETTLE_MS = 800; // wait after each action for the page to settle
+// Connect to background agent loop
+const port = browser.runtime.connect({ name: "agent-panel" });
 
-const DOM_STABLE_ACTIONS = new Set(["type", "wait"]);
-
-/**
- * Runs a single agent cycle: fresh-scan → VLM decision → get action plan.
- * Returns the array of actions, or throws on failure.
- */
-async function getPlanFromVLM(taskInstruction) {
-  // 1. Force a fresh scan so DOM + coordinates are current
-  const [activeTab] = await browser.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
-  if (activeTab) {
-    await browser.tabs
-      .sendMessage(activeTab.id, { type: "rescan" })
-      .catch(() => {});
-    await new Promise((r) => setTimeout(r, 200));
+port.onMessage.addListener((msg) => {
+  if (msg.type === "state") {
+    renderAgentState(msg);
+  } else if (msg.type === "update-panel") {
+    renderScanPayload(msg.payload);
+  } else if (msg.type === "privacy-violation") {
+    renderViolationPayload(msg.payload);
+  } else if (msg.type === "vlm-request-preview") {
+    renderVlmPreview(msg.payload);
   }
+});
 
-  // 2. Get the latest scan from background
-  const bgRes = await browser.runtime
-    .sendMessage({ type: "get-latest-scan" })
-    .catch(() => null);
-  const freshPayload =
-    bgRes?.scanPayload?.sanitizedPayload || lastPayload?.sanitizedPayload;
-  if (!freshPayload) throw new Error("No page data available");
-
-  // 2.5 Intercept locally if possible
-  const localDecision = tryLocalAction(taskInstruction, freshPayload.nodes || []);
-  if (localDecision.canHandle) {
-    console.log("[Local Agent] Handling locally:", localDecision.action);
-    // Add "done" so it doesn't loop infinitely after doing local action
-    return [localDecision.action, { action: "done", reasoning: localDecision.action.reasoning }];
+function renderAgentState(stateObj) {
+  const { state, step, maxSteps, errorReason, detail } = stateObj;
+  
+  if (state === "idle") {
+    agentRunning = false;
+    runAgentBtn.textContent = "▶️ Run Agent";
+    agentStatus.textContent = "Ready.";
+    runAgentBtn.disabled = false;
+  } else if (state === "planning") {
+    agentRunning = true;
+    runAgentBtn.textContent = "⏹️ Stop Agent";
+    agentStatus.textContent = `⏳ Step ${step}/${maxSteps} — thinking...`;
+    runAgentBtn.disabled = false;
+  } else if (state === "executing") {
+    agentRunning = true;
+    runAgentBtn.textContent = "⏹️ Stop Agent";
+    const targetInfo = typeof detail.target === "object" ? `(${detail.target.x},${detail.target.y})` : detail.target || "";
+    agentStatus.textContent = `🎯 Step ${step}: Executing (${detail.action} → ${targetInfo})`;
+    runAgentBtn.disabled = false;
+  } else if (state === "waiting-for-settle") {
+    agentRunning = true;
+    runAgentBtn.textContent = "⏹️ Stop Agent";
+    agentStatus.textContent = `🔄 Step ${step}: Waiting for page to settle...`;
+    runAgentBtn.disabled = false;
+  } else if (state === "done") {
+    agentRunning = false;
+    runAgentBtn.textContent = "▶️ Run Agent";
+    agentStatus.textContent = `✅ Done in ${step} step(s): ${detail || "Task completed."}`;
+    runAgentBtn.disabled = false;
+  } else if (state === "error") {
+    agentRunning = false;
+    runAgentBtn.textContent = "▶️ Run Agent";
+    agentStatus.textContent = `❌ Error: ${errorReason}`;
+    runAgentBtn.disabled = false;
   }
-
-  // 3. Ask VLM for the next action plan
-  const response = await browser.runtime.sendMessage({
-    type: "run-agent",
-    payload: {
-      sanitizedPayload: freshPayload,
-      tokenTypes: Array.isArray(freshPayload.tokenTypes)
-        ? freshPayload.tokenTypes
-        : Object.keys(freshPayload.tokenTypes || {}),
-      taskInstruction,
-      actionHistory: actionHistoryState,
-    },
-  });
-
-  if (response.status !== "success") {
-    throw new Error(response.error || "VLM request failed");
-  }
-
-  return response.plan.actions || [];
 }
 
-runAgentBtn.addEventListener("click", async () => {
-  // If already running, act as a Stop button
+runAgentBtn.addEventListener("click", () => {
   if (agentRunning) {
-    agentRunning = false;
-    runAgentBtn.textContent = "▶️ Run Agent";
-    agentStatus.textContent = "⏹️ Stopped by user.";
-    return;
-  }
-
-  if (!lastPayload) {
-    agentStatus.textContent = "❌ No active page data. Focus a web page first.";
-    return;
-  }
-
-  const taskInstruction = taskInput.value.trim() || "Fill out this form";
-
-  // Reset history if the task changed
-  if (taskInstruction !== lastTaskInstruction) {
-    actionHistoryState = [];
-    lastTaskInstruction = taskInstruction;
-  }
-
-  agentRunning = true;
-  runAgentBtn.textContent = "⏹️ Stop Agent";
-
-  try {
-    let isTaskDone = false;
-    let consecutiveFailures = 0;
-    const MAX_CONSECUTIVE_FAILURES = 3;
-
-    for (let step = 1; step <= MAX_AGENT_STEPS; step++) {
-      if (!agentRunning || isTaskDone) break; // user clicked Stop or task done
-
-      agentStatus.textContent = `⏳ Step ${step}/${MAX_AGENT_STEPS} — thinking...`;
-
-      const actions = await getPlanFromVLM(taskInstruction);
-      if (actions.length === 0) {
-          agentStatus.textContent = `⚠️ VLM returned empty plan. Stopping.`;
-          break;
-      }
-
-      for (let i = 0; i < actions.length; i++) {
-          if (!agentRunning) break;
-          const action = actions[i];
-
-          // Track action history (keep last 5 for loop detection)
-          actionHistoryState.push(action);
-          if (actionHistoryState.length > 5) {
-            actionHistoryState.shift();
-          }
-
-          if (action.action === "done") {
-            agentStatus.textContent = `✅ Done in ${step} step(s): ${action.reasoning || "Task completed."}`;
-            isTaskDone = true;
-            break;
-          }
-
-          agentStatus.textContent = `🎯 Step ${step}: Executing ${i+1}/${actions.length} (${action.action} → ${typeof action.target === "object" ? `(${action.target.x},${action.target.y})` : action.target || ""})`;
-
-          // Execute the action on the active tab
-          const [tab] = await browser.tabs.query({
-            active: true,
-            currentWindow: true,
-          });
-          if (!tab) throw new Error("No active tab found");
-
-          const execResult = await browser.tabs.sendMessage(tab.id, {
-            type: "execute-action",
-            payload: { action },
-          });
-
-          if (execResult?.status === "error") {
-            consecutiveFailures++;
-            console.warn(`[Agent Loop] Execution error (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, execResult.error);
-            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-              agentStatus.textContent = `❌ ${MAX_CONSECUTIVE_FAILURES} consecutive actions failed. Stopping. Last error: ${execResult.error}`;
-              isTaskDone = true; // break outer loop too
-              break;
-            }
-          } else {
-            consecutiveFailures = 0; // reset on success
-          }
-
-          // Wait for the page to settle before the next action
-          await new Promise((r) => setTimeout(r, STEP_SETTLE_MS));
-
-          // If action mutates DOM, break inner loop to force rescan
-          if (!DOM_STABLE_ACTIONS.has(action.action)) {
-              break;
-          }
-      }
-
-      if (step === MAX_AGENT_STEPS && !isTaskDone) {
-        agentStatus.textContent = `⚠️ Reached ${MAX_AGENT_STEPS}-step limit. Click Run to continue.`;
-      }
-    }
-  } catch (err) {
-    agentStatus.textContent = `❌ Step failed: ${err.message}`;
-  } finally {
-    agentRunning = false;
-    runAgentBtn.textContent = "▶️ Run Agent";
+    port.postMessage({ type: "stop-agent" });
+  } else {
+    const taskInstruction = taskInput.value.trim() || "Fill out this form";
+    port.postMessage({ type: "start-agent", task: taskInstruction });
   }
 });
 
 function renderScanPayload(payload) {
   if (!payload) return;
   lastPayload = payload;
-  const { piiList = [], metrics, fields, sanitizedPayload } = payload;
-
+  const { candidates = [], nodes = [], tokenSummary } = payload;
+  
+  // Note: Since background tokenizes, we use the candidates + tokenSummary to display the PII
+  // We'll construct a simplified view based on what the tokenizer mapped.
+  
   // 1. Update Connection Status
   if (statusBadge) {
     statusBadge.textContent = "Active";
@@ -198,28 +97,27 @@ function renderScanPayload(payload) {
 
   // 2. Update PII Count Badge
   if (piiCountBadge) {
-    piiCountBadge.textContent = `${piiList.length} PII Items`;
+    piiCountBadge.textContent = `${candidates.length} PII Items`;
     piiCountBadge.className =
-      piiList.length > 0 ? "count-badge danger" : "count-badge";
+      candidates.length > 0 ? "count-badge danger" : "count-badge";
   }
 
   // 3. Render PII List
   if (piiListContainer) {
-    if (!piiList || piiList.length === 0) {
+    if (!candidates || candidates.length === 0) {
       piiListContainer.innerHTML =
         '<p class="empty-state">No PII detected on active page.</p>';
     } else {
-      piiListContainer.innerHTML = piiList
+      piiListContainer.innerHTML = candidates
         .map(
           (item) => `
         <div class="pii-item">
           <div class="pii-item-header">
             <span class="pii-badge tag-${(item.entityType || "").toLowerCase()}">${item.entityType}</span>
-            <span class="pii-source">${item.source} (${Math.round((item.confidence || 1) * 100)}%)</span>
+            <span class="pii-source">DOM (${Math.round((item.confidence || 1) * 100)}%)</span>
           </div>
           <div class="pii-item-body">
-            <span class="pii-label">${item.label || item.fieldId || "Unnamed field"}:</span>
-            <span class="pii-value">${maskValue(item.value, item.entityType)}</span>
+            <span class="pii-value">${maskValue(item.realValue, item.entityType)}</span>
           </div>
         </div>
       `,
@@ -229,9 +127,9 @@ function renderScanPayload(payload) {
   }
 
   // 4. Update Raw JSON output
-  if (outputBox && sanitizedPayload) {
+  if (outputBox) {
     outputBox.textContent = JSON.stringify(
-      sanitizedPayload.nodes || [],
+      nodes || [],
       null,
       2,
     );
@@ -241,6 +139,37 @@ function renderScanPayload(payload) {
   if (gateBadge) {
     gateBadge.textContent = "🔒 GATE: PASS";
     gateBadge.className = "badge gate-pass";
+  }
+}
+
+function renderVlmPreview(reqBody) {
+  if (!reqBody) return;
+  
+  if (reqBody.redactedImage) {
+    document.getElementById("vlm-preview-container").style.display = "block";
+    document.getElementById("vlm-redacted-image").src = reqBody.redactedImage;
+  }
+  
+  const tokenizedInputs = (reqBody.sanitizedDom || []).filter(node => {
+    const hasToken = (str) => /\[\[.*?\]\]/.test(str || "");
+    return hasToken(node.value) || hasToken(node.label);
+  }).map(node => ({
+    tagName: node.tagName,
+    label: node.label,
+    value: node.value,
+    selector: node.selector
+  }));
+  
+  const previewData = {
+    taskInstruction: reqBody.taskInstruction,
+    tokenTypes: reqBody.tokenTypes,
+    tokenizedInputs: tokenizedInputs,
+    actionHistory: reqBody.actionHistory || [],
+    uiBoxes: reqBody.uiBoxes || []
+  };
+  
+  if (outputBox) {
+    outputBox.textContent = JSON.stringify(previewData, null, 2);
   }
 }
 
@@ -260,11 +189,9 @@ function renderViolationPayload(payload) {
   }
 }
 
-// Listen for messages from background
+// Global fallback listener for messages not handled by the port
 browser.runtime.onMessage.addListener((message) => {
-  if (message.type === "update-panel") {
-    renderScanPayload(message.payload);
-  } else if (message.type === "privacy-violation") {
+  if (message.type === "privacy-violation") {
     renderViolationPayload(message.payload);
   }
 });
@@ -277,30 +204,6 @@ if (exportAuditBtn) {
   });
 }
 
-// On side panel startup: get latest cached scan and request active tab to rescan
-(async function initPanel() {
-  try {
-    // 1. Check if background already has cached scan result
-    const bgRes = await browser.runtime
-      .sendMessage({ type: "get-latest-scan" })
-      .catch(() => null);
-    if (bgRes?.scanPayload) {
-      renderScanPayload(bgRes.scanPayload);
-    } else if (bgRes?.violationPayload) {
-      renderViolationPayload(bgRes.violationPayload);
-    }
+// Request initial state on startup
+port.postMessage({ type: "request-current-state" });
 
-    // 2. Trigger active tab to perform a fresh scan
-    const [tab] = await browser.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    if (tab?.id) {
-      await browser.tabs.sendMessage(tab.id, { type: "rescan" }).catch(() => {
-        // Tab might be chrome:// or un-injected page
-      });
-    }
-  } catch (err) {
-    console.warn("[ShieldBrowse Panel] Initial scan sync error:", err);
-  }
-})();

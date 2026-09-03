@@ -5,6 +5,10 @@ import { pipeline, env } from "@xenova/transformers";
 env.allowRemoteModels = false;
 env.useBrowserCache = false;
 
+// Force single-threaded execution to prevent Service Worker crashes 
+// (MV3 Service Workers have poor/buggy support for spawning internal WebWorkers)
+env.backends.onnx.wasm.numThreads = 1;
+
 let nerPipeline = null;
 
 /**

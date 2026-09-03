@@ -76,6 +76,7 @@ function extractNodesRecursively(root, interactiveNodes) {
         tagName: tag,
         type: node.type || null,
         label: label,
+        dataset: Object.assign({}, node.dataset),
         value:
           tag === "IMG"
             ? node.src === window.location.href
