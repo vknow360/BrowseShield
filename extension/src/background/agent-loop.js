@@ -402,8 +402,8 @@ export class AgentLoop {
       }
 
       // Contextual Key-Value extraction for credentials
-      const credentialRegex = /(?:password|pass|pwd|secret|key|token)\s*(?:is|:|=>|=|-|>)\s*([^\s,;."']+)/gi;
-      const usernameRegex = /(?:username|user|login|id|email)\s*(?:is|:|=>|=|-|>)\s*([^\s,;."']+)/gi;
+      const credentialRegex = /(?:password|pass|pwd|secret|key|token)\s*(?:is|:|=>|=|-|>|\s)\s*([^\s,;."']+)/gi;
+      const usernameRegex = /(?:username|user|login|id|email)\s*(?:is|:|=>|=|-|>|\s)\s*([^\s,;."']+)/gi;
 
       for (const match of this.taskInstruction.matchAll(credentialRegex)) {
         if (match[1]) detectedEntities.push({ type: "PASSWORD", value: match[1].trim() });

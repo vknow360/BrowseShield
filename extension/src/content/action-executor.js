@@ -253,18 +253,13 @@ export async function executeAction(action) {
       if (!element) throw new Error(`Element not found: ${target}`);
       await ensureVisible(element);
 
-      // Toggle the checked state
       if (element.type === "checkbox" || element.type === "radio") {
-        element.checked = !element.checked;
-        element.dispatchEvent(new Event("change", { bubbles: true }));
-        element.dispatchEvent(new Event("input", { bubbles: true }));
-        // Also fire click for frameworks that listen on click
-        element.click();
+        if (!element.checked) {
+          element.click();
+        }
       } else {
-        // It might be a toggle switch or custom element — just click it
         element.click();
       }
-
       return { success: true, action: actionType, target };
     }
 
