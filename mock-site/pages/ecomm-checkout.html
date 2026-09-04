@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopSecure — Checkout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+  <style>
+    .checkout-layout {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .checkout-card {
+      background: #fff;
+      border: 1px solid var(--border, #e2e8f0);
+      border-radius: 10px;
+      padding: 28px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      margin-bottom: 20px;
+    }
+
+    .checkout-card h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .payment-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .payment-tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      background: #f8fafc;
+      font-family: inherit;
+    }
+
+    .payment-tab.active {
+      border-color: var(--primary, #2563eb);
+      background: #eff6ff;
+      color: var(--primary);
+    }
+
+    .payment-tab:hover {
+      border-color: #94a3b8;
+    }
+
+    .payment-section {
+      display: none;
+    }
+
+    .payment-section.active {
+      display: block;
+    }
+
+    .order-summary {
+      position: sticky;
+      top: 80px;
+    }
+
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.9rem;
+    }
+
+    .order-item:last-child {
+      border-bottom: none;
+    }
+
+    .order-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0;
+      margin-top: 10px;
+      border-top: 2px solid var(--border);
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .badge-discount {
+      background: #dcfce7;
+      color: #16a34a;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .pincode-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .pincode-row input {
+      flex: 1;
+    }
+
+    .pincode-row button {
+      padding: 10px 16px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .delivery-info {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .checkout-success {
+      display: none;
+      text-align: center;
+      padding: 50px 20px;
+    }
+
+    .checkout-success h2 {
+      font-size: 1.5rem;
+      color: #059669;
+    }
+
+    .order-id-display {
+      font-family: monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      display: inline-block;
+      margin: 12px 0;
+    }
+
+    @media (max-width: 768px) {
+      .checkout-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .order-summary {
+        position: static;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">🛒 ShopSecure</div>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="login-otp.html">Login + OTP</a>
+      <a href="ecommerce-checkout.html" class="active">E-Commerce</a>
+      <a href="passport-application.html">Passport</a>
+      <a href="railway-booking.html">Railway</a>
+    </div>
+  </nav>
+
+  <div class="checkout-layout">
+    <!-- Main Checkout Form -->
+    <div id="checkout-form-area">
+      <form id="checkoutForm" novalidate>
+        <!-- Shipping Address -->
+        <div class="checkout-card">
+          <h2>📍 Shipping Address</h2>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="ship-name">Full Name <span class="req">*</span></label>
+              <input type="text" id="ship-name" name="fullName" placeholder="e.g. Rahul Sharma" required
+                autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label for="ship-phone">Mobile Number <span class="req">*</span></label>
+              <input type="tel" id="ship-phone" name="phone" placeholder="+91 98765 43210" required
+                autocomplete="tel" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="ship-email">Email Address <span class="req">*</span></label>
+            <input type="email" id="ship-email" name="email" placeholder="rahul@example.com" required
+              autocomplete="email" />
+          </div>
+
+          <div class="form-group">
+            <label for="ship-address">Street Address <span class="req">*</span></label>
+            <input type="text" id="ship-address" name="address" placeholder="House No, Street, Locality" required
+              autocomplete="street-address" />
+          </div>
+
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="ship-pincode">PIN Code <span class="req">*</span></label>
+              <div class="pincode-row">
+                <input type="text" id="ship-pincode" name="pincode" placeholder="560095" maxlength="6" required
+                  autocomplete="postal-code" />
+                <button type="button" id="check-pincode-btn">Check</button>
+              </div>
+              <div id="delivery-info" class="delivery-info">
+                ✅ Delivery available! Est. <strong>3-5 business days</strong>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="ship-city">City <span class="req">*</span></label>
+              <input type="text" id="ship-city" name="city" placeholder="Bengaluru" required
+                autocomplete="address-level2" />
+            </div>
+            <div class="form-group">
+              <label for="ship-state">State <span class="req">*</span></label>
+              <select id="ship-state" name="state" required>
+                <option value="">Select State</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Kerala">Kerala</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Telangana">Telangana</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="West Bengal">West Bengal</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="checkout-card">
+          <h2>💳 Payment Method</h2>
+
+          <div class="payment-tabs">
+            <button type="button" class="payment-tab active" data-method="upi">📱 UPI</button>
+            <button type="button" class="payment-tab" data-method="card">💳 Card</button>
+            <button type="button" class="payment-tab" data-method="netbanking">🏦 Net Banking</button>
+            <button type="button" class="payment-tab" data-method="cod">📦 Cash on Delivery</button>
+          </div>
+
+          <!-- UPI Section -->
+          <div id="payment-upi" class="payment-section active">
+            <div class="form-group">
+              <label for="upi-id">UPI ID <span class="req">*</span></label>
+              <input type="text" id="upi-id" name="upiId" placeholder="yourname@upi or 9876543210@paytm" />
+            </div>
+          </div>
+
+          <!-- Card Section -->
+          <div id="payment-card" class="payment-section">
+            <div class="form-group">
+              <label for="card-number">Card Number <span class="req">*</span></label>
+              <input type="text" id="card-number" name="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19"
+                autocomplete="cc-number" />
+            </div>
+            <div class="grid-3">
+              <div class="form-group">
+                <label for="card-holder">Card Holder Name</label>
+                <input type="text" id="card-holder" name="cardHolder" placeholder="Name on card"
+                  autocomplete="cc-name" />
+              </div>
+              <div class="form-group">
+                <label for="card-expiry">Expiry (MM/YY)</label>
+                <input type="text" id="card-expiry" name="cardExpiry" placeholder="12/28" maxlength="5"
+                  autocomplete="cc-exp" />
+              </div>
+              <div class="form-group">
+                <label for="card-cvv">CVV</label>
+                <input type="password" id="card-cvv" name="cardCvv" placeholder="***" maxlength="4"
+                  autocomplete="cc-csc" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Net Banking Section -->
+          <div id="payment-netbanking" class="payment-section">
+            <div class="form-group">
+              <label for="bank-select">Select Bank <span class="req">*</span></label>
+              <select id="bank-select" name="bankName">
+                <option value="">Choose your bank</option>
+                <option value="SBI">State Bank of India</option>
+                <option value="HDFC">HDFC Bank</option>
+                <option value="ICICI">ICICI Bank</option>
+                <option value="Axis">Axis Bank</option>
+                <option value="Kotak">Kotak Mahindra Bank</option>
+                <option value="PNB">Punjab National Bank</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- COD Section -->
+          <div id="payment-cod" class="payment-section">
+            <div
+              style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; padding: 12px; font-size: 0.85rem; color: #c2410c;">
+              💡 Cash on Delivery selected. An additional ₹49 COD fee will be charged. Pay the delivery person at the
+              time of delivery.
+            </div>
+          </div>
+        </div>
+
+        <!-- Place Order Button -->
+        <div class="checkout-card" style="text-align: center;">
+          <button type="submit" class="submit-btn" id="place-order-btn" style="max-width: 400px;">
+            🛒 Place Order & Pay
+          </button>
+        </div>
+      </form>
+
+      <!-- Success Panel -->
+      <div id="checkout-success" class="checkout-success checkout-card">
+        <div style="font-size: 4rem;">🎉</div>
+        <h2>Order Placed Successfully!</h2>
+        <p style="color: var(--text-muted); margin-bottom: 16px;">Thank you for shopping with ShopSecure.</p>
+        <div class="order-id-display" id="order-id-display">ORD-2026-XXXXXX</div>
+        <div class="session-info" style="max-width: 350px; margin: 20px auto;">
+          <div>📦 <strong>Status:</strong> Processing</div>
+          <div>🚚 <strong>Est. Delivery:</strong> <span id="est-delivery">—</span></div>
+          <div>🛡️ <strong>ShieldBrowse:</strong> <span style="color: #059669;">Payment PII Tokenized</span></div>
+        </div>
+        <button type="button" class="submit-btn" onclick="resetCheckout()"
+          style="max-width: 300px; background: #10b981;">
+          🔄 Place Another Order
+        </button>
+      </div>
+    </div>
+
+    <!-- Order Summary Sidebar -->
+    <div class="order-summary">
+      <div class="checkout-card">
+        <h2>🧾 Order Summary</h2>
+        <div class="order-item">
+          <span>Wireless Noise Cancelling Headphones</span>
+          <span>₹4,999</span>
+        </div>
+        <div class="order-item">
+          <span>USB-C Fast Charger (65W)</span>
+          <span>₹1,299</span>
+        </div>
+        <div class="order-item">
+          <span>Premium Phone Case (Clear)</span>
+          <span>₹699</span>
+        </div>
+        <div class="order-item">
+          <span>Shipping</span>
+          <span style="color: #16a34a;">FREE</span>
+        </div>
+        <div class="order-item">
+          <span>Discount <span class="badge-discount">SAVE20</span></span>
+          <span style="color: #16a34a;">-₹1,000</span>
+        </div>
+        <div class="order-total">
+          <span>Total</span>
+          <span id="order-total-amount">₹5,997</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>ShopSecure™ Mock Portal • ShieldBrowse SIH 2026 Demo • E-Commerce Checkout Testing</p>
+  </footer>
+
+  <script>
+    // Payment tab switching
+    document.querySelectorAll(".payment-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".payment-tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".payment-section").forEach(s => s.classList.remove("active"));
+        tab.classList.add("active");
+        const method = tab.dataset.method;
+        document.getElementById(`payment-${method}`).classList.add("active");
+
+        // Update total for COD
+        const total = document.getElementById("order-total-amount");
+        total.textContent = method === "cod" ? "₹6,046" : "₹5,997";
+
+        // Trigger rescan
+        document.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    });
+
+    // Pincode check mock
+    document.getElementById("check-pincode-btn").addEventListener("click", () => {
+      const pincode = document.getElementById("ship-pincode").value;
+      if (pincode.length === 6) {
+        document.getElementById("delivery-info").style.display = "block";
+        // Auto-fill city/state based on pincode (mock)
+        const pincodeMap = {
+          "560095": { city: "Bengaluru", state: "Karnataka" },
+          "110001": { city: "New Delhi", state: "Delhi" },
+          "400001": { city: "Mumbai", state: "Maharashtra" },
+          "600001": { city: "Chennai", state: "Tamil Nadu" },
+          "700001": { city: "Kolkata", state: "West Bengal" },
+        };
+        const data = pincodeMap[pincode];
+        if (data) {
+          document.getElementById("ship-city").value = data.city;
+          document.getElementById("ship-state").value = data.state;
+          document.getElementById("ship-city").dispatchEvent(new Event("input", { bubbles: true }));
+          document.getElementById("ship-state").dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+    });
+
+    // Form submission
+    document.getElementById("checkoutForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Generate order ID
+      const orderId = "ORD-2026-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      document.getElementById("order-id-display").textContent = orderId;
+
+      // Estimated delivery
+      const delivery = new Date();
+      delivery.setDate(delivery.getDate() + 5);
+      document.getElementById("est-delivery").textContent = delivery.toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric" });
+
+      // Show success, hide form
+      document.getElementById("checkoutForm").style.display = "none";
+      document.getElementById("checkout-success").style.display = "block";
+
+      // Trigger rescan
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    function resetCheckout() {
+      document.getElementById("checkoutForm").style.display = "block";
+      document.getElementById("checkout-success").style.display = "none";
+      document.getElementById("checkoutForm").reset();
+      document.getElementById("delivery-info").style.display = "none";
+      // Reset payment tabs
+      document.querySelectorAll(".payment-tab").forEach(t => t.classList.remove("active"));
+      document.querySelector('[data-method="upi"]').classList.add("active");
+      document.querySelectorAll(".payment-section").forEach(s => s.classList.remove("active"));
+      document.getElementById("payment-upi").classList.add("active");
+    }
+  </script>
+</body>
+
+</html>
