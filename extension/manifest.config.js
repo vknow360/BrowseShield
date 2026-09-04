@@ -29,7 +29,7 @@ export default defineManifest(async (env) => ({
     service_worker: "src/background/service-worker.js",
     type: "module",
   },
-  permissions: ["activeTab", "sidePanel", "storage", "tabs"],
+  permissions: ["activeTab", "sidePanel", "storage", "tabs", "offscreen"],
   host_permissions: ["<all_urls>"],
   side_panel: {
     default_path: "src/ui/sidepanel/index.html",
@@ -54,7 +54,7 @@ export default defineManifest(async (env) => ({
   web_accessible_resources: [
     {
       matches: ["<all_urls>"],
-      resources: ["models/*", "tesseract/*"],
+      resources: ["models/*", "tesseract/*", "src/offscreen/offscreen.html"],
     },
   ],
 }));

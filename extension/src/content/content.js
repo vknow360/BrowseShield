@@ -15,8 +15,8 @@ console.log("[ShieldBrowse] Content script active on:", window.location.href);
 
 initDetectors();
 
-// DOM Settle Detection
-function waitForSettle(timeoutMs = 2000, silenceMs = 500) {
+// DOM Settle Detection — waits for DOM to stop mutating
+function waitForSettle(timeoutMs = 3000, silenceMs = 600) {
   return new Promise(resolve => {
     let timer, ceiling;
     const obs = new MutationObserver(() => {
@@ -84,18 +84,45 @@ async function scanAndEmit(isActionComplete = false, actionId = null) {
 // 1. Initial scan on document load
 scanAndEmit();
 
-// 2. Debounced live listeners for user input or profile changes
+// 2. Debounced live listeners for user input — increased to 300ms for less churn
 let isAgentExecuting = false;
 const debouncedScan = debounce(() => {
   if (isAgentExecuting) return;
   scanAndEmit(false);
-}, 100);
+}, 300);
 
 document.addEventListener("input", debouncedScan);
 document.addEventListener("change", debouncedScan);
-document.addEventListener("scroll", debouncedScan);
 
-// 3. Listen for agent actions to execute
+// 3. MutationObserver for dynamically added elements (OTP fields, AJAX forms, etc.)
+const mutationDebounce = debounce(() => {
+  if (isAgentExecuting) return;
+  scanAndEmit(false);
+}, 500);
+
+const domObserver = new MutationObserver((mutations) => {
+  // Only trigger rescan if meaningful elements were added
+  const hasNewInteractives = mutations.some(m => {
+    if (m.type === "childList") {
+      for (const node of m.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.matches?.("input, select, textarea, button, form, [role='button']")) return true;
+          if (node.querySelector?.("input, select, textarea, button, form")) return true;
+        }
+      }
+    }
+    return false;
+  });
+
+  if (hasNewInteractives) {
+    console.log("[ShieldBrowse] New interactive elements detected in DOM. Rescanning...");
+    mutationDebounce();
+  }
+});
+
+domObserver.observe(document.body, { childList: true, subtree: true });
+
+// 4. Listen for agent actions to execute
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "rescan") {
     scanAndEmit(false)
@@ -107,7 +134,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "execute-action") {
     const { action, actionId } = message.payload;
     
-    // Note: 'action.value' is already rehydrated by the background script!
     isAgentExecuting = true;
     executeAction(action)
       .then(async (result) => {
@@ -120,7 +146,32 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })
       .catch(async (err) => {
         console.error("[ShieldBrowse] Action execution failed:", err);
-        sendResponse({ status: "error", error: err.message });
+
+        // Return richer error info for better VLM replanning
+        const errorInfo = {
+          message: err.message,
+          target: action.target,
+          action: action.action,
+        };
+
+        // Try to find what's actually at the target location
+        if (typeof action.target === "string") {
+          try {
+            const el = document.querySelector(action.target);
+            if (el) {
+              errorInfo.elementState = {
+                tagName: el.tagName,
+                type: el.type,
+                disabled: el.disabled,
+                readonly: el.readOnly,
+                visible: el.getBoundingClientRect().width > 0,
+                value: el.value?.substring(0, 50),
+              };
+            }
+          } catch (e) { /* ignore */ }
+        }
+
+        sendResponse({ status: "error", error: err.message, errorInfo });
         
         await waitForSettle();
         isAgentExecuting = false;

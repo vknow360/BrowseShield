@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Passport Seva — New Passport Application</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+  <style>
+    .passport-layout { max-width: 900px; margin: 30px auto; padding: 0 1rem; }
+    .govt-header { background: linear-gradient(135deg, #1e3a5f, #0f172a); color: #fff; padding: 20px 28px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 16px; }
+    .govt-header .emblem { font-size: 2.5rem; }
+    .govt-header h1 { font-size: 1.3rem; font-weight: 800; margin: 0; }
+    .govt-header .dept { font-size: 0.8rem; opacity: 0.7; }
+    .passport-form { background: #fff; border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; padding: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .tab-nav { display: flex; border-bottom: 2px solid var(--border); overflow-x: auto; }
+    .tab-btn { flex: 1; padding: 14px 16px; text-align: center; border: none; background: #f8fafc; font-family: inherit; font-weight: 600; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; color: var(--text-muted); white-space: nowrap; border-bottom: 3px solid transparent; }
+    .tab-btn.active { background: #fff; color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-btn:hover { background: #eff6ff; }
+    .tab-panel { display: none; padding: 28px; }
+    .tab-panel.active { display: block; }
+    .same-address-check { display: flex; align-items: center; gap: 10px; margin: 10px 0 16px; padding: 10px 14px; background: #f8fafc; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; }
+    .same-address-check input { width: 18px; height: 18px; cursor: pointer; }
+    .same-address-check span { font-size: 0.85rem; font-weight: 600; }
+    .captcha-box { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+    .captcha-challenge { background: #1e293b; color: #38bdf8; padding: 12px 24px; border-radius: 6px; font-family: monospace; font-size: 1.3rem; font-weight: 700; letter-spacing: 0.1em; user-select: none; }
+    .captcha-refresh { border: none; background: #f1f5f9; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 1.1rem; transition: transform 0.2s; }
+    .captcha-refresh:hover { transform: rotate(180deg); }
+    .captcha-input { width: 100px; }
+    .form-nav { display: flex; justify-content: space-between; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .success-banner { display: none; text-align: center; padding: 50px 20px; }
+    .success-banner h2 { color: #059669; font-size: 1.4rem; }
+    .arno { font-family: monospace; font-size: 1.3rem; background: #eff6ff; padding: 6px 14px; border-radius: 6px; color: var(--primary); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">🛂 Passport Seva</div>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="login-otp.html">Login + OTP</a>
+      <a href="ecommerce-checkout.html">E-Commerce</a>
+      <a href="passport-application.html" class="active">Passport</a>
+      <a href="railway-booking.html">Railway</a>
+    </div>
+  </nav>
+
+  <div class="passport-layout">
+    <div class="govt-header">
+      <div class="emblem">🇮🇳</div>
+      <div>
+        <h1>New Passport Application</h1>
+        <div class="dept">Ministry of External Affairs — Passport Seva Kendra</div>
+      </div>
+    </div>
+
+    <div class="passport-form">
+      <!-- Tab Navigation -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="personal">👤 Personal</button>
+        <button class="tab-btn" data-tab="family">👨‍👩‍👧 Family</button>
+        <button class="tab-btn" data-tab="address">📍 Address</button>
+        <button class="tab-btn" data-tab="identity">🪪 Identity</button>
+        <button class="tab-btn" data-tab="emergency">🚨 Emergency</button>
+        <button class="tab-btn" data-tab="review">✅ Review</button>
+      </div>
+
+      <form id="passportForm" novalidate>
+        <!-- Tab 1: Personal Details -->
+        <div id="tab-personal" class="tab-panel active">
+          <h2 style="margin-bottom: 16px;">Applicant Personal Details</h2>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="pp-first-name">First Name <span class="req">*</span></label>
+              <input type="text" id="pp-first-name" name="firstName" placeholder="Rahul" required />
+            </div>
+            <div class="form-group">
+              <label for="pp-middle-name">Middle Name</label>
+              <input type="text" id="pp-middle-name" name="middleName" placeholder="Kumar" />
+            </div>
+            <div class="form-group">
+              <label for="pp-last-name">Surname / Last Name <span class="req">*</span></label>
+              <input type="text" id="pp-last-name" name="lastName" placeholder="Sharma" required />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="pp-dob">Date of Birth <span class="req">*</span></label>
+              <input type="date" id="pp-dob" name="dob" required autocomplete="bday" />
+            </div>
+            <div class="form-group">
+              <label for="pp-gender">Gender <span class="req">*</span></label>
+              <select id="pp-gender" name="gender" required>
+                <option value="">Select</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pp-marital">Marital Status</label>
+              <select id="pp-marital" name="maritalStatus">
+                <option value="">Select</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="pp-email">Email Address <span class="req">*</span></label>
+              <input type="email" id="pp-email" name="email" placeholder="applicant@example.com" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="pp-phone">Mobile Number <span class="req">*</span></label>
+              <input type="tel" id="pp-phone" name="phone" placeholder="+91 98765 43210" required autocomplete="tel" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="pp-birthplace">Place of Birth <span class="req">*</span></label>
+              <input type="text" id="pp-birthplace" name="birthPlace" placeholder="e.g. Bengaluru" required />
+            </div>
+            <div class="form-group">
+              <label for="pp-nationality">Nationality</label>
+              <input type="text" id="pp-nationality" name="nationality" value="Indian" readonly />
+            </div>
+          </div>
+          <div class="form-nav">
+            <span></span>
+            <button type="button" class="btn btn-primary" onclick="switchTab('family')">Next: Family Details ➔</button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Family Details -->
+        <div id="tab-family" class="tab-panel">
+          <h2 style="margin-bottom: 16px;">Family Details</h2>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="pp-father-name">Father's Name <span class="req">*</span></label>
+              <input type="text" id="pp-father-name" name="fatherName" placeholder="e.g. Suresh Sharma" required />
+            </div>
+            <div class="form-group">
+              <label for="pp-mother-name">Mother's Name <span class="req">*</span></label>
+              <input type="text" id="pp-mother-name" name="motherName" placeholder="e.g. Sunita Sharma" required />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="pp-spouse-name">Spouse's Name (if applicable)</label>
+              <input type="text" id="pp-spouse-name" name="spouseName" placeholder="Leave blank if unmarried" />
+            </div>
+            <div class="form-group">
+              <label for="pp-guardian">Legal Guardian (for minors)</label>
+              <input type="text" id="pp-guardian" name="guardian" placeholder="Leave blank if not applicable" />
+            </div>
+          </div>
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="switchTab('personal')">⬅ Back</button>
+            <button type="button" class="btn btn-primary" onclick="switchTab('address')">Next: Address ➔</button>
+          </div>
+        </div>
+
+        <!-- Tab 3: Address -->
+        <div id="tab-address" class="tab-panel">
+          <h2 style="margin-bottom: 16px;">Present Address</h2>
+          <div class="form-group">
+            <label for="pp-present-addr">Street / House No / Locality <span class="req">*</span></label>
+            <input type="text" id="pp-present-addr" name="presentAddress" placeholder="123, MG Road, Indiranagar" required autocomplete="street-address" />
+          </div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="pp-present-city">City <span class="req">*</span></label>
+              <input type="text" id="pp-present-city" name="presentCity" placeholder="Bengaluru" required />
+            </div>
+            <div class="form-group">
+              <label for="pp-present-state">State <span class="req">*</span></label>
+              <input type="text" id="pp-present-state" name="presentState" placeholder="Karnataka" required />
+            </div>
+            <div class="form-group">
+              <label for="pp-present-pin">PIN Code <span class="req">*</span></label>
+              <input type="text" id="pp-present-pin" name="presentPincode" placeholder="560038" maxlength="6" required autocomplete="postal-code" />
+            </div>
+          </div>
+
+          <h2 style="margin: 24px 0 8px;">Permanent Address</h2>
+          <label class="same-address-check">
+            <input type="checkbox" id="pp-same-address" name="sameAddress" />
+            <span>Same as Present Address</span>
+          </label>
+          <div id="permanent-addr-fields">
+            <div class="form-group">
+              <label for="pp-perm-addr">Street / House No / Locality <span class="req">*</span></label>
+              <input type="text" id="pp-perm-addr" name="permAddress" placeholder="456, Church Street" />
+            </div>
+            <div class="grid-3">
+              <div class="form-group">
+                <label for="pp-perm-city">City <span class="req">*</span></label>
+                <input type="text" id="pp-perm-city" name="permCity" placeholder="Bengaluru" />
+              </div>
+              <div class="form-group">
+                <label for="pp-perm-state">State <span class="req">*</span></label>
+                <input type="text" id="pp-perm-state" name="permState" placeholder="Karnataka" />
+              </div>
+              <div class="form-group">
+                <label for="pp-perm-pin">PIN Code <span class="req">*</span></label>
+                <input type="text" id="pp-perm-pin" name="permPincode" placeholder="560001" maxlength="6" />
+              </div>
+            </div>
+          </div>
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="switchTab('family')">⬅ Back</button>
+            <button type="button" class="btn btn-primary" onclick="switchTab('identity')">Next: Identity Proof ➔</button>
+          </div>
+        </div>
+
+        <!-- Tab 4: Identity Documents -->
+        <div id="tab-identity" class="tab-panel">
+          <h2 style="margin-bottom: 16px;">Identity Verification Documents</h2>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="pp-id-type">Primary ID Proof Type <span class="req">*</span></label>
+              <select id="pp-id-type" name="idType" required>
+                <option value="">Select Document</option>
+                <option value="Aadhaar">Aadhaar Card</option>
+                <option value="PAN">PAN Card</option>
+                <option value="VoterID">Voter ID Card</option>
+                <option value="DrivingLicense">Driving License</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pp-id-number">Document Number <span class="req">*</span></label>
+              <input type="text" id="pp-id-number" name="idNumber" placeholder="Enter document number" required />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="pp-aadhaar">Aadhaar Number (12 digits) <span class="req">*</span></label>
+              <input type="text" id="pp-aadhaar" name="aadhaar" placeholder="XXXX XXXX XXXX" maxlength="14" required />
+            </div>
+            <div class="form-group">
+              <label for="pp-pan">PAN Number</label>
+              <input type="text" id="pp-pan" name="pan" placeholder="ABCDE1234F" maxlength="10" style="text-transform: uppercase;" />
+            </div>
+          </div>
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="switchTab('address')">⬅ Back</button>
+            <button type="button" class="btn btn-primary" onclick="switchTab('emergency')">Next: Emergency Contact ➔</button>
+          </div>
+        </div>
+
+        <!-- Tab 5: Emergency Contact -->
+        <div id="tab-emergency" class="tab-panel">
+          <h2 style="margin-bottom: 16px;">Emergency Contact Details</h2>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="pp-emg-name">Contact Person Name <span class="req">*</span></label>
+              <input type="text" id="pp-emg-name" name="emergencyName" placeholder="e.g. Priya Sharma" required />
+            </div>
+            <div class="form-group">
+              <label for="pp-emg-phone">Contact Phone <span class="req">*</span></label>
+              <input type="tel" id="pp-emg-phone" name="emergencyPhone" placeholder="+91 98765 43219" required />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="pp-emg-relation">Relationship</label>
+              <select id="pp-emg-relation" name="emergencyRelation">
+                <option value="Spouse">Spouse</option>
+                <option value="Parent">Parent</option>
+                <option value="Sibling">Sibling</option>
+                <option value="Friend">Friend</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pp-emg-addr">Emergency Contact Address</label>
+              <input type="text" id="pp-emg-addr" name="emergencyAddress" placeholder="City, State" />
+            </div>
+          </div>
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="switchTab('identity')">⬅ Back</button>
+            <button type="button" class="btn btn-primary" onclick="switchTab('review')">Next: Review & Submit ➔</button>
+          </div>
+        </div>
+
+        <!-- Tab 6: Review & Submit -->
+        <div id="tab-review" class="tab-panel">
+          <h2 style="margin-bottom: 16px;">Final Review & Declaration</h2>
+          <div id="review-summary" style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-size: 0.9rem; line-height: 1.8; margin-bottom: 20px;">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Math CAPTCHA -->
+          <div style="margin-bottom: 20px;">
+            <label>Security Verification (CAPTCHA) <span class="req">*</span></label>
+            <div class="captcha-box">
+              <div class="captcha-challenge" id="captcha-question">7 + 5 = ?</div>
+              <button type="button" class="captcha-refresh" onclick="refreshCaptcha()" title="Refresh CAPTCHA">🔄</button>
+              <input type="text" id="captcha-answer" name="captcha" class="captcha-input" placeholder="Answer" required />
+            </div>
+            <div id="captcha-error" style="color: #ef4444; font-size: 0.85rem; display: none;">Incorrect answer. Please try again.</div>
+          </div>
+
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" id="pp-declaration" name="declaration" required style="width: 18px; height: 18px;" />
+              <span>I declare that all information provided is true and correct. I understand that providing false information is a punishable offence under the Passports Act, 1967.</span>
+            </label>
+          </div>
+
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="switchTab('emergency')">⬅ Back</button>
+            <button type="submit" class="btn btn-primary" style="background: #10b981;" id="passport-submit-btn">
+              🚀 Submit Application
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Success -->
+      <div id="passport-success" class="success-banner tab-panel">
+        <div style="font-size: 4rem;">🎉</div>
+        <h2>Application Submitted Successfully!</h2>
+        <p style="color: var(--text-muted); margin: 10px 0;">Your Application Reference Number:</p>
+        <div class="arno" id="arno-display">ARN-2026-XXXXXX</div>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; max-width: 350px; margin: 20px auto; text-align: left; font-size: 0.85rem;">
+          <div>📋 <strong>Type:</strong> New Passport (Normal)</div>
+          <div>📅 <strong>Submitted:</strong> <span id="submit-date">—</span></div>
+          <div>🛡️ <strong>ShieldBrowse:</strong> <span style="color: #059669;">22 PII Fields Tokenized</span></div>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">🔄 Start New Application</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Passport Seva™ Mock Portal • ShieldBrowse SIH 2026 Demo • Government Form Testing</p>
+  </footer>
+
+  <script>
+    // ── Tab Navigation ──
+    let captchaAnswer = 0;
+
+    function switchTab(tabName) {
+      document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
+      document.getElementById(`tab-${tabName}`).classList.add("active");
+
+      if (tabName === "review") populateReview();
+
+      // Trigger rescan
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    // ── Same Address Checkbox ──
+    document.getElementById("pp-same-address").addEventListener("change", function() {
+      const fields = document.getElementById("permanent-addr-fields");
+      if (this.checked) {
+        document.getElementById("pp-perm-addr").value = document.getElementById("pp-present-addr").value;
+        document.getElementById("pp-perm-city").value = document.getElementById("pp-present-city").value;
+        document.getElementById("pp-perm-state").value = document.getElementById("pp-present-state").value;
+        document.getElementById("pp-perm-pin").value = document.getElementById("pp-present-pin").value;
+        fields.style.opacity = "0.5";
+        fields.querySelectorAll("input").forEach(i => i.readOnly = true);
+      } else {
+        fields.style.opacity = "1";
+        fields.querySelectorAll("input").forEach(i => i.readOnly = false);
+      }
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    // ── CAPTCHA ──
+    function refreshCaptcha() {
+      const a = Math.floor(Math.random() * 20) + 1;
+      const b = Math.floor(Math.random() * 20) + 1;
+      const ops = ['+', '-', '×'];
+      const op = ops[Math.floor(Math.random() * ops.length)];
+      let question, answer;
+      switch(op) {
+        case '+': question = `${a} + ${b} = ?`; answer = a + b; break;
+        case '-': question = `${Math.max(a,b)} - ${Math.min(a,b)} = ?`; answer = Math.max(a,b) - Math.min(a,b); break;
+        case '×': question = `${a} × ${Math.min(b, 9)} = ?`; answer = a * Math.min(b, 9); break;
+      }
+      document.getElementById("captcha-question").textContent = question;
+      captchaAnswer = answer;
+      document.getElementById("captcha-answer").value = "";
+    }
+    refreshCaptcha();
+
+    // ── Review Summary ──
+    function populateReview() {
+      const fields = [
+        ["Name", `${gv("pp-first-name")} ${gv("pp-middle-name")} ${gv("pp-last-name")}`.trim()],
+        ["Date of Birth", gv("pp-dob")],
+        ["Gender", gv("pp-gender")],
+        ["Email", gv("pp-email")],
+        ["Phone", gv("pp-phone")],
+        ["Father's Name", gv("pp-father-name")],
+        ["Mother's Name", gv("pp-mother-name")],
+        ["Present Address", `${gv("pp-present-addr")}, ${gv("pp-present-city")}, ${gv("pp-present-state")} - ${gv("pp-present-pin")}`],
+        ["ID Type", gv("pp-id-type")],
+        ["ID Number", gv("pp-id-number")],
+        ["Aadhaar", gv("pp-aadhaar")],
+      ];
+
+      const html = fields.map(([k, v]) => `<div><strong>${k}:</strong> ${v || '—'}</div>`).join("");
+      document.getElementById("review-summary").innerHTML = html;
+    }
+
+    function gv(id) { return document.getElementById(id)?.value || ""; }
+
+    // ── Form Submission ──
+    document.getElementById("passportForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      // Verify CAPTCHA
+      const userAnswer = parseInt(document.getElementById("captcha-answer").value);
+      if (userAnswer !== captchaAnswer) {
+        document.getElementById("captcha-error").style.display = "block";
+        return;
+      }
+      document.getElementById("captcha-error").style.display = "none";
+
+      // Verify declaration
+      if (!document.getElementById("pp-declaration").checked) {
+        alert("Please accept the declaration to proceed.");
+        return;
+      }
+
+      // Show success
+      const arn = "ARN-2026-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      document.getElementById("arno-display").textContent = arn;
+      document.getElementById("submit-date").textContent = new Date().toLocaleDateString("en-IN");
+
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(".tab-nav").style.display = "none";
+      document.getElementById("passport-success").classList.add("active");
+      document.getElementById("passport-success").style.display = "block";
+
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  </script>
+</body>
+</html>

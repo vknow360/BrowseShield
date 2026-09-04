@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShieldBrowse — Full Demo Flow</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+  <style>
+    .flow-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .flow-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .flow-header h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    .flow-header p {
+      color: #64748b;
+    }
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .pipeline-step {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    .pipeline-step.active {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+    .step-number {
+      width: 32px;
+      height: 32px;
+      background: #2563eb;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin: 0 auto 12px;
+    }
+    .step-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .step-desc {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+    .demo-area {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .panel {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .panel h3 {
+      margin: 0 0 16px;
+      font-size: 1rem;
+    }
+    .redact-box {
+      width: 100%;
+      height: 200px;
+      background: #000;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: monospace;
+      position: relative;
+      overflow: hidden;
+    }
+    .redacted-region {
+      position: absolute;
+      background: #000;
+      border: 2px solid #ef4444;
+    }
+    .token-output {
+      background: #090d16;
+      color: #38bdf8;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #2563eb;
+    }
+    .metric-label {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .log-console {
+      background: #090d16;
+      color: #10b981;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      margin-bottom: 4px;
+    }
+    .log-entry.error {
+      color: #ef4444;
+    }
+    .log-entry.warn {
+      color: #f59e0b;
+    }
+    @media (max-width: 768px) {
+      .pipeline {
+        grid-template-columns: 1fr;
+      }
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+      .metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">🛡️ ShieldBrowse Demo Sites</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="./pages/healthcare.html">Healthcare</a>
+      <a href="./pages/banking.html">Banking</a>
+      <a href="./pages/government.html">Government</a>
+      <a href="demo-flow.html" class="active">Live Demo</a>
+    </div>
+  </nav>
+
+  <div class="flow-container">
+    <div class="flow-header">
+      <h1>🛡️ ShieldBrowse — Live Demo Flow</h1>
+      <p>End-to-end demonstration of on-device PII detection, redaction, tokenization, and server reasoning.</p>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipeline-step active" id="step-1">
+        <div class="step-number">1</div>
+        <div class="step-title">Screen Capture</div>
+        <div class="step-desc">captureVisibleTab</div>
+      </div>
+      <div class="pipeline-step" id="step-2">
+        <div class="step-number">2</div>
+        <div class="step-title">PII Detection</div>
+        <div class="step-desc">DOM + Vision</div>
+      </div>
+      <div class="pipeline-step" id="step-3">
+        <div class="step-number">3</div>
+        <div class="step-title">Redaction</div>
+        <div class="step-desc">Blur + Blackout</div>
+      </div>
+      <div class="pipeline-step" id="step-4">
+        <div class="step-number">4</div>
+        <div class="step-title">Tokenization</div>
+        <div class="step-desc">Reversible tokens</div>
+      </div>
+      <div class="pipeline-step" id="step-5">
+        <div class="step-number">5</div>
+        <div class="step-title">VLM Server</div>
+        <div class="step-desc">Qwen2.5-VL</div>
+      </div>
+    </div>
+
+    <div class="demo-area">
+      <div class="two-col">
+        <div class="panel">
+          <h3>📸 Simulated Screenshot with PII</h3>
+          <div class="redact-box" id="screenshotBox">
+            <div style="text-align:center; z-index:1;">
+              <div style="font-size:1.2rem; margin-bottom:8px;">🏥 ArogyaShield Claim Portal</div>
+              <div style="font-size:0.9rem; opacity:0.8;">Patient: Rahul Sharma</div>
+              <div style="font-size:0.9rem; opacity:0.8;">Aadhaar: 2345 6789 0123</div>
+              <div style="font-size:0.9rem; opacity:0.8;">Card: 4111 1111 1111 1111</div>
+            </div>
+            <div class="redacted-region" style="top:20%; left:10%; width:80%; height:12%;"></div>
+            <div class="redacted-region" style="top:35%; left:10%; width:80%; height:12%;"></div>
+            <div class="redacted-region" style="top:50%; left:10%; width:80%; height:12%;"></div>
+          </div>
+          <div class="controls">
+            <button class="btn btn-primary" onclick="runDemo()">▶ Run Full Pipeline</button>
+            <button class="btn btn-secondary" onclick="resetDemo()">↺ Reset</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>🔍 PII Detection Log</h3>
+          <div class="log-console" id="logConsole">
+            <div class="log-entry">[System] Ready. Click "Run Full Pipeline" to start.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-area">
+      <div class="two-col">
+        <div class="panel">
+          <h3>🔒 Redacted Screenshot Output</h3>
+          <div class="redact-box" id="redactedBox" style="background:#111;">
+            <span style="color:#666;">Redacted output will appear here</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>🎫 Tokenized Payload Sent to Server</h3>
+          <div class="token-output" id="tokenOutput">
+{
+  "screenType": "form",
+  "tokenTypes": ["PERSON", "AADHAAR", "CREDIT_CARD"],
+  "taskInstruction": "Fill the claim form for [[PERSON_1]]",
+  "sanitizedDom": [...]
+}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric-card">
+        <div class="metric-value" id="metricPII">0</div>
+        <div class="metric-label">PII Fields Detected</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metricRedact">0%</div>
+        <div class="metric-label">Redaction Coverage</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metricLatency">0ms</div>
+        <div class="metric-label">End-to-End Latency</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metricTokens">0</div>
+        <div class="metric-label">Tokens Generated</div>
+      </div>
+    </div>
+
+    <div class="demo-area" style="margin-top:24px;">
+      <h3 style="margin-top:0;">🧪 Quick Scenarios</h3>
+      <div class="scenario-cards">
+        <a href="./pages/healthcare.html" class="scenario-card">
+          <h3>🏥 Healthcare</h3>
+          <p>14+ PII fields including Aadhaar, PAN, Medical history</p>
+        </a>
+        <a href="./pages/banking.html" class="scenario-card">
+          <h3>🏦 Banking</h3>
+          <p>Credit card, IFSC, PAN, Account numbers</p>
+        </a>
+        <a href="./pages/government.html" class="scenario-card">
+          <h3>🏛️ Government</h3>
+          <p>Aadhaar, Address, PIN code verification</p>
+        </a>
+        <a href="./pages/canvas-form.html" class="scenario-card">
+          <h3>🎨 Canvas PII</h3>
+          <p>PII rendered in canvas (bypasses DOM walker)</p>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const logConsole = document.getElementById('logConsole');
+    const redactedBox = document.getElementById('redactedBox');
+    const tokenOutput = document.getElementById('tokenOutput');
+    const metricPII = document.getElementById('metricPII');
+    const metricRedact = document.getElementById('metricRedact');
+    const metricLatency = document.getElementById('metricLatency');
+    const metricTokens = document.getElementById('metricTokens');
+
+    function log(msg, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logConsole.appendChild(entry);
+      logConsole.scrollTop = logConsole.scrollHeight;
+    }
+
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    async function runDemo() {
+      resetDemo();
+      const startTime = performance.now();
+      
+      log('Step 1: Capturing visible tab...');
+      await sleep(600);
+      highlightStep(1);
+      
+      log('Step 2: Running on-device vision pipeline (YOLO + MediaPipe)...');
+      await sleep(800);
+      highlightStep(2);
+      metricPII.textContent = '7';
+      log('Detected 7 PII fields: PERSON, AADHAAR, CREDIT_CARD, EMAIL, PHONE, ADDRESS, PINCODE');
+      
+      log('Step 3: Redacting faces and PII regions...');
+      await sleep(700);
+      highlightStep(3);
+      metricRedact.textContent = '92%';
+      redactedBox.innerHTML = `
+        <div style="text-align:center;">
+          <div style="font-size:1.2rem; margin-bottom:8px; filter:blur(8px);">ArogyaShield Claim Portal</div>
+          <div style="font-size:0.9rem; filter:blur(6px);">Patient: Rahul Sharma</div>
+          <div style="font-size:0.9rem; filter:blur(6px);">████████████</div>
+          <div style="font-size:0.9rem; filter:blur(6px);">████ ████ ████</div>
+        </div>
+      `;
+      log('Redacted: 3 face regions, 4 PII text boxes, 2 password fields');
+      
+      log('Step 4: Tokenizing sensitive values...');
+      await sleep(500);
+      highlightStep(4);
+      metricTokens.textContent = '5';
+      tokenOutput.textContent = JSON.stringify({
+        "screenType": "form",
+        "tokenTypes": ["PERSON", "AADHAAR", "CREDIT_CARD", "EMAIL", "PHONE"],
+        "taskInstruction": "Fill the claim form for [[PERSON_1]] using Aadhaar [[AADHAAR_1]]",
+        "sanitizedDom": [
+          { "tag": "INPUT", "type": "text", "value": "[[PERSON_1]]", "pii": true },
+          { "tag": "INPUT", "type": "text", "value": "[[AADHAAR_1]]", "pii": true },
+          { "tag": "INPUT", "type": "text", "value": "████████████", "pii": true }
+        ],
+        "redactedImage": "data:image/jpeg;base64,..."
+      }, null, 2);
+      log('Generated tokens: PERSON_1, AADHAAR_1, CREDIT_CARD_1, EMAIL_1, PHONE_1');
+      
+      log('Step 5: Sending sanitized payload to VLM server...');
+      await sleep(1000);
+      highlightStep(5);
+      const latency = Math.round(performance.now() - startTime);
+      metricLatency.textContent = `${latency}ms`;
+      log(`Server responded with plan: [{"action":"click","target":{...}}]`, 'success');
+      log(`Pipeline complete in ${latency}ms. Client never sent raw PII.`, 'success');
+    }
+
+    function highlightStep(n) {
+      document.querySelectorAll('.pipeline-step').forEach((el, i) => {
+        el.classList.toggle('active', i < n);
+      });
+    }
+
+    function resetDemo() {
+      logConsole.innerHTML = '<div class="log-entry">[System] Ready. Click "Run Full Pipeline" to start.</div>';
+      redactedBox.innerHTML = '<span style="color:#666;">Redacted output will appear here</span>';
+      tokenOutput.textContent = JSON.stringify({
+        "screenType": "form",
+        "tokenTypes": ["PERSON", "AADHAAR", "CREDIT_CARD"],
+        "taskInstruction": "Fill the claim form for [[PERSON_1]]",
+        "sanitizedDom": [...]
+      }, null, 2);
+      metricPII.textContent = '0';
+      metricRedact.textContent = '0%';
+      metricLatency.textContent = '0ms';
+      metricTokens.textContent = '0';
+      document.querySelectorAll('.pipeline-step').forEach(el => el.classList.remove('active'));
+    }
+  </script>
+</body>
+</html>

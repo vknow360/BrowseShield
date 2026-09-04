@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RailwayConnect — Train Ticket Booking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+  <style>
+    .railway-layout { max-width: 960px; margin: 30px auto; padding: 0 1rem; }
+    .railway-header { background: linear-gradient(135deg, #b91c1c, #7f1d1d); color: #fff; padding: 20px 28px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 16px; }
+    .railway-header h1 { font-size: 1.3rem; font-weight: 800; margin: 0; }
+    .railway-header .dept { font-size: 0.8rem; opacity: 0.8; }
+    .railway-card { background: #fff; border: 1px solid var(--border); border-radius: 0 0 10px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .railway-step { display: none; padding: 28px; }
+    .railway-step.active { display: block; }
+    .progress-steps { display: flex; border-bottom: 2px solid var(--border); padding: 0; }
+    .progress-step { flex: 1; text-align: center; padding: 14px; font-weight: 600; font-size: 0.82rem; color: var(--text-muted); position: relative; }
+    .progress-step.active { color: #b91c1c; }
+    .progress-step.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: #b91c1c; }
+    .progress-step.done { color: #059669; }
+    .progress-step.done::before { content: '✓ '; }
+    .train-search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .passenger-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 16px; position: relative; }
+    .passenger-card h3 { font-size: 0.95rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .passenger-number { background: #b91c1c; color: #fff; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+    .remove-passenger { position: absolute; top: 14px; right: 14px; border: none; background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; font-family: inherit; }
+    .add-passenger-btn { width: 100%; padding: 12px; border: 2px dashed var(--border); border-radius: 8px; background: #f8fafc; cursor: pointer; font-weight: 700; color: var(--primary, #2563eb); font-family: inherit; font-size: 0.9rem; transition: all 0.2s; }
+    .add-passenger-btn:hover { border-color: var(--primary); background: #eff6ff; }
+    .train-result { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 10px 0; display: flex; align-items: center; justify-content: space-between; }
+    .train-info { font-size: 0.9rem; }
+    .train-name { font-weight: 700; font-size: 1rem; }
+    .train-timing { color: var(--text-muted); font-size: 0.85rem; }
+    .avail-tag { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+    .avail-tag.available { background: #dcfce7; color: #16a34a; }
+    .avail-tag.waiting { background: #fef3c7; color: #d97706; }
+    .select-train-btn { padding: 8px 16px; border: none; background: #b91c1c; color: #fff; border-radius: 6px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+    .form-nav { display: flex; justify-content: space-between; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .booking-success { text-align: center; padding: 40px 20px; }
+    .pnr-display { font-family: monospace; font-size: 1.4rem; font-weight: 700; color: #b91c1c; background: #fef2f2; padding: 8px 20px; border-radius: 8px; display: inline-block; margin: 12px 0; letter-spacing: 0.1em; }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">🚆 RailwayConnect</div>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="login-otp.html">Login + OTP</a>
+      <a href="ecommerce-checkout.html">E-Commerce</a>
+      <a href="passport-application.html">Passport</a>
+      <a href="railway-booking.html" class="active">Railway</a>
+    </div>
+  </nav>
+
+  <div class="railway-layout">
+    <div class="railway-header">
+      <div style="font-size: 2rem;">🚆</div>
+      <div>
+        <h1>Train Ticket Booking</h1>
+        <div class="dept">Indian Railway Catering and Tourism Corporation — Mock Portal</div>
+      </div>
+    </div>
+
+    <div class="railway-card">
+      <div class="progress-steps" id="progress-nav">
+        <div class="progress-step active" data-step="search">1. Search Trains</div>
+        <div class="progress-step" data-step="passengers">2. Passenger Details</div>
+        <div class="progress-step" data-step="payment">3. Payment</div>
+        <div class="progress-step" data-step="confirm">4. Confirmation</div>
+      </div>
+
+      <form id="railwayForm" novalidate>
+        <!-- Step 1: Search Trains -->
+        <div id="step-search" class="railway-step active">
+          <h2 style="margin-bottom: 16px;">🔍 Search for Trains</h2>
+          <div class="train-search-grid">
+            <div class="form-group">
+              <label for="rw-from">From Station <span class="req">*</span></label>
+              <input type="text" id="rw-from" name="fromStation" placeholder="e.g. New Delhi (NDLS)" required list="stations-from" />
+              <datalist id="stations-from">
+                <option value="New Delhi (NDLS)">
+                <option value="Mumbai Central (MMCT)">
+                <option value="Bengaluru City (SBC)">
+                <option value="Chennai Central (MAS)">
+                <option value="Kolkata (HWH)">
+                <option value="Hyderabad (HYB)">
+                <option value="Jaipur (JP)">
+                <option value="Lucknow (LKO)">
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label for="rw-to">To Station <span class="req">*</span></label>
+              <input type="text" id="rw-to" name="toStation" placeholder="e.g. Mumbai Central (MMCT)" required list="stations-to" />
+              <datalist id="stations-to">
+                <option value="New Delhi (NDLS)">
+                <option value="Mumbai Central (MMCT)">
+                <option value="Bengaluru City (SBC)">
+                <option value="Chennai Central (MAS)">
+                <option value="Kolkata (HWH)">
+                <option value="Hyderabad (HYB)">
+                <option value="Jaipur (JP)">
+                <option value="Lucknow (LKO)">
+              </datalist>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="rw-date">Journey Date <span class="req">*</span></label>
+              <input type="date" id="rw-date" name="journeyDate" required />
+            </div>
+            <div class="form-group">
+              <label for="rw-class">Travel Class <span class="req">*</span></label>
+              <select id="rw-class" name="travelClass" required>
+                <option value="">Select Class</option>
+                <option value="SL">Sleeper (SL)</option>
+                <option value="3A">AC 3-Tier (3A)</option>
+                <option value="2A">AC 2-Tier (2A)</option>
+                <option value="1A">AC First Class (1A)</option>
+                <option value="CC">Chair Car (CC)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="rw-quota">Quota</label>
+              <select id="rw-quota" name="quota">
+                <option value="GN">General (GN)</option>
+                <option value="TQ">Tatkal (TQ)</option>
+                <option value="SS">Senior Citizen (SS)</option>
+                <option value="LD">Ladies (LD)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-nav">
+            <span></span>
+            <button type="button" class="btn btn-primary" onclick="searchTrains()" style="background: #b91c1c;">🔍 Search Trains</button>
+          </div>
+
+          <!-- Train Results (shown after search) -->
+          <div id="train-results" style="display: none; margin-top: 20px;">
+            <h3 style="margin-bottom: 10px;">Available Trains</h3>
+            <div class="train-result">
+              <div class="train-info">
+                <div class="train-name">12301 — Rajdhani Express</div>
+                <div class="train-timing">Dep: 16:55 → Arr: 08:35 (+1) • 15h 40m</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="avail-tag available">Available 42</span>
+                <button type="button" class="select-train-btn" onclick="selectTrain('12301 Rajdhani Express')">Book</button>
+              </div>
+            </div>
+            <div class="train-result">
+              <div class="train-info">
+                <div class="train-name">22691 — Duronto Express</div>
+                <div class="train-timing">Dep: 23:00 → Arr: 15:50 (+1) • 16h 50m</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="avail-tag waiting">WL 5</span>
+                <button type="button" class="select-train-btn" onclick="selectTrain('22691 Duronto Express')">Book</button>
+              </div>
+            </div>
+            <div class="train-result">
+              <div class="train-info">
+                <div class="train-name">12952 — Mumbai Rajdhani</div>
+                <div class="train-timing">Dep: 16:25 → Arr: 08:15 (+1) • 15h 50m</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="avail-tag available">Available 18</span>
+                <button type="button" class="select-train-btn" onclick="selectTrain('12952 Mumbai Rajdhani')">Book</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Passenger Details -->
+        <div id="step-passengers" class="railway-step">
+          <h2 style="margin-bottom: 6px;">👥 Passenger Details</h2>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+            Selected: <strong id="selected-train-name">—</strong>
+          </p>
+
+          <div id="passengers-container">
+            <!-- Passenger 1 (always present) -->
+            <div class="passenger-card" data-passenger="1">
+              <h3><span class="passenger-number">1</span> Passenger 1</h3>
+              <div class="grid-3">
+                <div class="form-group">
+                  <label for="p1-name">Full Name <span class="req">*</span></label>
+                  <input type="text" id="p1-name" name="p1Name" placeholder="As per ID proof" required />
+                </div>
+                <div class="form-group">
+                  <label for="p1-age">Age <span class="req">*</span></label>
+                  <input type="text" id="p1-age" name="p1Age" placeholder="e.g. 28" maxlength="3" required />
+                </div>
+                <div class="form-group">
+                  <label for="p1-gender">Gender <span class="req">*</span></label>
+                  <select id="p1-gender" name="p1Gender" required>
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Trans">Transgender</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid-3">
+                <div class="form-group">
+                  <label for="p1-berth">Berth Preference</label>
+                  <select id="p1-berth" name="p1Berth">
+                    <option value="NP">No Preference</option>
+                    <option value="LB">Lower</option>
+                    <option value="MB">Middle</option>
+                    <option value="UB">Upper</option>
+                    <option value="SL">Side Lower</option>
+                    <option value="SU">Side Upper</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="p1-idtype">ID Proof Type <span class="req">*</span></label>
+                  <select id="p1-idtype" name="p1IdType" required>
+                    <option value="">Select</option>
+                    <option value="Aadhaar">Aadhaar Card</option>
+                    <option value="PAN">PAN Card</option>
+                    <option value="Passport">Passport</option>
+                    <option value="VoterID">Voter ID</option>
+                    <option value="DL">Driving License</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="p1-idnum">ID Number <span class="req">*</span></label>
+                  <input type="text" id="p1-idnum" name="p1IdNumber" placeholder="Document number" required />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="add-passenger-btn" id="add-passenger-btn" onclick="addPassenger()">
+            ➕ Add Passenger (Max 6)
+          </button>
+
+          <div class="form-group" style="margin-top: 16px;">
+            <label for="rw-mobile">Contact Mobile Number <span class="req">*</span></label>
+            <input type="tel" id="rw-mobile" name="contactMobile" placeholder="+91 98765 43210" required autocomplete="tel" />
+          </div>
+          <div class="form-group">
+            <label for="rw-email">Email for Ticket <span class="req">*</span></label>
+            <input type="email" id="rw-email" name="contactEmail" placeholder="email@example.com" required autocomplete="email" />
+          </div>
+
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="goToStep('search')">⬅ Back</button>
+            <button type="button" class="btn btn-primary" onclick="goToStep('payment')" style="background: #b91c1c;">Proceed to Payment ➔</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Payment -->
+        <div id="step-payment" class="railway-step">
+          <h2 style="margin-bottom: 16px;">💳 Payment</h2>
+
+          <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+              <span>Total Fare (<span id="fare-passengers">1</span> passenger(s))</span>
+              <span style="font-weight: 800; font-size: 1.2rem; color: #b91c1c;" id="total-fare">₹2,450</span>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="rw-card-number">Card Number <span class="req">*</span></label>
+              <input type="text" id="rw-card-number" name="paymentCard" placeholder="1234 5678 9012 3456" maxlength="19" required autocomplete="cc-number" />
+            </div>
+            <div class="form-group">
+              <label for="rw-card-name">Card Holder Name <span class="req">*</span></label>
+              <input type="text" id="rw-card-name" name="cardHolderName" placeholder="Name on card" required autocomplete="cc-name" />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="rw-card-expiry">Expiry Date</label>
+              <input type="text" id="rw-card-expiry" name="cardExpiry" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp" />
+            </div>
+            <div class="form-group">
+              <label for="rw-card-cvv">CVV</label>
+              <input type="password" id="rw-card-cvv" name="cardCvv" placeholder="***" maxlength="4" autocomplete="cc-csc" />
+            </div>
+            <div></div>
+          </div>
+
+          <div class="form-nav">
+            <button type="button" class="btn btn-secondary" onclick="goToStep('passengers')">⬅ Back</button>
+            <button type="submit" class="btn btn-primary" style="background: #b91c1c;" id="pay-btn">🔒 Pay & Book Ticket</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Confirmation -->
+        <div id="step-confirm" class="railway-step">
+          <div class="booking-success">
+            <div style="font-size: 4rem;">🎫</div>
+            <h2 style="color: #059669; margin-bottom: 10px;">Booking Confirmed!</h2>
+            <p style="color: var(--text-muted);">Your PNR Number:</p>
+            <div class="pnr-display" id="pnr-display">PNR-XXXXXXXXXX</div>
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; max-width: 400px; margin: 20px auto; text-align: left; font-size: 0.85rem; line-height: 1.8;">
+              <div>🚆 <strong>Train:</strong> <span id="confirm-train">—</span></div>
+              <div>📅 <strong>Date:</strong> <span id="confirm-date">—</span></div>
+              <div>👥 <strong>Passengers:</strong> <span id="confirm-pax">—</span></div>
+              <div>💰 <strong>Amount Paid:</strong> <span id="confirm-amount">—</span></div>
+              <div>🛡️ <strong>ShieldBrowse:</strong> <span style="color: #059669;">All PII Tokenized</span></div>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="location.reload()" style="background: #b91c1c; margin-top: 16px;">🔄 Book Another Ticket</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>RailwayConnect™ Mock Portal • ShieldBrowse SIH 2026 Demo • Multi-Passenger Booking Testing</p>
+  </footer>
+
+  <script>
+    let passengerCount = 1;
+    let selectedTrainName = "";
+
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById("rw-date").value = tomorrow.toISOString().split("T")[0];
+
+    function goToStep(step) {
+      document.querySelectorAll(".railway-step").forEach(s => s.classList.remove("active"));
+      document.getElementById(`step-${step}`).classList.add("active");
+
+      // Update progress
+      const steps = ["search", "passengers", "payment", "confirm"];
+      const stepIdx = steps.indexOf(step);
+      document.querySelectorAll(".progress-step").forEach((el, i) => {
+        el.classList.remove("active", "done");
+        if (i < stepIdx) el.classList.add("done");
+        if (i === stepIdx) el.classList.add("active");
+      });
+
+      // Update fare
+      if (step === "payment") {
+        const baseFare = 2450;
+        document.getElementById("fare-passengers").textContent = passengerCount;
+        document.getElementById("total-fare").textContent = `₹${(baseFare * passengerCount).toLocaleString("en-IN")}`;
+      }
+
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    function searchTrains() {
+      document.getElementById("train-results").style.display = "block";
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    function selectTrain(name) {
+      selectedTrainName = name;
+      document.getElementById("selected-train-name").textContent = name;
+      goToStep("passengers");
+    }
+
+    function addPassenger() {
+      if (passengerCount >= 6) return;
+      passengerCount++;
+      const n = passengerCount;
+
+      const html = `
+        <div class="passenger-card" data-passenger="${n}">
+          <h3><span class="passenger-number">${n}</span> Passenger ${n}</h3>
+          <button type="button" class="remove-passenger" onclick="removePassenger(${n})">✕ Remove</button>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="p${n}-name">Full Name <span class="req">*</span></label>
+              <input type="text" id="p${n}-name" name="p${n}Name" placeholder="As per ID proof" required />
+            </div>
+            <div class="form-group">
+              <label for="p${n}-age">Age <span class="req">*</span></label>
+              <input type="text" id="p${n}-age" name="p${n}Age" placeholder="e.g. 28" maxlength="3" required />
+            </div>
+            <div class="form-group">
+              <label for="p${n}-gender">Gender <span class="req">*</span></label>
+              <select id="p${n}-gender" name="p${n}Gender" required>
+                <option value="">Select</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Trans">Transgender</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label for="p${n}-berth">Berth Preference</label>
+              <select id="p${n}-berth" name="p${n}Berth">
+                <option value="NP">No Preference</option>
+                <option value="LB">Lower</option>
+                <option value="MB">Middle</option>
+                <option value="UB">Upper</option>
+                <option value="SL">Side Lower</option>
+                <option value="SU">Side Upper</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="p${n}-idtype">ID Proof Type <span class="req">*</span></label>
+              <select id="p${n}-idtype" name="p${n}IdType" required>
+                <option value="">Select</option>
+                <option value="Aadhaar">Aadhaar Card</option>
+                <option value="PAN">PAN Card</option>
+                <option value="Passport">Passport</option>
+                <option value="VoterID">Voter ID</option>
+                <option value="DL">Driving License</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="p${n}-idnum">ID Number <span class="req">*</span></label>
+              <input type="text" id="p${n}-idnum" name="p${n}IdNumber" placeholder="Document number" required />
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("passengers-container").insertAdjacentHTML("beforeend", html);
+      if (passengerCount >= 6) document.getElementById("add-passenger-btn").style.display = "none";
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    function removePassenger(n) {
+      const card = document.querySelector(`.passenger-card[data-passenger="${n}"]`);
+      if (card) card.remove();
+      passengerCount--;
+      document.getElementById("add-passenger-btn").style.display = "block";
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    // Form submission
+    document.getElementById("railwayForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const pnr = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+      document.getElementById("pnr-display").textContent = pnr;
+      document.getElementById("confirm-train").textContent = selectedTrainName;
+      document.getElementById("confirm-date").textContent = document.getElementById("rw-date").value;
+      document.getElementById("confirm-pax").textContent = passengerCount;
+      document.getElementById("confirm-amount").textContent = document.getElementById("total-fare").textContent;
+
+      goToStep("confirm");
+    });
+  </script>
+</body>
+</html>

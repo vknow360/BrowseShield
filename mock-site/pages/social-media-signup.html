@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConnectMe — Join Now</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+  <style>
+    .social-layout { max-width: 800px; margin: 40px auto; padding: 0 1rem; }
+    .social-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    .social-header { text-align: center; margin-bottom: 30px; }
+    .social-header h1 { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    .social-header p { color: var(--text-muted); }
+    .username-check { display: flex; align-items: center; gap: 10px; }
+    .username-check input { flex: 1; }
+    .check-btn { padding: 10px 16px; border: 1px solid var(--primary); background: var(--primary-light); color: var(--primary); border-radius: 6px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 0.85rem; }
+    .check-btn:hover { background: var(--primary); color: #fff; }
+    .username-msg { font-size: 0.8rem; font-weight: 600; margin-top: 6px; display: none; }
+    .username-msg.available { color: #16a34a; }
+    .username-msg.taken { color: #ef4444; }
+    
+    .password-strength { height: 6px; background: #e2e8f0; border-radius: 3px; margin: 8px 0; overflow: hidden; display: flex; gap: 2px; }
+    .strength-bar { height: 100%; width: 0; transition: all 0.3s; }
+    .strength-text { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+    
+    .photo-upload { border: 2px dashed var(--border); border-radius: 10px; padding: 30px; text-align: center; margin-bottom: 20px; background: #f8fafc; cursor: pointer; transition: border-color 0.2s; }
+    .photo-upload:hover { border-color: var(--primary); }
+    .photo-preview { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px; display: block; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: #e2e8f0; }
+    
+    .toggle-group { display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
+    .toggle-info h4 { margin: 0 0 4px 0; font-size: 0.9rem; }
+    .toggle-info p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+    
+    .switch { position: relative; display: inline-block; width: 48px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(24px); }
+    
+    .terms-check { display: flex; align-items: flex-start; gap: 12px; margin: 24px 0; }
+    .terms-check input { margin-top: 4px; }
+    .terms-check label { font-size: 0.85rem; font-weight: 500; line-height: 1.5; margin: 0; }
+    
+    .success-overlay { display: none; text-align: center; padding: 40px 0; }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">💬 ConnectMe</div>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="login-otp.html">Login + OTP</a>
+      <a href="ecommerce-checkout.html">E-Commerce</a>
+      <a href="passport-application.html">Passport</a>
+      <a href="railway-booking.html">Railway</a>
+    </div>
+  </nav>
+
+  <div class="social-layout">
+    <div class="social-card">
+      <div id="signup-form-view">
+        <div class="social-header">
+          <h1>Join ConnectMe Today</h1>
+          <p>Create your profile and connect with the world.</p>
+        </div>
+
+        <form id="socialSignupForm" novalidate>
+          <div class="photo-upload" onclick="document.getElementById('profile-photo').click()">
+            <img src="../public/icons/icon128.png" id="photo-preview" class="photo-preview" alt="Profile placeholder" />
+            <div style="font-weight: 600; color: var(--primary);">📷 Upload Profile Photo</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">JPEG/PNG, max 5MB</div>
+            <input type="file" id="profile-photo" accept="image/*" style="display: none;" onchange="previewImage(event)" />
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="sm-firstname">First Name <span class="req">*</span></label>
+              <input type="text" id="sm-firstname" name="firstName" placeholder="Jane" required />
+            </div>
+            <div class="form-group">
+              <label for="sm-lastname">Last Name <span class="req">*</span></label>
+              <input type="text" id="sm-lastname" name="lastName" placeholder="Doe" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="sm-username">Choose a Username <span class="req">*</span></label>
+            <div class="username-check">
+              <input type="text" id="sm-username" name="username" placeholder="@janedoe" required />
+              <button type="button" class="check-btn" onclick="checkUsername()">Verify</button>
+            </div>
+            <div id="username-msg" class="username-msg"></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="sm-email">Email Address <span class="req">*</span></label>
+              <input type="email" id="sm-email" name="email" placeholder="jane@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="sm-dob">Date of Birth <span class="req">*</span></label>
+              <input type="date" id="sm-dob" name="dob" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="sm-password">Password <span class="req">*</span></label>
+            <input type="password" id="sm-password" name="password" placeholder="Min 8 chars, 1 number, 1 symbol" required oninput="checkStrength(this.value)" />
+            <div class="password-strength">
+              <div id="strength-bar-1" class="strength-bar"></div>
+              <div id="strength-bar-2" class="strength-bar"></div>
+              <div id="strength-bar-3" class="strength-bar"></div>
+            </div>
+            <div id="strength-text" class="strength-text">Password Strength: None</div>
+          </div>
+
+          <div class="form-group" style="margin-top: 24px;">
+            <label for="sm-bio">Short Bio</label>
+            <textarea id="sm-bio" name="bio" rows="3" placeholder="Tell us a bit about yourself..."></textarea>
+          </div>
+
+          <h3 style="margin: 28px 0 16px; font-size: 1.1rem;">Privacy Settings</h3>
+          
+          <div class="toggle-group">
+            <div class="toggle-info">
+              <h4>Public Profile</h4>
+              <p>Allow anyone to see your profile and posts.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="sm-public-profile" name="publicProfile" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="toggle-group">
+            <div class="toggle-info">
+              <h4>Allow Tagging</h4>
+              <p>Let other users tag you in photos and posts.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="sm-allow-tags" name="allowTags" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="toggle-group">
+            <div class="toggle-info">
+              <h4>Targeted Ads</h4>
+              <p>Use my data to show personalized advertisements.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="sm-ads" name="targetedAds">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="terms-check">
+            <input type="checkbox" id="sm-terms" required />
+            <label for="sm-terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I understand that my data will be processed as described.</label>
+          </div>
+
+          <button type="submit" class="submit-btn" style="width: 100%; padding: 16px; font-size: 1.1rem; border-radius: 8px;">
+            ✨ Create Account
+          </button>
+        </form>
+      </div>
+
+      <!-- Success View -->
+      <div id="signup-success-view" class="success-overlay">
+        <div style="font-size: 4rem; margin-bottom: 20px;">📩</div>
+        <h2 style="color: var(--primary); margin-bottom: 12px;">Welcome to ConnectMe!</h2>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">We've sent a verification email to <strong id="confirm-email"></strong>.</p>
+        <p style="margin-top: 24px; font-size: 0.9rem; background: #f0fdf4; padding: 16px; border-radius: 8px; border: 1px solid #bbf7d0;">
+          🛡️ <strong>ShieldBrowse Note:</strong> Profile photo, bio, and credentials were fully tokenized during this test flow.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function previewImage(event) {
+      const reader = new FileReader();
+      reader.onload = function() {
+        const output = document.getElementById('photo-preview');
+        output.src = reader.result;
+      };
+      if (event.target.files[0]) {
+        reader.readAsDataURL(event.target.files[0]);
+      }
+    }
+
+    function checkUsername() {
+      const input = document.getElementById('sm-username').value.trim();
+      const msg = document.getElementById('username-msg');
+      if (input.length < 3) {
+        msg.textContent = "Username too short.";
+        msg.className = "username-msg taken";
+        msg.style.display = "block";
+        return;
+      }
+      
+      // Mock validation
+      msg.style.display = "block";
+      if (input.toLowerCase() === "admin" || input.toLowerCase() === "test") {
+        msg.textContent = `❌ @${input} is already taken.`;
+        msg.className = "username-msg taken";
+      } else {
+        msg.textContent = `✅ @${input} is available!`;
+        msg.className = "username-msg available";
+      }
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    function checkStrength(pwd) {
+      let score = 0;
+      if (pwd.length > 7) score++;
+      if (/[A-Z]/.test(pwd) && /[0-9]/.test(pwd)) score++;
+      if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+      const b1 = document.getElementById("strength-bar-1");
+      const b2 = document.getElementById("strength-bar-2");
+      const b3 = document.getElementById("strength-bar-3");
+      const text = document.getElementById("strength-text");
+
+      b1.style.width = "0"; b2.style.width = "0"; b3.style.width = "0";
+      b1.style.background = "#e2e8f0"; b2.style.background = "#e2e8f0"; b3.style.background = "#e2e8f0";
+
+      if (score === 0 && pwd.length > 0) {
+        b1.style.width = "100%"; b1.style.background = "#ef4444";
+        text.textContent = "Password Strength: Weak"; text.style.color = "#ef4444";
+      } else if (score === 1) {
+        b1.style.width = "100%"; b2.style.width = "100%";
+        b1.style.background = "#f59e0b"; b2.style.background = "#f59e0b";
+        text.textContent = "Password Strength: Fair"; text.style.color = "#f59e0b";
+      } else if (score >= 2) {
+        b1.style.width = "100%"; b2.style.width = "100%"; b3.style.width = "100%";
+        b1.style.background = "#10b981"; b2.style.background = "#10b981"; b3.style.background = "#10b981";
+        text.textContent = "Password Strength: Strong"; text.style.color = "#10b981";
+      } else {
+        text.textContent = "Password Strength: None"; text.style.color = "var(--text-muted)";
+      }
+    }
+
+    document.getElementById("socialSignupForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      
+      if (!document.getElementById("sm-terms").checked) {
+        alert("Please accept the terms and conditions.");
+        return;
+      }
+      
+      const email = document.getElementById("sm-email").value;
+      document.getElementById("confirm-email").textContent = email;
+      
+      document.getElementById("signup-form-view").style.display = "none";
+      document.getElementById("signup-success-view").style.display = "block";
+      
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  </script>
+</body>
+</html>

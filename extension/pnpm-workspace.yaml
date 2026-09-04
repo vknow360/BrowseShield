@@ -1,0 +1,4 @@
+allowBuilds:
+  protobufjs: true
+  sharp: true
+  tesseract.js: true

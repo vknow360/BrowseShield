@@ -1,5 +1,5 @@
 import browser from "webextension-polyfill";
-import { perceiveScreen } from "./vision-pipeline.js";
+import { perceiveScreenOffscreen } from "./vision-proxy.js";
 import { redactScreenshot } from "../core/vision/redactor.js";
 import { detectSemanticPII, initNERPipeline } from "../core/detector/ner-pipeline.js";
 import { privacyGate } from "../core/tokenizer/privacy-gate.js";
@@ -9,7 +9,7 @@ export class AgentLoop {
   constructor() {
     this.state = "idle";
     this.step = 0;
-    this.maxSteps = 10;
+    this.maxSteps = 15;  // Increased from 10 — complex forms need more steps
     this.taskInstruction = "";
     this.actionHistory = [];
     this.currentPlan = [];
@@ -28,6 +28,16 @@ export class AgentLoop {
     this.consecutiveFailures = 0;
     this.lastFailedActionKey = null;
     this.lastPlanUrl = null;
+
+    // Track filled fields to prevent re-typing
+    this.filledFields = new Set();
+
+    // Track failed actions for VLM context
+    this.failedActions = [];
+
+    // OTP/CAPTCHA detection
+    this.isWaitingForUser = false;
+    this.waitingReason = null;
   }
 
   async initialize() {
@@ -35,13 +45,14 @@ export class AgentLoop {
     const s = await browser.storage.session.get(["agentState", "agentTokenMap", "agentCounters"]);
     if (s.agentState) {
       Object.assign(this, s.agentState);
+      // Restore Set from array
+      this.filledFields = new Set(s.agentState.filledFields || []);
     }
     if (s.agentTokenMap) {
       this.tokenizer.loadState(s.agentTokenMap, s.agentCounters || {});
     }
 
-    // If the Service Worker restarted while the agent was running (e.g. Vite HMR or Chrome suspend),
-    // the execution promises are dead. We must reset to prevent a zombie state.
+    // If the Service Worker restarted while the agent was running, reset
     if (["planning", "executing", "waiting-for-settle"].includes(this.state)) {
       console.warn(`[AgentLoop] Recovered from zombie state '${this.state}'. Resetting.`);
       this.state = "error";
@@ -62,7 +73,8 @@ export class AgentLoop {
         currentPlan: this.currentPlan,
         lastTabId: this.lastTabId,
         lastWindowId: this.lastWindowId,
-        errorReason: this.errorReason
+        errorReason: this.errorReason,
+        filledFields: Array.from(this.filledFields),
       },
       agentTokenMap: tokenMap,
       agentCounters: counters
@@ -84,6 +96,8 @@ export class AgentLoop {
         errorReason: this.errorReason,
         canRetry: ["content-script-unreachable", "network-error", "timeout"].includes(this.errorReason),
         detail,
+        isWaitingForUser: this.isWaitingForUser,
+        waitingReason: this.waitingReason,
         timestamp: Date.now()
       });
     }
@@ -115,6 +129,12 @@ export class AgentLoop {
     this.step = 0;
     this.errorReason = null;
     this.isPlanningInFlight = false;
+    this.isWaitingForUser = false;
+    this.waitingReason = null;
+    this.filledFields = new Set();
+    this.failedActions = [];
+    this.consecutiveFailures = 0;
+    this.lastFailedActionKey = null;
     this.tokenizer.loadState({}, {}); // Reset tokens
     await this.transition("idle");
   }
@@ -132,6 +152,32 @@ export class AgentLoop {
     await this.requestFreshScan(tabId);
   }
 
+  async resume(newTaskInstruction = null) {
+    this.isWaitingForUser = false;
+    this.waitingReason = null;
+    if (newTaskInstruction && newTaskInstruction.trim()) {
+      const inputVal = newTaskInstruction.trim();
+      const codeMatch = inputVal.match(/\b\d{4,8}\b/);
+      if (codeMatch) {
+        const code = codeMatch[0];
+        if (this.taskInstruction && !this.taskInstruction.includes(code)) {
+          this.taskInstruction = `${this.taskInstruction} (OTP: ${code})`;
+        } else if (!this.taskInstruction) {
+          this.taskInstruction = `Enter OTP ${code}`;
+        }
+      } else if (inputVal !== "Fill out this form" && inputVal !== this.taskInstruction) {
+        if (this.taskInstruction && !this.taskInstruction.includes(inputVal)) {
+          this.taskInstruction = `${this.taskInstruction} - ${inputVal}`;
+        } else if (!this.taskInstruction) {
+          this.taskInstruction = inputVal;
+        }
+      }
+    }
+    console.log(`[AgentLoop] Resuming agent with instruction: "${this.taskInstruction}"`);
+    await this.transition("planning");
+    await this.requestFreshScan(this.lastTabId);
+  }
+
   async requestFreshScan(tabId) {
     try {
       await this.sendToContentScript(tabId, { type: "rescan" });
@@ -140,15 +186,69 @@ export class AgentLoop {
     }
   }
 
+  /**
+   * Detect if the page has OTP or CAPTCHA elements that need user input.
+   */
+  detectUserInterventionNeeded(nodes) {
+    for (const node of nodes) {
+      const label = (node.label || "").toLowerCase();
+      const placeholder = (node.placeholder || "").toLowerCase();
+      const id = (node.id || "").toLowerCase();
+      const name = (node.name || "").toLowerCase();
+      const type = (node.type || "").toLowerCase();
+
+      // OTP detection
+      const isOTP = (
+        label.includes("otp") || label.includes("verification code") ||
+        label.includes("one time") ||
+        placeholder.includes("otp") || placeholder.includes("verification") ||
+        id.includes("otp") || name.includes("otp") ||
+        (type === "tel" && (node.maxLength || 99) <= 6 && (label.includes("code") || placeholder.includes("code")))
+      );
+
+      if (isOTP && !node.value) {
+        // Check if an explicit OTP digit code (4-8 digits) is present in the task instruction
+        const hasExplicitOTP = (
+          /\b\d{4,8}\b/.test(this.taskInstruction) ||
+          /otp\s*:?\s*\d{4,8}/i.test(this.taskInstruction) ||
+          /code\s*:?\s*\d{4,8}/i.test(this.taskInstruction) ||
+          /\(otp\s*:?\s*\d{4,8}\)/i.test(this.taskInstruction)
+        );
+
+        if (!hasExplicitOTP) {
+          return { needed: true, reason: "otp", message: "OTP field detected. Please enter the OTP, then click Resume." };
+        }
+      }
+    }
+
+    // CAPTCHA detection (check for recaptcha iframes or captcha images/canvases)
+    // This is done via the nodes — look for img/canvas with captcha-related attributes
+    for (const node of nodes) {
+      const label = (node.label || "").toLowerCase();
+      const id = (node.id || "").toLowerCase();
+      const name = (node.name || "").toLowerCase();
+
+      const isCaptcha = (
+        label.includes("captcha") || id.includes("captcha") || name.includes("captcha") ||
+        label.includes("security code") || label.includes("verification image")
+      );
+
+      if (isCaptcha && node.tagName === "INPUT" && !node.value) {
+        return { needed: true, reason: "captcha", message: "CAPTCHA detected. Please solve it, then click Resume." };
+      }
+    }
+
+    return { needed: false };
+  }
+
   // Handles dom-scan-result and action-complete
   async handleScanPayload(payload, isActionComplete) {
     this.latestScan = payload;
 
     // 1. Centralized Tokenization
-    // Add candidates from DOM
     this.tokenizer.assignTokens(payload.candidates || []);
 
-    // Send update to sidepanel (we sanitize the nodes first)
+    // Send update to sidepanel
     const sanitizedNodes = this.tokenizer.sanitizeNodes(payload.nodes);
     this.pushScanUpdate({
       ...payload,
@@ -160,12 +260,27 @@ export class AgentLoop {
       return; // Ignore scans if we aren't running
     }
 
+    // Check if user intervention is needed (OTP/CAPTCHA)
+    if (!this.isWaitingForUser) {
+      const intervention = this.detectUserInterventionNeeded(payload.nodes);
+      if (intervention.needed) {
+        console.log(`[AgentLoop] User intervention needed: ${intervention.reason}`);
+        this.isWaitingForUser = true;
+        this.waitingReason = intervention.message;
+        await this.transition("waiting-for-user", intervention.message);
+        return;
+      }
+    }
+
+    if (this.state === "waiting-for-user") {
+      return; // Stay paused until user clicks resume
+    }
+
     if (this.state === "waiting-for-settle") {
       if (isActionComplete) {
-        // The action finished and the DOM settled natively.
+        // The action finished and the DOM settled
         if (this.currentPlan.length > 0) {
-          // Gentle pacing delay between consecutive DOM actions
-          await new Promise(r => setTimeout(r, 1200));
+          await new Promise(r => setTimeout(r, 800));
           await this.executeNextActionInPlan();
         } else {
           // Plan exhausted, need to plan again
@@ -178,20 +293,17 @@ export class AgentLoop {
           this.planNextStep();
         }
       } else {
-        // We received a fresh 'dom-scan-result' while waiting for an action to complete!
-        // This implies the page navigated or reloaded, wiping out the content script before it could send 'action-complete'.
-        console.log("[AgentLoop] Page navigated or hard reloaded. Discarding remaining plan.");
+        // Page navigated or reloaded while waiting for action-complete
+        console.log("[AgentLoop] Page navigated while waiting. Replanning.");
         this.currentPlan = [];
 
-        // Auto-done: if the URL changed, the original task likely succeeded (e.g. login → dashboard)
-        const newUrl = payload.url || "";
-        if (this.lastPlanUrl && newUrl && newUrl !== this.lastPlanUrl) {
-          console.log(`[AgentLoop] URL changed: ${this.lastPlanUrl} → ${newUrl}. Marking task done.`);
-          await this.transition("done", "Page navigated — task appears complete");
+        // DON'T auto-done on URL change — multi-page workflows are common
+        // Instead, replan to continue the task on the new page
+        this.step++;
+        if (this.step > this.maxSteps) {
+          await this.transition("done", "Max steps reached");
           return;
         }
-
-        this.step++;
         await this.transition("planning");
         this.planNextStep();
       }
@@ -238,16 +350,15 @@ export class AgentLoop {
           fullBitmap.close();
         }
 
-        const perception = await perceiveScreen(imageBitmap, sanitizedNodes);
+        const perception = await perceiveScreenOffscreen(imageBitmap, sanitizedNodes);
         screenType = perception.screenType;
         uiBoxes = perception.uiBoxes || [];
 
-        // Scale content script rects (full device coordinates -> downscaled imageBitmap)
+        // Scale content script rects
         const piiFieldBoxes = (payload.sensitiveRects || []).map(r => ({
           x: r.x * f, y: r.y * f, w: r.w * f, h: r.h * f
         }));
 
-        // Add DOM elements that were identified as containing PII
         for (const node of payload.nodes) {
           if ((node.hasPII || node.pii) && node.box && node.box.length === 4) {
             piiFieldBoxes.push({
@@ -256,7 +367,6 @@ export class AgentLoop {
           }
         }
 
-        // Perception boxes are already in imageBitmap coordinate space
         (perception.piiVisionBoxes || []).forEach(box => {
           piiFieldBoxes.push({ x: box.x, y: box.y, w: box.w, h: box.h });
         });
@@ -264,7 +374,7 @@ export class AgentLoop {
         redactedImage = await redactScreenshot(imageBitmap, {
           faceBoxes: perception.faceBoxes,
           piiFieldBoxes,
-          passwordBoxes: [] // Handled by sensitiveRects
+          passwordBoxes: []
         });
         imageBitmap.close();
       } catch (visionErr) {
@@ -318,6 +428,8 @@ export class AgentLoop {
         tokenTypes: Object.keys(this.tokenizer.counters),
         actionHistory: this.actionHistory,
         uiBoxes,
+        filledFields: Array.from(this.filledFields),
+        failedActions: this.failedActions.slice(-3),
       };
 
       if (redactedImage) {
@@ -338,12 +450,12 @@ export class AgentLoop {
         });
       }
 
-      // Rate limit throttle: ensure at least 4s between VLM requests
+      // Rate limit throttle: ensure at least 3s between VLM requests
       const elapsed = Date.now() - this.lastServerRequestTime;
-      const minIntervalMs = 4000;
+      const minIntervalMs = 3000;
       if (elapsed < minIntervalMs && this.lastServerRequestTime > 0) {
         const waitMs = minIntervalMs - elapsed;
-        console.log(`[AgentLoop] Pacing delay: waiting ${waitMs}ms before VLM request to prevent 429...`);
+        console.log(`[AgentLoop] Pacing delay: waiting ${waitMs}ms...`);
         await new Promise(r => setTimeout(r, waitMs));
       }
       this.lastServerRequestTime = Date.now();
@@ -389,7 +501,7 @@ export class AgentLoop {
     this.actionHistory.push(action);
     await this.transition("executing", action);
 
-    // Rehydrate any tokenized values back to raw PII before sending to the active tab
+    // Rehydrate any tokenized values back to raw PII
     if (action.value) {
       action.value = this.tokenizer.rehydrateString(action.value);
     }
@@ -408,6 +520,13 @@ export class AgentLoop {
       });
 
       if (response && response.status === "error") {
+        // Track failed action for VLM context
+        this.failedActions.push({
+          action: action.action,
+          target: action.target,
+          error: response.error || "unknown"
+        });
+
         // Loop-breaker: track consecutive identical failures
         const actionKey = `${action.action}|${JSON.stringify(action.target)}|${action.value || ''}`;
         if (actionKey === this.lastFailedActionKey) {
@@ -417,31 +536,37 @@ export class AgentLoop {
           this.lastFailedActionKey = actionKey;
         }
 
-        if (this.consecutiveFailures >= 2) {
-          console.warn(`[AgentLoop] Same action failed ${this.consecutiveFailures}x in a row. Stopping.`);
+        if (this.consecutiveFailures >= 3) {
+          console.warn(`[AgentLoop] Same action failed ${this.consecutiveFailures}x. Stopping.`);
           this.consecutiveFailures = 0;
           this.lastFailedActionKey = null;
-          await this.transition("done", "Repeated action failures — task may already be complete");
+          await this.transition("done", "Repeated action failures — task may be stuck");
           return;
         }
 
-        console.warn(`[AgentLoop] Action failed on page: ${response.error}. Discarding remaining plan.`);
-        this.currentPlan = []; // Force replan on next settle
+        console.warn(`[AgentLoop] Action failed: ${response.error}. Discarding plan, will replan with error context.`);
+        this.currentPlan = []; // Force replan
       } else {
-        // Reset failure tracking on success
+        // Success — reset failure tracking
         this.consecutiveFailures = 0;
         this.lastFailedActionKey = null;
+
+        // Track filled fields
+        if (action.action === "type" && action.target && typeof action.target === "string") {
+          this.filledFields.add(action.target);
+        }
       }
 
-      // We successfully sent it. Now we wait for the content script to push 'action-complete'
+      // Wait for content script to push 'action-complete'
       await this.transition("waiting-for-settle");
 
-      // Set a safety timeout in case the content script never pushes back
+      // Safety timeout — increased to 30s for slow pages
       setTimeout(() => {
         if (this.state === "waiting-for-settle") {
+          console.warn("[AgentLoop] Safety timeout triggered (30s).");
           this.transition("error", "timeout");
         }
-      }, 10000);
+      }, 30000);
 
     } catch (err) {
       await this.transition("error", "content-script-unreachable");

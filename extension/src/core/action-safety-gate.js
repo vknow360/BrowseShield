@@ -8,6 +8,8 @@ const ALLOWED_ACTIONS = new Set([
   "navigate",
   "wait",
   "done",
+  "clear",
+  "check",
 ]);
 
 // Patterns that indicate executable code injection

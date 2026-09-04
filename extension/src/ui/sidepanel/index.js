@@ -13,6 +13,8 @@ const piiListContainer = document.getElementById("pii-list");
 const piiCountBadge = document.getElementById("pii-count-badge");
 const gateBadge = document.getElementById("gate-badge");
 const runAgentBtn = document.getElementById("run-agent-btn");
+const resumeAgentBtn = document.getElementById("resume-agent-btn");
+const agentWaitingNotice = document.getElementById("agent-waiting-notice");
 const agentStatus = document.getElementById("agent-status");
 const taskInput = document.getElementById("task-instruction");
 
@@ -36,13 +38,25 @@ port.onMessage.addListener((msg) => {
 });
 
 function renderAgentState(stateObj) {
-  const { state, step, maxSteps, errorReason, detail } = stateObj;
+  const { state, step, maxSteps, errorReason, detail, isWaitingForUser, waitingReason } = stateObj;
+
+  // Hide resume button and notice by default
+  resumeAgentBtn.style.display = "none";
+  agentWaitingNotice.style.display = "none";
+  runAgentBtn.style.display = "block";
   
   if (state === "idle") {
     agentRunning = false;
     runAgentBtn.textContent = "▶️ Run Agent";
     agentStatus.textContent = "Ready.";
     runAgentBtn.disabled = false;
+  } else if (state === "waiting-for-user") {
+    agentRunning = true;
+    runAgentBtn.style.display = "none"; // Hide Stop button when Resume is shown
+    agentStatus.textContent = `⏸️ Step ${step}: Waiting for user input...`;
+    resumeAgentBtn.style.display = "block";
+    agentWaitingNotice.style.display = "block";
+    agentWaitingNotice.textContent = waitingReason || detail || "Please complete the required field and click Resume.";
   } else if (state === "planning") {
     agentRunning = true;
     runAgentBtn.textContent = "⏹️ Stop Agent";
@@ -51,8 +65,8 @@ function renderAgentState(stateObj) {
   } else if (state === "executing") {
     agentRunning = true;
     runAgentBtn.textContent = "⏹️ Stop Agent";
-    const targetInfo = typeof detail.target === "object" ? `(${detail.target.x},${detail.target.y})` : detail.target || "";
-    agentStatus.textContent = `🎯 Step ${step}: Executing (${detail.action} → ${targetInfo})`;
+    const targetInfo = detail && typeof detail.target === "object" ? `(${detail.target.x},${detail.target.y})` : (detail?.target || "");
+    agentStatus.textContent = `🎯 Step ${step}: Executing (${detail?.action || "?"} → ${targetInfo})`;
     runAgentBtn.disabled = false;
   } else if (state === "waiting-for-settle") {
     agentRunning = true;
@@ -72,6 +86,22 @@ function renderAgentState(stateObj) {
   }
 }
 
+taskInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (resumeAgentBtn.style.display !== "none") {
+      // If waiting for user, enter resumes
+      resumeAgentBtn.click();
+    } else if (!agentRunning) {
+      // If idle, enter starts the agent
+      runAgentBtn.click();
+    } else {
+      // If running, enter stops the agent
+      runAgentBtn.click();
+    }
+  }
+});
+
 runAgentBtn.addEventListener("click", () => {
   if (agentRunning) {
     port.postMessage({ type: "stop-agent" });
@@ -79,6 +109,15 @@ runAgentBtn.addEventListener("click", () => {
     const taskInstruction = taskInput.value.trim() || "Fill out this form";
     port.postMessage({ type: "start-agent", task: taskInstruction });
   }
+});
+
+resumeAgentBtn.addEventListener("click", () => {
+  const taskInstruction = taskInput.value.trim() || "Fill out this form";
+  port.postMessage({ type: "resume-agent", task: taskInstruction });
+  resumeAgentBtn.style.display = "none";
+  runAgentBtn.style.display = "block";
+  runAgentBtn.textContent = "⏹️ Stop Agent";
+  agentWaitingNotice.style.display = "none";
 });
 
 function renderScanPayload(payload) {

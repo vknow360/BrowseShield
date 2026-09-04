@@ -6,14 +6,13 @@ if (typeof window === 'undefined') {
 // src/background/service-worker.js
 import browser from "webextension-polyfill";
 import {
-  initVisionPipeline,
-  detectFaces,
-} from "./vision-pipeline.js";
+  initVisionPipelineOffscreen,
+  detectFacesOffscreen,
+} from "./vision-proxy.js";
 import { ocrRegion } from "../core/vision/ocr.js";
 import { AgentLoop } from "./agent-loop.js";
 
-// Call immediately to avoid race conditions with content script
-initVisionPipeline();
+// Vision is initialized lazily via offscreen document when first needed
 
 // 1. Lifecycle: Triggered on extension installation or update
 browser.runtime.onInstalled.addListener(() => {
@@ -21,8 +20,12 @@ browser.runtime.onInstalled.addListener(() => {
 });
 
 // Also run on browser startup (Service Worker wakeup)
-browser.runtime.onStartup.addListener(() => {
-  initVisionPipeline();
+browser.runtime.onStartup.addListener(async () => {
+  try {
+    await initVisionPipelineOffscreen();
+  } catch (err) {
+    console.warn("[ShieldBrowse] Offscreen vision init failed:", err);
+  }
 });
 
 // 2. Configure Side Panel to open on toolbar action click
@@ -62,6 +65,8 @@ browser.runtime.onConnect.addListener(port => {
         }
       } else if (msg.type === "stop-agent") {
         agentLoop.stop();
+      } else if (msg.type === "resume-agent") {
+        agentLoop.resume(msg.task);
       }
     });
     
@@ -100,7 +105,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const response = await fetch(message.payload.dataUri);
         const blob = await response.blob();
         const imageBitmap = await createImageBitmap(blob);
-        const faces = detectFaces(imageBitmap);
+        const faces = await detectFacesOffscreen(imageBitmap);
         imageBitmap.close();
         sendResponse({ status: "success", faces });
       } catch (err) {
