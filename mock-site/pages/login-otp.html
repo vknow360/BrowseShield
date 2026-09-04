@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecureAuth — Login & OTP Verification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+  <style>
+    .login-container {
+      max-width: 460px;
+      margin: 60px auto;
+      padding: 0 1rem;
+    }
+
+    .login-card {
+      background: var(--bg-card, #fff);
+      border: 1px solid var(--border, #e2e8f0);
+      border-radius: 12px;
+      padding: 36px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+
+    .login-card h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .login-card .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted, #64748b);
+      margin-bottom: 28px;
+    }
+
+    .login-step {
+      display: none;
+    }
+
+    .login-step.active {
+      display: block;
+    }
+
+    .otp-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .otp-group input {
+      width: 52px;
+      height: 56px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      border: 2px solid var(--border, #e2e8f0);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .otp-group input:focus {
+      border-color: var(--primary, #2563eb);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .timer-bar {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted, #64748b);
+      margin: 12px 0;
+    }
+
+    .timer-bar .countdown {
+      font-weight: 700;
+      color: var(--primary, #2563eb);
+    }
+
+    .resend-btn {
+      background: none;
+      border: none;
+      color: var(--primary, #2563eb);
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-decoration: underline;
+    }
+
+    .resend-btn:disabled {
+      color: var(--text-muted, #94a3b8);
+      cursor: default;
+      text-decoration: none;
+    }
+
+    .error-msg {
+      color: #ef4444;
+      font-size: 0.85rem;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1e293b;
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    .toast .otp-display {
+      font-family: monospace;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      color: #38bdf8;
+      display: block;
+      margin-top: 6px;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .success-panel {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .success-panel .check-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+
+    .success-panel h2 {
+      color: #059669;
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .session-info {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px auto;
+      max-width: 300px;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .session-info code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #dcfce7;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    .mock-form .submit-btn,
+    .login-card .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary, #2563eb);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover {
+      background: var(--primary-hover, #1d4ed8);
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="top-nav">
+    <div class="nav-brand">🔐 SecureAuth Portal</div>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="login-otp.html" class="active">Login + OTP</a>
+      <a href="ecommerce-checkout.html">E-Commerce</a>
+      <a href="passport-application.html">Passport</a>
+      <a href="railway-booking.html">Railway</a>
+    </div>
+  </nav>
+
+  <!-- OTP Toast Notification (for testing — shows the generated OTP) -->
+  <div id="otp-toast" class="toast">
+    📱 OTP sent to your mobile:
+    <span id="otp-display" class="otp-display"></span>
+  </div>
+
+  <div class="login-container">
+    <!-- Step 1: Login Credentials -->
+    <div id="step-login" class="login-step active">
+      <div class="login-card">
+        <h1>🔑 Sign In</h1>
+        <p class="subtitle">Enter your registered mobile number and password to continue.</p>
+
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label for="login-phone">Mobile Number <span class="req">*</span></label>
+            <input type="tel" id="login-phone" name="phone" placeholder="+91 98765 43210" required autocomplete="tel" />
+            <div id="phone-error" class="error-msg">Please enter a valid 10-digit mobile number.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">Password <span class="req">*</span></label>
+            <input type="password" id="login-password" name="password" placeholder="Enter your password" required
+              autocomplete="current-password" />
+            <div id="password-error" class="error-msg">Password is required.</div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="login-submit-btn">
+            Sign In & Send OTP
+          </button>
+        </form>
+
+        <div style="margin-top: 16px; text-align: center;">
+          <a href="#" style="font-size: 0.85rem; color: var(--primary);">Forgot Password?</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: OTP Verification -->
+    <div id="step-otp" class="login-step">
+      <div class="login-card">
+        <h1>📲 Verify OTP</h1>
+        <p class="subtitle">Enter the 6-digit code sent to <strong id="masked-phone"></strong></p>
+
+        <form id="otpForm" novalidate>
+          <div class="otp-group">
+            <input type="tel" id="otp-1" name="otp1" maxlength="1" autocomplete="one-time-code"
+              aria-label="OTP digit 1" />
+            <input type="tel" id="otp-2" name="otp2" maxlength="1" aria-label="OTP digit 2" />
+            <input type="tel" id="otp-3" name="otp3" maxlength="1" aria-label="OTP digit 3" />
+            <input type="tel" id="otp-4" name="otp4" maxlength="1" aria-label="OTP digit 4" />
+            <input type="tel" id="otp-5" name="otp5" maxlength="1" aria-label="OTP digit 5" />
+            <input type="tel" id="otp-6" name="otp6" maxlength="1" aria-label="OTP digit 6" />
+          </div>
+
+          <!-- Also provide a single combined OTP field for easier agent filling -->
+          <div class="form-group" style="margin-top: 10px;">
+            <label for="otp-combined">Or paste full OTP code</label>
+            <input type="text" id="otp-combined" name="otp" placeholder="Enter 6-digit OTP" maxlength="6"
+              autocomplete="one-time-code" />
+          </div>
+
+          <div class="timer-bar">
+            <span id="otp-timer">Resend OTP in <span class="countdown" id="countdown">30</span>s</span>
+            <button type="button" id="resend-btn" class="resend-btn" disabled>Resend OTP</button>
+          </div>
+
+          <div id="otp-error" class="error-msg" style="text-align: center;">Invalid OTP. Please try again.</div>
+
+          <button type="submit" class="submit-btn" id="otp-submit-btn">
+            Verify & Continue
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Step 3: Success Dashboard -->
+    <div id="step-success" class="login-step">
+      <div class="login-card success-panel">
+        <div class="check-icon">✅</div>
+        <h2>Login Successful!</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">
+          You have been securely authenticated via 2-factor verification.
+        </p>
+
+        <div class="session-info">
+          <div>👤 <strong>User:</strong> <span id="session-user">—</span></div>
+          <div>🔑 <strong>Session:</strong> <code id="session-token">—</code></div>
+          <div>⏰ <strong>Login Time:</strong> <span id="session-time">—</span></div>
+          <div>🛡️ <strong>ShieldBrowse:</strong> <span style="color: #059669;">All PII Tokenized</span></div>
+        </div>
+
+        <button type="button" class="submit-btn" onclick="resetFlow()" style="background: #10b981; margin-top: 16px;">
+          🔄 Try Again (Reset)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>SecureAuth™ Mock Portal • ShieldBrowse SIH 2026 Demo • OTP Flow Testing</p>
+  </footer>
+
+  <script>
+    // ── State ──
+    let generatedOTP = "";
+    let countdownInterval = null;
+
+    // ── Step 1: Login Form ──
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const phone = document.getElementById("login-phone").value.replace(/\D/g, "");
+      const password = document.getElementById("login-password").value;
+
+      // Validate
+      let valid = true;
+      if (phone.length < 10) {
+        document.getElementById("phone-error").style.display = "block";
+        valid = false;
+      } else {
+        document.getElementById("phone-error").style.display = "none";
+      }
+
+      if (!password) {
+        document.getElementById("password-error").style.display = "block";
+        valid = false;
+      } else {
+        document.getElementById("password-error").style.display = "none";
+      }
+
+      if (!valid) return;
+
+      // Generate OTP
+      generatedOTP = String(Math.floor(100000 + Math.random() * 900000));
+      console.log("[MockSite] Generated OTP:", generatedOTP);
+
+      // Show masked phone
+      const last4 = phone.slice(-4);
+      document.getElementById("masked-phone").textContent = `+91 XXXXXX${last4}`;
+
+      // Show toast with OTP (for testing)
+      document.getElementById("otp-display").textContent = generatedOTP;
+      const toast = document.getElementById("otp-toast");
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 15000);
+
+      // Switch to OTP step
+      document.getElementById("step-login").classList.remove("active");
+      document.getElementById("step-otp").classList.add("active");
+
+      // Start countdown
+      startCountdown();
+
+      // Dispatch input event to trigger ShieldBrowse rescan
+      document.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    // ── Step 2: OTP Verification ──
+    // Auto-advance on individual OTP inputs
+    document.querySelectorAll(".otp-group input").forEach((input, idx, inputs) => {
+      input.addEventListener("input", function () {
+        if (this.value.length === 1 && idx < inputs.length - 1) {
+          inputs[idx + 1].focus();
+        }
+      });
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Backspace" && !this.value && idx > 0) {
+          inputs[idx - 1].focus();
+        }
+      });
+    });
+
+    // Sync combined field with individual inputs
+    document.getElementById("otp-combined").addEventListener("input", function () {
+      const digits = this.value.replace(/\D/g, "").split("");
+      document.querySelectorAll(".otp-group input").forEach((input, i) => {
+        input.value = digits[i] || "";
+      });
+    });
+
+    document.getElementById("otpForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Get OTP from individual inputs or combined field
+      const combined = document.getElementById("otp-combined").value.replace(/\D/g, "");
+      let enteredOTP = combined;
+
+      if (!enteredOTP || enteredOTP.length < 6) {
+        const digits = [];
+        document.querySelectorAll(".otp-group input").forEach(input => {
+          digits.push(input.value);
+        });
+        enteredOTP = digits.join("");
+      }
+
+      if (enteredOTP === generatedOTP) {
+        document.getElementById("otp-error").style.display = "none";
+
+        // Show success
+        document.getElementById("step-otp").classList.remove("active");
+        document.getElementById("step-success").classList.add("active");
+
+        const phone = document.getElementById("login-phone").value;
+        document.getElementById("session-user").textContent = phone;
+        document.getElementById("session-token").textContent = "tok_" + Math.random().toString(36).substring(2, 14);
+        document.getElementById("session-time").textContent = new Date().toLocaleString();
+
+        clearInterval(countdownInterval);
+
+        // Dispatch event for ShieldBrowse
+        document.dispatchEvent(new Event("input", { bubbles: true }));
+      } else {
+        document.getElementById("otp-error").style.display = "block";
+      }
+    });
+
+    // ── Countdown Timer ──
+    function startCountdown() {
+      let seconds = 30;
+      const countdownEl = document.getElementById("countdown");
+      const timerEl = document.getElementById("otp-timer");
+      const resendBtn = document.getElementById("resend-btn");
+
+      resendBtn.disabled = true;
+      timerEl.style.display = "inline";
+
+      clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        seconds--;
+        countdownEl.textContent = seconds;
+
+        if (seconds <= 0) {
+          clearInterval(countdownInterval);
+          timerEl.style.display = "none";
+          resendBtn.disabled = false;
+        }
+      }, 1000);
+    }
+
+    // ── Resend OTP ──
+    document.getElementById("resend-btn").addEventListener("click", function () {
+      generatedOTP = String(Math.floor(100000 + Math.random() * 900000));
+      console.log("[MockSite] Regenerated OTP:", generatedOTP);
+
+      document.getElementById("otp-display").textContent = generatedOTP;
+      const toast = document.getElementById("otp-toast");
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 15000);
+
+      startCountdown();
+    });
+
+    // ── Reset Flow ──
+    function resetFlow() {
+      document.getElementById("step-success").classList.remove("active");
+      document.getElementById("step-login").classList.add("active");
+      document.getElementById("loginForm").reset();
+      document.getElementById("otpForm").reset();
+      document.querySelectorAll(".otp-group input").forEach(i => i.value = "");
+      generatedOTP = "";
+      clearInterval(countdownInterval);
+    }
+  </script>
+</body>
+
+</html>

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ShieldBrowse Demo Dashboard</title>
   <link rel="stylesheet" href="./src/styles.css" />
 </head>
+
 <body>
   <nav class="top-nav">
     <div class="nav-brand">🛡️ ShieldBrowse Demo Sites</div>
@@ -15,13 +17,14 @@
       <a href="./pages/banking.html">Banking</a>
       <a href="./pages/government.html">Government</a>
       <a href="./pages/adversarial.html" class="danger">Adversarial</a>
+      <a href="./pages/login-otp.html">Login with OTP</a>
     </div>
   </nav>
 
   <main class="demo-container">
     <h1>Welcome to the ShieldBrowse Test Environment</h1>
     <p>Select a scenario above to test the PII Detection and Privacy Gate features.</p>
-    
+
     <div class="scenario-cards">
       <a href="./pages/healthcare.html" class="scenario-card">
         <h3>🏥 Healthcare Portal</h3>
@@ -39,6 +42,10 @@
         <h3>⚠️ Adversarial Attack</h3>
         <p>Test the Action Safety Gate and Prompt Injection defenses against malicious input.</p>
       </a>
+      <a href="./pages/login-otp.html" class="scenario-card">
+        <h3>Login with OTP</h3>
+        <p>Login page with OTP verification flow.</p>
+      </a>
     </div>
 
     <!--
@@ -51,22 +58,31 @@
     -->
     <section class="scenario-card" style="margin-top:32px;">
       <h3>👤 Sample Profile Preview</h3>
-      <p style="color:#666;">These fields simulate a signed-in user. ShieldBrowse should tokenize every one of them on load.</p>
+      <p style="color:#666;">These fields simulate a signed-in user. ShieldBrowse should tokenize every one of them on
+        load.</p>
       <div class="form-group"><label for="home-name">Name</label>
-        <input id="home-name" type="text" readonly value="Rahul Sharma" /></div>
+        <input id="home-name" type="text" readonly value="Rahul Sharma" />
+      </div>
       <div class="form-group"><label for="home-email">Email</label>
-        <input id="home-email" type="email" readonly value="rahul.sharma@example.com" /></div>
+        <input id="home-email" type="email" readonly value="rahul.sharma@example.com" />
+      </div>
       <div class="form-group"><label for="home-phone">Mobile</label>
-        <input id="home-phone" type="tel" readonly value="+91 98765 43210" /></div>
+        <input id="home-phone" type="tel" readonly value="+91 98765 43210" />
+      </div>
       <div class="form-group"><label for="home-aadhaar">Aadhaar</label>
-        <input id="home-aadhaar" type="text" readonly value="2341 2341 2346" /></div>
+        <input id="home-aadhaar" type="text" readonly value="2341 2341 2346" />
+      </div>
       <div class="form-group"><label for="home-pan">PAN</label>
-        <input id="home-pan" type="text" readonly value="ABCDE1234F" /></div>
+        <input id="home-pan" type="text" readonly value="ABCDE1234F" />
+      </div>
       <div class="form-group"><label for="home-ifsc">IFSC</label>
-        <input id="home-ifsc" type="text" readonly value="HDFC0001234" /></div>
+        <input id="home-ifsc" type="text" readonly value="HDFC0001234" />
+      </div>
       <div class="form-group"><label for="home-card">Card</label>
-        <input id="home-card" type="text" readonly value="4111 1111 1111 1111" /></div>
+        <input id="home-card" type="text" readonly value="4111 1111 1111 1111" />
+      </div>
     </section>
   </main>
 </body>
+
 </html>
