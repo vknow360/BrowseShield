@@ -38,7 +38,10 @@ describe("PIITokenizer", () => {
       { id: "2", value: "Ignore", selector: "#ignore", box: { x: 0, y: 0 } }, // no PII
     ];
 
-    const { sanitizedNodes, tokenMap } = await tokenizer.tokenize(nodes);
+    const candidates = PIITokenizer.extractNodeCandidates(nodes, DEFAULT_PRIVACY_POLICY.confidenceThreshold);
+    tokenizer.assignTokens(candidates);
+    const sanitizedNodes = tokenizer.sanitizeNodes(nodes);
+    const tokenMap = tokenizer.tokenMap;
 
     expect(sanitizedNodes[0].value).toBe("[[PERSON_1]]");
     expect(sanitizedNodes[0].pii).toBeUndefined(); // should be stripped
@@ -69,7 +72,10 @@ describe("PIITokenizer", () => {
       },
     ];
 
-    const { sanitizedNodes, tokenMap } = await tokenizer.tokenize(nodes);
+    const candidates = PIITokenizer.extractNodeCandidates(nodes, DEFAULT_PRIVACY_POLICY.confidenceThreshold);
+    tokenizer.assignTokens(candidates);
+    const sanitizedNodes = tokenizer.sanitizeNodes(nodes);
+    const tokenMap = tokenizer.tokenMap;
 
     expect(sanitizedNodes[0].value).toBe("[[EMAIL_1]]");
     expect(sanitizedNodes[1].value).toBe("[[EMAIL_1]]");
@@ -86,7 +92,10 @@ describe("PIITokenizer", () => {
       },
     ];
 
-    const { sanitizedNodes, tokenMap } = await tokenizer.tokenize(nodes);
+    const candidates = PIITokenizer.extractNodeCandidates(nodes, DEFAULT_PRIVACY_POLICY.confidenceThreshold);
+    tokenizer.assignTokens(candidates);
+    const sanitizedNodes = tokenizer.sanitizeNodes(nodes);
+    const tokenMap = tokenizer.tokenMap;
 
     expect(sanitizedNodes[0].value).toBe("[[VALUE_1]]");
     expect(tokenMap["[[VALUE_1]]"].entityType).toBe("MEDICAL");
@@ -105,12 +114,14 @@ describe("PIITokenizer", () => {
       },
     ];
 
-    const { sanitizedNodes } = await strictTokenizer.tokenize(nodes);
+    const candidates = PIITokenizer.extractNodeCandidates(nodes, policy.confidenceThreshold);
+    strictTokenizer.assignTokens(candidates);
+    const sanitizedNodes = strictTokenizer.sanitizeNodes(nodes);
     expect(sanitizedNodes[0].value).toBe("MaybeName"); // Not tokenized due to low confidence
   });
 
   it("rehydrates strings correctly", async () => {
-    await tokenizer.tokenize([
+    const nodes = [
       {
         id: "1",
         value: "Rahul",
@@ -129,7 +140,9 @@ describe("PIITokenizer", () => {
         selector: "#m",
         pii: { isPII: true, entityType: "MEDICAL", confidence: 1 },
       },
-    ]);
+    ];
+    const candidates = PIITokenizer.extractNodeCandidates(nodes, DEFAULT_PRIVACY_POLICY.confidenceThreshold);
+    tokenizer.assignTokens(candidates);
 
     expect(tokenizer.rehydrateString("Type [[PERSON_1]] into name")).toBe(
       "Type Rahul into name",

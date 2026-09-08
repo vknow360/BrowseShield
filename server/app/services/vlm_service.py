@@ -78,18 +78,19 @@ async def get_action_plan_from_vlm(request: AgentRequest) -> AgentPlan:
                 print(f"Image received: {len(request.redactedImage)} chars (first 100: {request.redactedImage[:100]}...)")
                 b64_img = request.redactedImage.split("base64,")[-1] if "base64," in request.redactedImage else request.redactedImage
                 
-                # Save the image to disk for debugging/verification
-                try:
-                    import base64
-                    from datetime import datetime
-                    debug_dir = os.path.join(os.path.dirname(__file__), "..", "..", "debug_images")
-                    os.makedirs(debug_dir, exist_ok=True)
-                    img_path = os.path.join(debug_dir, f"received_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
-                    with open(img_path, "wb") as f:
-                        f.write(base64.b64decode(b64_img))
-                    print(f"[VLM Server] Saved received image for verification: {img_path}")
-                except Exception as img_err:
-                    print(f"[VLM Server] Failed to save debug image: {img_err}")
+                if os.getenv('AGENT_DEBUG') == 'true':
+                    # Save the image to disk for debugging/verification
+                    try:
+                        import base64
+                        from datetime import datetime
+                        debug_dir = os.path.join(os.path.dirname(__file__), "..", "..", "debug_images")
+                        os.makedirs(debug_dir, exist_ok=True)
+                        img_path = os.path.join(debug_dir, f"received_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+                        with open(img_path, "wb") as f:
+                            f.write(base64.b64decode(b64_img))
+                        print(f"[VLM Server] Saved received image for verification: {img_path}")
+                    except Exception as img_err:
+                        print(f"[VLM Server] Failed to save debug image: {img_err}")
 
         async with httpx.AsyncClient(trust_env=False) as client:
             openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -174,6 +175,10 @@ async def get_action_plan_from_vlm(request: AgentRequest) -> AgentPlan:
             return AgentPlan(actions=[AgentAction(**action_json)], reasoning="")
         return AgentPlan(**action_json)
     except Exception as e:
-        raw = result.get("choices", [{}])[0].get("message", {}).get("content") or result.get("message", {}).get("content")
-        print(f"[VLM Server] Error parsing VLM output: {e}\nRaw output: {raw}")
+        if type(result) == dict:
+            raw = result.get("choices", [{}])[0].get("message", {}).get("content") or result.get("message", {}).get("content")
+            print(f"[VLM Server] Error parsing VLM output: {e}\nRaw output: {raw}")
+        else:
+            print(f"[VLM Server] Error parsing VLM output: {e}\nRaw output: {result}")
         raise ValueError(f"Failed to parse VLM response: {e}")
+

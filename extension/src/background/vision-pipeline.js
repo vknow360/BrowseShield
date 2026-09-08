@@ -61,40 +61,36 @@ export async function perceiveScreen(imageBitmap, nodes = []) {
   let uiBoxes = [];
   let faceBoxes = [];
 
-  try {
-    if (yoloSession) {
-      const { tensor, scale, offsetX, offsetY } =
-        await preprocessYOLO(imageBitmap);
-      const results = await yoloSession.run({ images: tensor });
-      const outputTensor = results[yoloSession.outputNames[0]];
-      uiBoxes = postprocessYOLO(
-        outputTensor,
-        scale,
-        offsetX,
-        offsetY,
-        imageBitmap.width,
-        imageBitmap.height,
-      );
-      tensor.dispose();
-      if (outputTensor && typeof outputTensor.dispose === 'function') {
-        outputTensor.dispose();
-      }
+  if (yoloSession) {
+    const { tensor, scale, offsetX, offsetY } =
+      await preprocessYOLO(imageBitmap);
+    const results = await yoloSession.run({ images: tensor });
+    const outputTensor = results[yoloSession.outputNames[0]];
+    uiBoxes = postprocessYOLO(
+      outputTensor,
+      scale,
+      offsetX,
+      offsetY,
+      imageBitmap.width,
+      imageBitmap.height,
+    );
+    tensor.dispose();
+    if (outputTensor && typeof outputTensor.dispose === 'function') {
+      outputTensor.dispose();
     }
+  }
 
-    if (faceDetector) {
-      const detections = faceDetector.detect(imageBitmap);
-      if (detections && detections.detections) {
-        faceBoxes = detections.detections.map((d) => ({
-          x: d.boundingBox.originX,
-          y: d.boundingBox.originY,
-          w: d.boundingBox.width,
-          h: d.boundingBox.height,
-          conf: d.categories[0].score,
-        }));
-      }
+  if (faceDetector) {
+    const detections = faceDetector.detect(imageBitmap);
+    if (detections && detections.detections) {
+      faceBoxes = detections.detections.map((d) => ({
+        x: d.boundingBox.originX,
+        y: d.boundingBox.originY,
+        w: d.boundingBox.width,
+        h: d.boundingBox.height,
+        conf: d.categories[0].score,
+      }));
     }
-  } catch (err) {
-    console.error("[Vision] Error in perceiveScreen:", err);
   }
 
   const { screenType, piiVisionBoxes } = classifyScreenType(nodes, faceBoxes, uiBoxes);

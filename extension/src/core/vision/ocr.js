@@ -1,4 +1,5 @@
 import { createWorker } from 'tesseract.js';
+import { browser } from 'webextension-polyfill';
 
 let workerPromise = null;
 
@@ -7,11 +8,11 @@ async function getWorker() {
     workerPromise = (async () => {
       console.log("[OCR] Initializing Tesseract.js Worker...");
       const worker = await createWorker('eng', 1, {
-        workerPath: chrome.runtime.getURL('tesseract/worker.min.js'),
-        corePath: chrome.runtime.getURL('tesseract/tesseract-core-simd.wasm.js'),
+        workerPath: browser.runtime.getURL('tesseract/worker.min.js'),
+        corePath: browser.runtime.getURL('tesseract/tesseract-core-simd.wasm.js'),
         // Tesseract appends /eng.traineddata.gz or similar to the langPath.
         // It's expecting the URL to the directory containing eng.traineddata.gz
-        langPath: chrome.runtime.getURL('tesseract'),
+        langPath: browser.runtime.getURL('tesseract'),
         gzip: true,
         logger: m => {
           if (m.status === "recognizing text") {
@@ -58,7 +59,7 @@ export async function ocrRegion(imageBitmapOrCrop) {
     }
     if (data) {
       console.log(`[OCR] recognized ${words.length} raw words (text="${(data.text || '').slice(0, 120).replace(/\n/g, ' | ')}")`);
-      
+
       const validWords = [];
       for (const word of words) {
         if (word.confidence > 30 && word.text && word.text.trim()) {
@@ -86,13 +87,13 @@ export async function ocrRegion(imageBitmapOrCrop) {
           continue;
         }
         const last = results[results.length - 1];
-        
+
         const resCenterY = (res.box.y0 + res.box.y1) / 2;
         const isSameLine = resCenterY >= last.box.y0 && resCenterY <= last.box.y1;
-        
+
         const charWidth = (last.box.x1 - last.box.x0) / Math.max(1, last.text.length);
         const dist = res.box.x0 - last.box.x1;
-        
+
         // Merge if on same line and horizontally adjacent (distance < 3 char widths, allowing slight overlap)
         if (isSameLine && dist >= -charWidth && dist < charWidth * 3) {
           last.text += " " + res.text;

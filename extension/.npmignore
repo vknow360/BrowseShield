@@ -1,0 +1,6 @@
+tests/
+mock-site/
+benchmark/
+colab/
+docs/
+*.log

@@ -1,0 +1,9 @@
+mock-site/
+benchmark/
+colab/
+docs/
+extension/
+*.log
+__pycache__/
+.pytest_cache/
+tests/

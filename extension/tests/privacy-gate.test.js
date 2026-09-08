@@ -6,7 +6,7 @@ import {
 
 describe("Privacy Gate (validateOutboundPayload)", () => {
   it("allows payload when token map is empty or payload is sanitized", () => {
-    const payload = JSON.stringify({ nodes: [{ value: "[[AADHAAR_1]]" }] });
+    const payload = { nodes: [{ value: "[[AADHAAR_1]]" }] };
     const tokenMap = {
       "[[AADHAAR_1]]": { realValue: "1234 5678 9012", entityType: "AADHAAR" },
     };
@@ -18,9 +18,9 @@ describe("Privacy Gate (validateOutboundPayload)", () => {
 
   it("blocks payload if structured data (Aadhaar) leaks", () => {
     // 1234 5678 9012 is present in the payload string
-    const payload = JSON.stringify({
+    const payload = {
       nodes: [{ value: "[[AADHAAR_1]]" }, { value: "1234 5678 9012" }],
-    });
+    };
     const tokenMap = {
       "[[AADHAAR_1]]": { realValue: "1234 5678 9012", entityType: "AADHAAR" },
     };
@@ -32,7 +32,7 @@ describe("Privacy Gate (validateOutboundPayload)", () => {
   });
 
   it("blocks payload if unstructured data (PERSON) leaks using case-insensitive match", () => {
-    const payload = JSON.stringify({ title: "Welcome rahul sharma" }); // lowercase in payload
+    const payload = { textContent: "Welcome rahul sharma" }; // lowercase in payload
     const tokenMap = {
       "[[PERSON_1]]": { realValue: "Rahul Sharma", entityType: "PERSON" }, // uppercase in map
     };
@@ -43,7 +43,7 @@ describe("Privacy Gate (validateOutboundPayload)", () => {
   });
 
   it("skips short values (<= 2 chars) to prevent false positives", () => {
-    const payload = JSON.stringify({ text: "He is in UK" });
+    const payload = { textContent: "He is in UK" };
     const tokenMap = {
       "[[STATE_1]]": { realValue: "UK", entityType: "STATE" },
     };
@@ -59,7 +59,7 @@ describe("Privacy Gate (enforcement wrapper)", () => {
   });
 
   it("respects enforcement mode", () => {
-    const payload = { test: "Secret" };
+    const payload = { textContent: "Secret" };
     const map = {
       "[[VALUE_1]]": { realValue: "Secret", entityType: "MEDICAL" },
     };

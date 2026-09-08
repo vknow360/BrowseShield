@@ -4,6 +4,8 @@ import { redactScreenshot } from "../core/vision/redactor.js";
 import { detectSemanticPII, initNERPipeline } from "../core/detector/ner-pipeline.js";
 import { privacyGate } from "../core/tokenizer/privacy-gate.js";
 import { PIITokenizer } from "../core/tokenizer/tokenizer.js";
+import { tryLocalAction } from "../core/local-agent.js";
+import { validateAction } from "../core/action-safety-gate.js";
 
 export class AgentLoop {
   constructor() {
@@ -214,6 +216,16 @@ export class AgentLoop {
       this.lastPlanUrl = payload.url || "";
       const sanitizedNodes = this.tokenizer.sanitizeNodes(payload.nodes);
 
+      // Check if this task can be handled locally (e.g. scroll, dismiss popup) without a VLM call
+      const localResult = tryLocalAction(this.taskInstruction, sanitizedNodes);
+      if (localResult.canHandle && localResult.action) {
+        console.log("[AgentLoop] Local agent intercepted task:", localResult.action);
+        this.currentPlan = [localResult.action];
+        // Execute it immediately and skip the heavy vision pipeline
+        await this.executeNextActionInPlan();
+        return;
+      }
+
       let redactedImage = null;
       let screenType = "unknown";
       let uiBoxes = [];
@@ -269,6 +281,8 @@ export class AgentLoop {
         imageBitmap.close();
       } catch (visionErr) {
         console.error("[AgentLoop] Vision loop failed:", visionErr);
+        await this.transition("error", "vision-pipeline-crashed");
+        return;
       }
 
       // Prompt Tokenization
@@ -380,6 +394,15 @@ export class AgentLoop {
     if (this.currentPlan.length === 0) return;
 
     const action = this.currentPlan.shift();
+
+    // Validate the action before executing it to prevent malicious payload execution
+    const validation = validateAction(action, null);
+    if (!validation.valid) {
+      console.warn(`[AgentLoop] Action Safety Gate blocked action:`, action, `Reason: ${validation.reason}`);
+      this.currentPlan = []; // Discard the rest of the unsafe plan
+      await this.transition("error", `Safety check failed: ${validation.reason}`);
+      return;
+    }
 
     if (action.action === "done") {
       await this.transition("done", action.reasoning || "Task completed");

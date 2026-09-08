@@ -148,12 +148,16 @@ async function benchOne(browser, url, swInfo) {
 
     page.on('console', msg => {
         const text = msg.text();
-        const m = text.match(/\[ShieldBrowse\] Detected (\d+) PII items across \d+ nodes in (\d+)ms/);
+        const m = text.match(/\[ShieldBrowse\] Detected (\d+) PII candidates across \d+ nodes in (\d+)ms/);
         if (m) {
             scans.push({ piiFound: Number(m[1]), scanMs: Number(m[2]), at: Date.now() });
             lastScanAt = Date.now();
             armSettle();
         }
+    });
+    
+    page.on('pageerror', err => {
+        console.log(`[PAGE ERROR] ${err}`);
     });
 
     const t0 = Date.now();

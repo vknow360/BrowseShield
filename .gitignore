@@ -71,6 +71,12 @@ training/data/raw/
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 graft/
 
+# Temporary benchmark and verification outputs
+verify_out/
+reports/
+benchmark/accuracy/screenshots/
+benchmark/accuracy/ground_truth/
+
 # Workspace specific ignores
 server/debug_images/
 extension/public/models/ner/
@@ -83,3 +89,19 @@ extension/public/models/ner/
 .agents/
 opencode.json
 .mcp.json
+
+# Colab notebooks & training scripts
+colab/
+
+# Internal plans & documentation
+plans/
+docs/plan/
+docs/plans/
+*codebase_review*
+*shieldbrowse_deep_dive*
+*deep_dive*
+codebase_review.md
+shieldbrowse_deep_dive.md
+docs/codebase_review.md
+docs/shieldbrowse_deep_dive.md
+
