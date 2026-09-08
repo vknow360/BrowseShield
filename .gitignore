@@ -94,14 +94,5 @@ opencode.json
 colab/
 
 # Internal plans & documentation
-plans/
-docs/plan/
-docs/plans/
-*codebase_review*
-*shieldbrowse_deep_dive*
-*deep_dive*
-codebase_review.md
-shieldbrowse_deep_dive.md
-docs/codebase_review.md
-docs/shieldbrowse_deep_dive.md
+docs/plans/*
 
