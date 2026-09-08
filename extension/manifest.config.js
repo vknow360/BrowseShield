@@ -38,11 +38,11 @@ export default defineManifest(async (env) => ({
     ? {
         sidebar_action: {
           default_panel: "src/ui/sidepanel/index.html",
-          default_title: "ShieldBrowse",
+          default_title: "BrowseShield",
         },
         browser_specific_settings: {
           gecko: {
-            id: "shieldbrowse@example.com",
+            id: "browseshield@example.com",
             strict_min_version: "109.0",
           },
         },

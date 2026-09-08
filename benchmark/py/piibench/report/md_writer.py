@@ -5,7 +5,7 @@ def write_md_report(report_data, out_dir):
     path = os.path.join(out_dir, 'metrics_report.md')
     
     lines = [
-        "# ShieldBrowse PIIBench Report",
+        "# BrowseShield PIIBench Report",
         f"**Run ID:** `{report_data.get('run_id', 'unknown')}`",
         f"**Date:** {report_data.get('generated_at')}",
         "",

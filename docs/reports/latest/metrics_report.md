@@ -1,4 +1,4 @@
-# ShieldBrowse PIIBench Report
+# BrowseShield PIIBench Report
 **Run ID:** `SIH26-Local`
 **Date:** None
 

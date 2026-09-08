@@ -84,7 +84,7 @@ def list_datasets(args):
     print("Available datasets: ai4privacy_200k, ai4privacy_300k, presidio, etc.")
 
 def main():
-    parser = argparse.ArgumentParser(description="PIIBench - ShieldBrowse Benchmarking Harness")
+    parser = argparse.ArgumentParser(description="PIIBench - BrowseShield Benchmarking Harness")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # `run` command

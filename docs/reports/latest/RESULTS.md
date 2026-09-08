@@ -1,4 +1,4 @@
-# ShieldBrowse — Measured Benchmark Results
+# BrowseShield — Measured Benchmark Results
 
 > Reproduced from `plans/BENCHMARK_HOWTO.md`. Every row below was produced by
 > running the referenced command against the current tree; no numbers are
@@ -41,7 +41,7 @@ Command: inline `node --expose-gc` import of `extension/src/core/detector/index.
 | External (WASM / ArrayBuffers) | **3.6 MB** |
 
 **B. Chromium extension (live)** — not scripted this run; capture from
-`chrome://extensions` → Task Manager (`Shift+Esc`) → row *Extension: ShieldBrowse*
+`chrome://extensions` → Task Manager (`Shift+Esc`) → row *Extension: BrowseShield*
 during a live demo, per `BENCHMARK_HOWTO.md §2.B`.
 
 ---
@@ -76,7 +76,7 @@ Per-dataset report: `reports/latest/metrics_report.md` and `.json`.
 | Artifact | Size |
 |---|---:|
 | Unzipped `extension/dist/` | **97.94 MB** |
-| Zipped `extension/shieldbrowse.zip` | **41.49 MB** |
+| Zipped `extension/browseshield.zip` | **41.49 MB** |
 
 **Top 5 largest assets** (explains the number, and points at the
 optimization path):
@@ -99,7 +99,7 @@ the SIMD one for another ~21 MB — both are "planned", not "measured".
 
 `node .\benchmark\js\run_e2e.js` against the built `extension/dist/` in real
 Chromium (Puppeteer, `headless: 'new'`) driving 7 mock-site pages served by
-Vite on `:3002`. The harness now captures **every** `[ShieldBrowse] Detected …`
+Vite on `:3002`. The harness now captures **every** `[BrowseShield] Detected …`
 log per visit (not just the first), settles when no new scan arrives for
 1500 ms, and — on pages that expose no `#quickFillBtn` — synthetically fills
 matching input ids (Aadhaar, PAN, IFSC, phone, email, name, address,
@@ -174,7 +174,7 @@ real bugs, not design decisions, and were fixed:
 
 ### 6. Slide-ready summary line
 
-> **ShieldBrowse (measured, on this host):** per-node PII scan **1.00 ms**,
+> **BrowseShield (measured, on this host):** per-node PII scan **1.00 ms**,
 > cold start **361 ms**, detector-core RSS **108 MB**, extension size
 > **97.9 MB unzipped / 41.5 MB zipped**, precision **0.995** and F1 **0.935**
 > on a 1000-sample Indian PII synth benchmark using the same code path shipped

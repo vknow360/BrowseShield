@@ -1,7 +1,7 @@
 /// <reference types="chrome" />
 import { DEFAULT_PRIVACY_POLICY, generateToken } from "./privacy-policy.js";
 
-// Centralized tokenizer for ShieldBrowse.
+// Centralized tokenizer for BrowseShield.
 // State (tokenMap, counters) is owned by the background script (agent-loop).
 export class PIITokenizer {
   constructor(policy = DEFAULT_PRIVACY_POLICY) {

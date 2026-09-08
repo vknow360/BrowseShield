@@ -62,7 +62,7 @@ export function privacyGate(outboundPayload, tokenMap, enforcement = "block") {
 
   if (!result.allowed && enforcement === "block") {
     console.error(
-      "[ShieldBrowse] 🔒 PRIVACY GATE BLOCKED — raw PII in outbound:",
+      "[BrowseShield] 🔒 PRIVACY GATE BLOCKED — raw PII in outbound:",
       result.violations.map(
         (v) => `${v.entityType} "${v.realValue}" should be ${v.token}`,
       ),

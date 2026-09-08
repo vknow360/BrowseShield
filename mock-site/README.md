@@ -1,6 +1,6 @@
 # ArogyaShield Health Insurance — Mock Portal
 
-A realistic Indian healthcare claim application designed specifically to benchmark and demonstrate **ShieldBrowse** (On-Device Visual Perception & PII Redaction Browser Agent).
+A realistic Indian healthcare claim application designed specifically to benchmark and demonstrate **BrowseShield** (On-Device Visual Perception & PII Redaction Browser Agent).
 
 ---
 

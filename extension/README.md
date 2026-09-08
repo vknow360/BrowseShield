@@ -1,4 +1,4 @@
-# ShieldBrowse — Extension Architecture & Development
+# BrowseShield — Extension Architecture & Development
 
 ## 🛠️ Day 1 Milestone: Extension Skeleton Verified
 
@@ -27,7 +27,7 @@ npm run build
 1. Navigate to `chrome://extensions/`
 2. Enable **Developer mode** (toggle in upper-right corner).
 3. Click **Load unpacked** and select the `extension/dist` folder.
-4. Pin the **ShieldBrowse** icon to your toolbar.
+4. Pin the **BrowseShield** icon to your toolbar.
 
 ---
 

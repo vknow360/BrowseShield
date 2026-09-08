@@ -11,7 +11,7 @@ import { executeAction } from "./action-executor.js";
 import { scanImagesAndRedact, scanCanvasesForOCR } from "./image-scanner.js";
 import browser from "webextension-polyfill";
 
-console.log("[ShieldBrowse] Content script active on:", window.location.href);
+console.log("[BrowseShield] Content script active on:", window.location.href);
 
 initDetectors();
 
@@ -57,7 +57,7 @@ async function scanAndEmit(isActionComplete = false, actionId = null) {
   const { rects, dpr } = collectSensitiveRects();
 
   const scanTimeMs = Math.round(performance.now() - startTime);
-  console.log(`[ShieldBrowse] Detected ${candidates.length} PII candidates across ${taggedNodes.length} nodes in ${scanTimeMs}ms.`);
+  console.log(`[BrowseShield] Detected ${candidates.length} PII candidates across ${taggedNodes.length} nodes in ${scanTimeMs}ms.`);
 
   const messageType = isActionComplete ? "action-complete" : "dom-scan-result";
 
@@ -111,7 +111,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     isAgentExecuting = true;
     executeAction(action)
       .then(async (result) => {
-        console.log("[ShieldBrowse] Action executed successfully", result);
+        console.log("[BrowseShield] Action executed successfully", result);
         sendResponse({ status: "success", result });
         
         await waitForSettle();
@@ -119,7 +119,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         scanAndEmit(true, actionId);
       })
       .catch(async (err) => {
-        console.error("[ShieldBrowse] Action execution failed:", err);
+        console.error("[BrowseShield] Action execution failed:", err);
         sendResponse({ status: "error", error: err.message });
         
         await waitForSettle();

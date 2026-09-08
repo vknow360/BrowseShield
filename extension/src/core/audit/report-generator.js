@@ -20,7 +20,7 @@ export function generateAuditReport(scanPayload, blockCount) {
   const timestamp = new Date().toISOString();
   const pageUrl = scanPayload?.sanitizedPayload?.pageUrl || 'Unknown';
 
-  let markdown = `# ShieldBrowse DPDP Audit Report\n\n`;
+  let markdown = `# BrowseShield DPDP Audit Report\n\n`;
   markdown += `**Generated:** ${timestamp}\n`;
   markdown += `**Target URL:** ${pageUrl}\n\n`;
 
@@ -59,7 +59,7 @@ export function downloadReport(markdown) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `ShieldBrowse_Audit_${new Date().getTime()}.md`;
+  a.download = `BrowseShield_Audit_${new Date().getTime()}.md`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

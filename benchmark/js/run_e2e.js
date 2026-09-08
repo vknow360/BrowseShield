@@ -4,7 +4,7 @@
 // visits each mock-site page, and records per page:
 //   - navMs           : navigation time (goto -> networkidle2)
 //   - scanMs          : extension-reported scan time (last scan of the burst,
-//                       parsed from "[ShieldBrowse] Detected ... in Xms")
+//                       parsed from "[BrowseShield] Detected ... in Xms")
 //   - initialScanMs   : first scan after load (idle-load number)
 //   - endToEndMs      : goto-start -> last-scan-complete
 //   - pageHeapMB      : page V8 heap (Performance.getMetrics.JSHeapUsedSize)
@@ -53,7 +53,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 // WASM worker, typically 5-15s on a warm machine. After that first page the
 // worker is cached and later pages settle in <2s.
 const SCAN_TIMEOUT_MS = Number(process.env.SCAN_TIMEOUT_MS || 60000);
-// After the last observed [ShieldBrowse] scan log, wait this long for another
+// After the last observed [BrowseShield] scan log, wait this long for another
 // one. If none arrives, we consider the burst settled. Must exceed the
 // content script's 100ms debounce with headroom for tokenizer work AND for
 // the async canvas OCR path (SW OCR -> inject synthetic nodes -> rescan).
@@ -148,7 +148,7 @@ async function benchOne(browser, url, swInfo) {
 
     page.on('console', msg => {
         const text = msg.text();
-        const m = text.match(/\[ShieldBrowse\] Detected (\d+) PII candidates across \d+ nodes in (\d+)ms/);
+        const m = text.match(/\[BrowseShield\] Detected (\d+) PII candidates across \d+ nodes in (\d+)ms/);
         if (m) {
             scans.push({ piiFound: Number(m[1]), scanMs: Number(m[2]), at: Date.now() });
             lastScanAt = Date.now();
@@ -393,7 +393,7 @@ async function main() {
     }
     md.push('');
     md.push('Notes:');
-    md.push('- "Initial scan" = first `[ShieldBrowse] Detected …` log after page load (idle DOM).');
+    md.push('- "Initial scan" = first `[BrowseShield] Detected …` log after page load (idle DOM).');
     md.push('- "Final scan" = last scan of the debounced burst after `#quickFillBtn` click; represents worst-case for pages that expose the synthetic fill.');
     md.push('- "Page V8 heap" = `Performance.getMetrics.JSHeapUsedSize` on the page target (content-script + page JS).');
     md.push('- "Extension SW heap" = `Runtime.getHeapUsage.usedSize` on the extension\'s MV3 service-worker target.');

@@ -28,7 +28,7 @@
 | /canvas-form.html | ✅ | 1171 | 27 | 23 | 9857 | 6.94 | — | 0→4 | 4 |
 
 Notes:
-- "Initial scan" = first `[ShieldBrowse] Detected …` log after page load (idle DOM).
+- "Initial scan" = first `[BrowseShield] Detected …` log after page load (idle DOM).
 - "Final scan" = last scan of the debounced burst after `#quickFillBtn` click; represents worst-case for pages that expose the synthetic fill.
 - "Page V8 heap" = `Performance.getMetrics.JSHeapUsedSize` on the page target (content-script + page JS).
 - "Extension SW heap" = `Runtime.getHeapUsage.usedSize` on the extension's MV3 service-worker target.

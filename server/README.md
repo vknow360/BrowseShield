@@ -1,6 +1,6 @@
-# ShieldBrowse Server (VLM Backend)
+# BrowseShield Server (VLM Backend)
 
-This is the FastAPI backend for the ShieldBrowse extension. It acts as the bridge between the browser extension and the local Vision-Language Model (Ollama/Qwen2.5-VL).
+This is the FastAPI backend for the BrowseShield extension. It acts as the bridge between the browser extension and the local Vision-Language Model (Ollama/Qwen2.5-VL).
 
 ## Prerequisites
 - Python 3.10+

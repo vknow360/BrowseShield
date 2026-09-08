@@ -1,9 +1,9 @@
-# ShieldBrowse
+# BrowseShield
 
 > **On-Device Visual Perception for Lightweight, Privacy-Preserving Browser Agents**  
 > *Developed for Smart India Hackathon (SIH) 2026 — Indian Space Research Organisation (ISRO) Problem Statement*
 
-[![CI](https://github.com/vknow360/ShieldBrowse/actions/workflows/ci.yml/badge.svg)](https://github.com/vknow360/ShieldBrowse/actions/workflows/ci.yml)
+[![CI](https://github.com/vknow360/BrowseShield/actions/workflows/ci.yml/badge.svg)](https://github.com/vknow360/BrowseShield/actions/workflows/ci.yml)
 [![Manifest V3](https://img.shields.io/badge/Chrome_Extension-Manifest_V3-blue.svg)](https://developer.chrome.com/docs/extensions/mv3/)
 [![ONNX Runtime Web](https://img.shields.io/badge/ONNX_Runtime_Web-WebGPU%2FWASM-orange.svg)](https://onnxruntime.ai/)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-green.svg)](https://www.python.org/)
@@ -16,7 +16,7 @@
 
 Autonomous AI agents increasingly require visual perception and screen-state access to automate complex workflows and navigate web applications. However, existing commercial and open-source agents transmit unredacted screenshots to cloud-hosted Vision-Language Models (VLMs), exposing sensitive Personally Identifiable Information (PII), violating user privacy, and breaching national data sovereignty mandates (e.g., India's **Digital Personal Data Protection Act 2023**).
 
-**ShieldBrowse** is an edge-native, privacy-preserving browser agent framework. It performs multi-layer PII detection, on-device computer vision grounding (YOLOv8-nano via WebGPU/WASM), face detection (MediaPipe BlazeFace), and pixel-level screenshot redaction **entirely within the user's browser runtime**.
+**BrowseShield** is an edge-native, privacy-preserving browser agent framework. It performs multi-layer PII detection, on-device computer vision grounding (YOLOv8-nano via WebGPU/WASM), face detection (MediaPipe BlazeFace), and pixel-level screenshot redaction **entirely within the user's browser runtime**.
 
 Sensitive values are replaced on-the-fly using a **Reversible Tokenization Scheme** (e.g., `[[PERSON_1]]`, `[[AADHAAR_1]]`). Centralized cloud VLMs reason purely over sanitized DOM structures, redacted images, and bounding boxes. When the VLM returns an action plan, the client execution engine rehydrates tokens into real values locally before dispatching native DOM events.
 
@@ -95,7 +95,7 @@ All screen reading, vision inference, and PII scanning execute locally within th
 - **Tesseract.js OCR Fallback**: Extracts embedded text from graphical images or canvas components when DOM access is unavailable.
 
 ### 4. 3-Step Reversible Tokenization
-Rather than destructive masking that breaks agent reasoning, ShieldBrowse utilizes a 3-step pipeline:
+Rather than destructive masking that breaks agent reasoning, BrowseShield utilizes a 3-step pipeline:
 1. `extractNodeCandidates()`: Identifies DOM and visual candidate targets.
 2. `assignTokens()`: Maps each candidate to a typed token (e.g., `[[PERSON_1]]`, `[[EMAIL_1]]`) and stores the mapping in `chrome.storage.local`.
 3. `sanitizeNodes()`: Generates a sanitized DOM tree with tokens substituted for values.
@@ -205,7 +205,7 @@ npm run build:firefox
 1. Open Chrome and navigate to `chrome://extensions/`.
 2. Enable **Developer mode** (top-right toggle).
 3. Click **Load unpacked** and choose the `extension/dist` folder.
-4. Pin **ShieldBrowse** to your browser toolbar.
+4. Pin **BrowseShield** to your browser toolbar.
 
 #### Loading into Firefox:
 1. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
@@ -234,9 +234,13 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit `server/.env` to configure your API key:
+Edit `server/.env` to configure your VLM provider. By default, it connects to a local Ollama instance:
 ```env
-OPENROUTER_API_KEY=your_openrouter_api_key_here
+# VLM_BASE_URL=http://localhost:11434/v1/chat/completions
+# VLM_MODEL=qwen2.5-vl:3b
+
+# Set this to use cloud providers (e.g., OpenRouter, OpenAI, Groq)
+VLM_API_KEY=your_api_key_here
 AGENT_DEBUG=false
 ```
 
@@ -251,16 +255,16 @@ The server will start at `http://localhost:8000`. Swagger API documentation is a
 ### Step 4: Run the Agent
 
 1. Navigate to `http://localhost:3000` in your browser.
-2. Click the **ShieldBrowse** extension icon in the toolbar to open the Side Panel.
+2. Click the **BrowseShield** extension icon in the toolbar to open the Side Panel.
 3. Observe the real-time detection cards highlighting detected PII, field tokenization badges, and screen-state classification.
 4. Enter an automation task in the Side Panel (e.g., *"Fill the patient registration form using Rahul Sharma's profile and click Submit"*) and click **Start Agent**.
-5. Watch ShieldBrowse tokenize fields locally, consult the VLM over anonymized context, and rehydrate inputs to complete the form.
+5. Watch BrowseShield tokenize fields locally, consult the VLM over anonymized context, and rehydrate inputs to complete the form.
 
 ---
 
 ## Testing & Quality Assurance
 
-ShieldBrowse includes automated test suites for both client-side and server-side components.
+BrowseShield includes automated test suites for both client-side and server-side components.
 
 ### 1. Extension Tests (Vitest)
 Tests cover tokenizer candidate extraction, token assignment, node sanitization, checksum algorithms, and privacy gate invariants:
@@ -285,7 +289,7 @@ All tests run automatically on every `push` and `pull_request` to the `main` bra
 
 ## Benchmark Suite (PIIBench)
 
-ShieldBrowse includes a comprehensive benchmark harness (`benchmark/js/run_e2e.js`) using Puppeteer to measure all 5 SIH evaluation criteria on real DOM fixtures.
+BrowseShield includes a comprehensive benchmark harness (`benchmark/js/run_e2e.js`) using Puppeteer to measure all 5 SIH evaluation criteria on real DOM fixtures.
 
 ```bash
 # From the repository root:
@@ -317,7 +321,7 @@ node benchmark/js/run_e2e.js
 
 ## Future Roadmap
 
-While ShieldBrowse achieves production-ready on-device PII protection today, the following enhancements are planned for future iterations:
+While BrowseShield achieves production-ready on-device PII protection today, the following enhancements are planned for future iterations:
 
 1. **Fail-Open Safety Net (Conservative Fallback)**: An optional policy mode to redact large, unclassified free-text areas. This provides an absolute data guarantee in high-security environments at the cost of agent autonomy over general text fields.
 2. **Indian-Context Domain NER**: Fine-tuning a lightweight local NER model specialized in Indian names, regional addresses, and colloquial terms to close the remaining unstructured free-text recall gap.

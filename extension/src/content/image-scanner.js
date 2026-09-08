@@ -12,7 +12,7 @@ export async function scanImagesAndRedact() {
   if (images.length === 0) return;
 
   console.log(
-    `[ShieldBrowse] Found ${images.length} new image(s). Running face detection...`,
+    `[BrowseShield] Found ${images.length} new image(s). Running face detection...`,
   );
 
   for (const img of images) {
@@ -45,7 +45,7 @@ export async function scanImagesAndRedact() {
       // Mark as processed
       img.setAttribute("data-redacted", "true");
     } catch (e) {
-      console.warn("[ShieldBrowse] Failed to scan image for faces:", e);
+      console.warn("[BrowseShield] Failed to scan image for faces:", e);
     }
   }
 }
@@ -58,7 +58,7 @@ function applyRedactionBoxes(img, faces) {
 
     // Create redaction div
     const redactionBox = document.createElement("div");
-    redactionBox.className = "shieldbrowse-face-redaction";
+    redactionBox.className = "browseshield-face-redaction";
     redactionBox.style.position = "absolute";
     redactionBox.style.backgroundColor = "black";
     redactionBox.style.zIndex = "999999";
@@ -72,12 +72,12 @@ function applyRedactionBoxes(img, faces) {
     redactionBox.style.height = `${box.height}px`;
 
     // Add title for debugging
-    redactionBox.title = "Face Redacted by ShieldBrowse Vision Pipeline";
+    redactionBox.title = "Face Redacted by BrowseShield Vision Pipeline";
 
     document.body.appendChild(redactionBox);
   });
 
-  console.log(`[ShieldBrowse] Redacted ${faces.length} face(s) over image.`);
+  console.log(`[BrowseShield] Redacted ${faces.length} face(s) over image.`);
 }
 
 export async function scanCanvasesForOCR() {
@@ -86,7 +86,7 @@ export async function scanCanvasesForOCR() {
   );
   if (targets.length === 0) return;
 
-  console.log(`[ShieldBrowse] Found ${targets.length} new canvas(es). Running OCR...`);
+  console.log(`[BrowseShield] Found ${targets.length} new canvas(es). Running OCR...`);
 
   for (const canvas of targets) {
     if (canvas.width === 0 || canvas.height === 0) continue;
@@ -99,7 +99,7 @@ export async function scanCanvasesForOCR() {
       const dataUri = canvas.toDataURL("image/png");
       const results = await ocrRegion(dataUri);
       console.log(
-        `[ShieldBrowse] OCR returned ${results?.length ?? 0} word(s) on canvas.`,
+        `[BrowseShield] OCR returned ${results?.length ?? 0} word(s) on canvas.`,
       );
       if (results && results.length > 0) {
         injectSyntheticOCRNodes(canvas, results);
@@ -108,7 +108,7 @@ export async function scanCanvasesForOCR() {
       // If OCR returned nothing, do NOT mark the canvas processed — a later
       // rescan (after the canvas is fully drawn) will retry.
     } catch (e) {
-      console.warn("[ShieldBrowse] Failed to scan canvas for OCR:", e);
+      console.warn("[BrowseShield] Failed to scan canvas for OCR:", e);
     }
   }
 }
@@ -139,7 +139,7 @@ function injectSyntheticOCRNodes(sourceEl, results) {
   });
   
   if (results.length > 0) {
-    console.log(`[ShieldBrowse] Injected ${results.length} OCR nodes into DOM.`);
+    console.log(`[BrowseShield] Injected ${results.length} OCR nodes into DOM.`);
     // Dispatch an input event to trigger a rescan in dom-walker
     document.dispatchEvent(new Event("input", { bubbles: true }));
   }

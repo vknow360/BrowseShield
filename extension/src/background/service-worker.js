@@ -17,7 +17,7 @@ initVisionPipeline();
 
 // 1. Lifecycle: Triggered on extension installation or update
 browser.runtime.onInstalled.addListener(() => {
-  console.log("[ShieldBrowse] Background Service Worker installed.");
+  console.log("[BrowseShield] Background Service Worker installed.");
 });
 
 // Also run on browser startup (Service Worker wakeup)
@@ -30,7 +30,7 @@ if (browser.sidePanel) {
   browser.sidePanel
     .setPanelBehavior({ openPanelOnActionClick: true })
     .catch((err) =>
-      console.error("[ShieldBrowse] Failed to set side panel behavior:", err),
+      console.error("[BrowseShield] Failed to set side panel behavior:", err),
     );
 }
 
@@ -74,7 +74,7 @@ browser.runtime.onConnect.addListener(port => {
 // 3. Central message dispatcher
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log(
-    "[ShieldBrowse SW] Received:",
+    "[BrowseShield SW] Received:",
     message.type,
     "from tab:",
     sender.tab?.id,
@@ -104,7 +104,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         imageBitmap.close();
         sendResponse({ status: "success", faces });
       } catch (err) {
-        console.error("[ShieldBrowse SW] Face detection failed:", err);
+        console.error("[BrowseShield SW] Face detection failed:", err);
         sendResponse({ status: "error", error: err.message });
       }
     })();
@@ -120,7 +120,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         imageBitmap.close();
         sendResponse({ status: "success", results });
       } catch (err) {
-        console.error("[ShieldBrowse SW] OCR failed:", err);
+        console.error("[BrowseShield SW] OCR failed:", err);
         sendResponse({ status: "error", error: err.message });
       }
     })();

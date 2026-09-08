@@ -309,7 +309,7 @@
           <div>👤 <strong>User:</strong> <span id="session-user">—</span></div>
           <div>🔑 <strong>Session:</strong> <code id="session-token">—</code></div>
           <div>⏰ <strong>Login Time:</strong> <span id="session-time">—</span></div>
-          <div>🛡️ <strong>ShieldBrowse:</strong> <span style="color: #059669;">All PII Tokenized</span></div>
+          <div>🛡️ <strong>BrowseShield:</strong> <span style="color: #059669;">All PII Tokenized</span></div>
         </div>
 
         <button type="button" class="submit-btn" onclick="resetFlow()" style="background: #10b981; margin-top: 16px;">
@@ -320,7 +320,7 @@
   </div>
 
   <footer class="footer">
-    <p>SecureAuth™ Mock Portal • ShieldBrowse SIH 2026 Demo • OTP Flow Testing</p>
+    <p>SecureAuth™ Mock Portal • BrowseShield SIH 2026 Demo • OTP Flow Testing</p>
   </footer>
 
   <script>
@@ -374,7 +374,7 @@
       // Start countdown
       startCountdown();
 
-      // Dispatch input event to trigger ShieldBrowse rescan
+      // Dispatch input event to trigger BrowseShield rescan
       document.dispatchEvent(new Event("input", { bubbles: true }));
     });
 
@@ -430,7 +430,7 @@
 
         clearInterval(countdownInterval);
 
-        // Dispatch event for ShieldBrowse
+        // Dispatch event for BrowseShield
         document.dispatchEvent(new Event("input", { bubbles: true }));
       } else {
         document.getElementById("otp-error").style.display = "block";

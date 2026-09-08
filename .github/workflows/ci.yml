@@ -1,4 +1,4 @@
-name: ShieldBrowse CI
+name: BrowseShield CI
 
 on:
   workflow_dispatch:

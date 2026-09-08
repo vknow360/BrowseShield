@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateLiveDomStream();
 
-    // Trigger input event to make ShieldBrowse rescan the newly visible elements
+    // Trigger input event to make BrowseShield rescan the newly visible elements
     document.dispatchEvent(new Event('input', { bubbles: true }));
   }
 

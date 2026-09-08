@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Loads variables from .env file
 
-app = FastAPI(title="ShieldBrowse Server")
+app = FastAPI(title="BrowseShield Server")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,4 +19,4 @@ app.include_router(agent_router, prefix="/agent", tags=["Agent"])
 
 @app.get("/")
 def read_root():
-    return {"message": "ShieldBrowse Server is running"}
+    return {"message": "BrowseShield Server is running"}

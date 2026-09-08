@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 from app.schemas.agent import AgentRequest, AgentAction, AgentPlan
 
-SYSTEM_PROMPT = """You are ShieldBrowse Agent. You automate browser tasks using sanitized DOM and redacted screenshots.
+SYSTEM_PROMPT = """You are BrowseShield Agent. You automate browser tasks using sanitized DOM and redacted screenshots.
 PII is replaced with tokens like [[PERSON_1]], [[EMAIL_1]]. You never see real values.
 
 RULES:
@@ -68,8 +68,9 @@ async def get_action_plan_from_vlm(request: AgentRequest) -> AgentPlan:
     timeout_config = httpx.Timeout(180.0, connect=10.0)
     try:
         async with httpx.AsyncClient(timeout=timeout_config, trust_env=False) as client:
-            gemini_key = os.environ.get("GEMINI_API_KEY")
-            groq_key = os.environ.get("GROQ_API_KEY")
+            vlm_base_url = os.environ.get("VLM_BASE_URL", "http://localhost:11434/v1/chat/completions")
+            model_name = os.environ.get("VLM_MODEL", "qwen2.5-vl:3b")
+            vlm_api_key = os.environ.get("VLM_API_KEY", "")
             
             # Setup image payload and debug saving
             b64_img = None
@@ -92,13 +93,7 @@ async def get_action_plan_from_vlm(request: AgentRequest) -> AgentPlan:
                     except Exception as img_err:
                         print(f"[VLM Server] Failed to save debug image: {img_err}")
 
-        async with httpx.AsyncClient(trust_env=False) as client:
-            openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
-            if not openrouter_key:
-                raise ValueError("OPENROUTER_API_KEY not found in environment.")
-                
-            model_name = "openrouter/free"
-            print(f"[VLM] Using OpenRouter endpoint: https://openrouter.ai/api/v1/chat/completions (model: {model_name})")
+            print(f"[VLM] Using endpoint: {vlm_base_url} (model: {model_name})")
             
             messages = [
                 {"role": "system", "content": SYSTEM_PROMPT},
@@ -111,14 +106,17 @@ async def get_action_plan_from_vlm(request: AgentRequest) -> AgentPlan:
                     "image_url": {"url": f"data:image/jpeg;base64,{b64_img}"}
                 })
 
+            headers = {
+                "Content-Type": "application/json",
+                "HTTP-Referer": "http://localhost:3000",
+                "X-Title": "BrowseShield Local Relay"
+            }
+            if vlm_api_key:
+                headers["Authorization"] = f"Bearer {vlm_api_key}"
+
             ollama_response = await client.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {openrouter_key}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "ShieldBrowse Local Relay"
-                },
+                vlm_base_url,
+                headers=headers,
                 json={
                     "model": model_name,
                     "messages": messages
@@ -126,7 +124,7 @@ async def get_action_plan_from_vlm(request: AgentRequest) -> AgentPlan:
                 timeout=180.0
             )
             if ollama_response.status_code != 200:
-                print(f"[VLM Server] OpenRouter returned status {ollama_response.status_code}: {ollama_response.text}")
+                print(f"[VLM Server] API returned status {ollama_response.status_code}: {ollama_response.text}")
             ollama_response.raise_for_status()
     except Exception as e:
         import traceback

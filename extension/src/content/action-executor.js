@@ -56,7 +56,7 @@ export async function executeAction(action) {
   const { action: actionType, target, value, reasoning } = action;
 
   console.log(
-    `[ShieldBrowse] Executing: ${actionType} on ${target} (${reasoning})`,
+    `[BrowseShield] Executing: ${actionType} on ${target} (${reasoning})`,
   );
 
   switch (actionType) {
@@ -106,7 +106,7 @@ export async function executeAction(action) {
         "y" in target
       ) {
         console.log(
-          `[ShieldBrowse] Vision-grounded physical coordinate click at (${target.x}, ${target.y})`,
+          `[BrowseShield] Vision-grounded physical coordinate click at (${target.x}, ${target.y})`,
         );
 
         // Translate from VLM's f-scaled physical pixels back to the browser's logical CSS pixels
@@ -116,7 +116,7 @@ export async function executeAction(action) {
         const logicalY = target.y / (f * dpr);
 
         console.log(
-          `[ShieldBrowse] Translated to logical viewport CSS coordinates: (${logicalX}, ${logicalY})`,
+          `[BrowseShield] Translated to logical viewport CSS coordinates: (${logicalX}, ${logicalY})`,
         );
 
         const el =
@@ -144,10 +144,10 @@ export async function executeAction(action) {
           try {
             form.requestSubmit(element);
             console.log(
-              "[ShieldBrowse] Dispatched form.requestSubmit() as fallback",
+              "[BrowseShield] Dispatched form.requestSubmit() as fallback",
             );
           } catch (e) {
-            console.warn("[ShieldBrowse] form.requestSubmit failed:", e);
+            console.warn("[BrowseShield] form.requestSubmit failed:", e);
           }
         }
       }
