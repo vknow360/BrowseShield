@@ -1,11 +1,12 @@
 import browser from "webextension-polyfill";
-import { perceiveScreen } from "./vision-pipeline.js";
+import { perceiveScreen, detectVisualPII } from "./vision-pipeline.js";
 import { redactScreenshot } from "../core/vision/redactor.js";
 import { detectSemanticPII, initNERPipeline } from "../core/detector/ner-pipeline.js";
 import { privacyGate } from "../core/tokenizer/privacy-gate.js";
 import { PIITokenizer } from "../core/tokenizer/tokenizer.js";
 import { tryLocalAction } from "../core/local-agent.js";
 import { validateAction } from "../core/action-safety-gate.js";
+import { auditLogger } from "../core/audit/audit-logger.js";
 
 export class AgentLoop {
   constructor() {
@@ -30,6 +31,7 @@ export class AgentLoop {
     this.consecutiveFailures = 0;
     this.lastFailedActionKey = null;
     this.lastPlanUrl = null;
+    this.executionId = 0;
   }
 
   async initialize() {
@@ -117,6 +119,14 @@ export class AgentLoop {
     this.step = 0;
     this.errorReason = null;
     this.isPlanningInFlight = false;
+    this.executionId++; // Invalidate any in-flight async operations
+    
+    // Disconnect active WebSocket to prevent trailing responses
+    if (this.ws) {
+      try { this.ws.close(); } catch (_) {}
+      this.ws = null;
+    }
+    
     this.tokenizer.loadState({}, {}); // Reset tokens
     await this.transition("idle");
   }
@@ -185,12 +195,10 @@ export class AgentLoop {
         console.log("[AgentLoop] Page navigated or hard reloaded. Discarding remaining plan.");
         this.currentPlan = [];
 
-        // Auto-done: if the URL changed, the original task likely succeeded (e.g. login → dashboard)
+        // Auto-done logic removed: URL changes should just cause a replan for multi-page flows
         const newUrl = payload.url || "";
         if (this.lastPlanUrl && newUrl && newUrl !== this.lastPlanUrl) {
-          console.log(`[AgentLoop] URL changed: ${this.lastPlanUrl} → ${newUrl}. Marking task done.`);
-          await this.transition("done", "Page navigated — task appears complete");
-          return;
+          console.log(`[AgentLoop] URL changed: ${this.lastPlanUrl} → ${newUrl}. Replanning.`);
         }
 
         this.step++;
@@ -209,12 +217,15 @@ export class AgentLoop {
       return;
     }
     this.isPlanningInFlight = true;
+    const currentExecutionId = this.executionId;
     try {
       await this.transition("planning");
+      console.log(`[AgentLoop:Timing] planNextStep START ${Date.now()}`);
 
       const payload = this.latestScan;
       this.lastPlanUrl = payload.url || "";
       const sanitizedNodes = this.tokenizer.sanitizeNodes(payload.nodes);
+      console.log(`[AgentLoop:Timing] dom_sanitization DONE ${Date.now()}`);
 
       // Check if this task can be handled locally (e.g. scroll, dismiss popup) without a VLM call
       const localResult = tryLocalAction(this.taskInstruction, sanitizedNodes);
@@ -223,65 +234,6 @@ export class AgentLoop {
         this.currentPlan = [localResult.action];
         // Execute it immediately and skip the heavy vision pipeline
         await this.executeNextActionInPlan();
-        return;
-      }
-
-      let redactedImage = null;
-      let screenType = "unknown";
-      let uiBoxes = [];
-      let f = 1;
-
-      // Vision Loop
-      try {
-        const dataUrl = await browser.tabs.captureVisibleTab(this.lastWindowId, { format: "jpeg", quality: 90 });
-        const blob = await (await fetch(dataUrl)).blob();
-        const fullBitmap = await createImageBitmap(blob);
-
-        const MAX_EDGE = 1280;
-        const longest = Math.max(fullBitmap.width, fullBitmap.height);
-        f = longest > MAX_EDGE ? MAX_EDGE / longest : 1;
-        let imageBitmap = fullBitmap;
-        if (f < 1) {
-          imageBitmap = await createImageBitmap(fullBitmap, {
-            resizeWidth: Math.round(fullBitmap.width * f),
-            resizeHeight: Math.round(fullBitmap.height * f),
-            resizeQuality: "high",
-          });
-          fullBitmap.close();
-        }
-
-        const perception = await perceiveScreen(imageBitmap, sanitizedNodes);
-        screenType = perception.screenType;
-        uiBoxes = perception.uiBoxes || [];
-
-        // Scale content script rects (full device coordinates -> downscaled imageBitmap)
-        const piiFieldBoxes = (payload.sensitiveRects || []).map(r => ({
-          x: r.x * f, y: r.y * f, w: r.w * f, h: r.h * f
-        }));
-
-        // Add DOM elements that were identified as containing PII
-        for (const node of payload.nodes) {
-          if ((node.hasPII || node.pii) && node.box && node.box.length === 4) {
-            piiFieldBoxes.push({
-              x: node.box[0] * f, y: node.box[1] * f, w: node.box[2] * f, h: node.box[3] * f
-            });
-          }
-        }
-
-        // Perception boxes are already in imageBitmap coordinate space
-        (perception.piiVisionBoxes || []).forEach(box => {
-          piiFieldBoxes.push({ x: box.x, y: box.y, w: box.w, h: box.h });
-        });
-
-        redactedImage = await redactScreenshot(imageBitmap, {
-          faceBoxes: perception.faceBoxes,
-          piiFieldBoxes,
-          passwordBoxes: [] // Handled by sensitiveRects
-        });
-        imageBitmap.close();
-      } catch (visionErr) {
-        console.error("[AgentLoop] Vision loop failed:", visionErr);
-        await this.transition("error", "vision-pipeline-crashed");
         return;
       }
 
@@ -322,6 +274,77 @@ export class AgentLoop {
 
       this.tokenizer.assignTokens(detectedEntities.map(e => ({ entityType: e.type, realValue: e.value })));
       const sanitizedInstruction = this.tokenizer.sanitizeString(this.taskInstruction);
+      console.log(`[AgentLoop:Timing] prompt_tokenization DONE ${Date.now()}`);
+
+      let redactedImage = null;
+      let originalImage = null;
+      let screenType = "unknown";
+      let uiBoxes = [];
+      let f = 1;
+
+      // Vision Loop
+      try {
+        const dataUrl = await browser.tabs.captureVisibleTab(this.lastWindowId, { format: "jpeg", quality: 75 });
+        originalImage = dataUrl;
+        const blob = await (await fetch(dataUrl)).blob();
+        const fullBitmap = await createImageBitmap(blob);
+
+        const MAX_EDGE = 1280;
+        const longest = Math.max(fullBitmap.width, fullBitmap.height);
+        f = longest > MAX_EDGE ? MAX_EDGE / longest : 1;
+        let imageBitmap = fullBitmap;
+        if (f < 1) {
+          imageBitmap = await createImageBitmap(fullBitmap, {
+            resizeWidth: Math.round(fullBitmap.width * f),
+            resizeHeight: Math.round(fullBitmap.height * f),
+            resizeQuality: "high",
+          });
+          fullBitmap.close();
+        }
+        console.log(`[AgentLoop:Timing] screen_capture DONE ${Date.now()}`);
+
+        const perception = await perceiveScreen(imageBitmap, sanitizedNodes);
+        console.log(`[AgentLoop:Timing] yolo_inference DONE ${Date.now()}`);
+        screenType = perception.screenType;
+        uiBoxes = perception.uiBoxes || [];
+
+        // Scale content script rects (full device coordinates -> downscaled imageBitmap)
+        const piiFieldBoxes = (payload.sensitiveRects || []).map(r => ({
+          x: r.x * f, y: r.y * f, w: r.w * f, h: r.h * f
+        }));
+
+        // Add DOM elements that were identified as containing PII
+        for (const node of payload.nodes) {
+          if ((node.hasPII || node.pii) && node.box && node.box.length === 4) {
+            piiFieldBoxes.push({
+              x: node.box[0] * f, y: node.box[1] * f, w: node.box[2] * f, h: node.box[3] * f
+            });
+          }
+        }
+
+        // Perception boxes are already in imageBitmap coordinate space
+        (perception.piiVisionBoxes || []).forEach(box => {
+          piiFieldBoxes.push({ x: box.x, y: box.y, w: box.w, h: box.h });
+        });
+
+        // Fast Visual Pass for static PII missed by DOM
+        const tokenMap = this.tokenizer.getState().tokenMap;
+        const visualPiiBoxes = await detectVisualPII(imageBitmap, tokenMap);
+        visualPiiBoxes.forEach(box => {
+          piiFieldBoxes.push({ x: box.x, y: box.y, w: box.w, h: box.h });
+        });
+
+        redactedImage = await redactScreenshot(imageBitmap, {
+          faceBoxes: perception.faceBoxes,
+          piiFieldBoxes,
+          passwordBoxes: [] // Handled by sensitiveRects
+        });
+        imageBitmap.close();
+        console.log(`[AgentLoop:Timing] redaction DONE ${Date.now()}`);
+      } catch (visionErr) {
+        console.error("[AgentLoop] Vision loop failed, degrading gracefully to DOM-only mode:", visionErr);
+        // Do not crash the loop. Continue without visual context.
+      }
 
       const reqBody = {
         sanitizedDom: sanitizedNodes,
@@ -336,6 +359,7 @@ export class AgentLoop {
 
       if (redactedImage) {
         reqBody.redactedImage = redactedImage;
+        reqBody.originalImage = originalImage;
       }
 
       // 🔒 PRIVACY GATE
@@ -344,6 +368,7 @@ export class AgentLoop {
         await this.transition("error", "privacy-gate-blocked");
         return;
       }
+      console.log(`[AgentLoop:Timing] privacy_gate DONE ${Date.now()}`);
 
       if (this.sidepanelPort) {
         this.sidepanelPort.postMessage({
@@ -351,6 +376,8 @@ export class AgentLoop {
           payload: reqBody
         });
       }
+
+      if (this.executionId !== currentExecutionId) return;
 
       // Rate limit throttle: ensure at least 4s between VLM requests
       const elapsed = Date.now() - this.lastServerRequestTime;
@@ -362,14 +389,67 @@ export class AgentLoop {
       }
       this.lastServerRequestTime = Date.now();
 
-      const response = await fetch("http://localhost:8000/agent/plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reqBody),
+      auditLogger.log("SERVER_REQUEST_SENT", {
+        tokenCount: Object.keys(this.tokenizer.getState().tokenMap).length,
+        nodesCount: reqBody.sanitizedDom.length,
+        hasImage: !!reqBody.redactedImage
       });
 
-      if (!response.ok) throw new Error(`Server returned ${response.status}`);
-      const planJSON = await response.json();
+      const storage = await browser.storage.local.get(["serverEndpoint"]);
+      const serverEndpoint = storage.serverEndpoint || "http://localhost:8000";
+      const httpUrl = serverEndpoint.replace(/\/$/, "") + "/agent/plan";
+      const wsUrl = serverEndpoint.replace(/^http/, "ws").replace(/\/$/, "") + "/agent/ws/plan";
+
+      let planJSON = null;
+
+      // 1. Try WebSocket transport for persistent, low-latency streaming
+      try {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+          this.ws = new WebSocket(wsUrl);
+          await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error("WebSocket connection timeout")), 3000);
+            this.ws.onopen = () => { clearTimeout(timer); resolve(); };
+            this.ws.onerror = (err) => { clearTimeout(timer); reject(err); };
+          });
+        }
+
+        planJSON = await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("WebSocket response timeout")), 20000);
+          this.ws.onmessage = (event) => {
+            clearTimeout(timer);
+            try {
+              resolve(JSON.parse(event.data));
+            } catch (err) {
+              reject(err);
+            }
+          };
+          this.ws.onerror = (err) => { clearTimeout(timer); reject(err); };
+          this.ws.send(JSON.stringify(reqBody));
+        });
+      } catch (wsErr) {
+        console.warn("[AgentLoop] WebSocket transport failed, falling back to HTTP POST:", wsErr);
+        if (this.ws) {
+          try { this.ws.close(); } catch (_) {}
+          this.ws = null;
+        }
+
+        // 2. Graceful Fallback: Standard HTTP POST /agent/plan
+        const response = await fetch(httpUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(reqBody)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP planning fallback failed: ${response.status} ${response.statusText}`);
+        }
+        planJSON = await response.json();
+      }
+      console.log(`[AgentLoop:Timing] server_response DONE ${Date.now()}`);
+
+      if (planJSON.error) {
+        throw new Error(planJSON.error);
+      }
 
       this.currentPlan = planJSON.actions || [];
       if (this.currentPlan.length === 0) {
@@ -380,13 +460,20 @@ export class AgentLoop {
       // Inject scale factor for click coordinates
       this.currentPlan.forEach(a => a.f = f);
 
+      if (this.executionId !== currentExecutionId) return;
+
       await this.executeNextActionInPlan();
+      console.log(`[AgentLoop:Timing] action_execution DONE ${Date.now()}`);
 
     } catch (err) {
-      console.error("[AgentLoop] Planning failed:", err);
-      await this.transition("error", "network-error");
+      if (this.executionId === currentExecutionId) {
+        console.error("[AgentLoop] Planning failed:", err);
+        await this.transition("error", "network-error");
+      }
     } finally {
-      this.isPlanningInFlight = false;
+      if (this.executionId === currentExecutionId) {
+        this.isPlanningInFlight = false;
+      }
     }
   }
 
@@ -475,10 +562,22 @@ export class AgentLoop {
     try {
       return await browser.tabs.sendMessage(tabId, msg);
     } catch (err) {
-      console.warn("[AgentLoop] Content script unreachable, attempting reinjection...");
-      await browser.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
-      await new Promise(r => setTimeout(r, 200));
-      return await browser.tabs.sendMessage(tabId, msg);
+      console.warn("[AgentLoop] Content script unreachable, attempting reinjection...", err);
+      try {
+        const manifest = browser.runtime.getManifest();
+        const contentScripts = manifest.content_scripts?.[0]?.js || [];
+        if (browser.scripting && contentScripts.length > 0) {
+          await browser.scripting.executeScript({
+            target: { tabId },
+            files: contentScripts
+          });
+          await new Promise(r => setTimeout(r, 300));
+          return await browser.tabs.sendMessage(tabId, msg);
+        }
+      } catch (reinjectErr) {
+        console.warn("[AgentLoop] Script reinjection failed:", reinjectErr);
+      }
+      throw err;
     }
   }
 }

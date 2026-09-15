@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArogyaShield Health Insurance — Cashless Claim Portal (Step 4)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">🏥</div>
+        <div class="brand-text">
+          <span class="brand-title">ArogyaShield</span>
+          <span class="brand-subtitle">National Health Insurance Network</span>
+        </div>
+      </div>
+      <div class="nav-controls">
+        <div class="profile-quick-switch">
+          <label for="profileSelect" class="quick-label">⚡ Pre-fill Profile:</label>
+          <select id="profileSelect" class="profile-select">
+            <option value="profile-1">Rahul Sharma (Bengaluru)</option>
+            <option value="profile-2">Dr. Ananya Iyer (Chennai)</option>
+            <option value="profile-3">Vikramjit Singh (New Delhi)</option>
+            <option value="empty">-- Empty Form --</option>
+          </select>
+        </div>
+        <div class="user-badge">
+          <span class="pulse-dot"></span>
+          <span>Claim Ref: <strong>#CLM-2026-9814</strong></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    <!-- Stepper Progress Bar -->
+    <section class="stepper-section">
+      <div class="stepper">
+        <div class="step-item completed">
+          <div class="step-circle">1</div>
+          <div class="step-meta">
+            <span class="step-name">Personal Info</span>
+            <span class="step-status">Completed</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item completed">
+          <div class="step-circle">2</div>
+          <div class="step-meta">
+            <span class="step-name">Medical History</span>
+            <span class="step-status">Completed</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item completed">
+          <div class="step-circle">3</div>
+          <div class="step-meta">
+            <span class="step-name">Documents</span>
+            <span class="step-status">Completed</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item active">
+          <div class="step-circle">4</div>
+          <div class="step-meta">
+            <span class="step-name">Review & Submit</span>
+            <span class="step-status">In Progress</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form Content Container -->
+    <div class="content-grid">
+      <!-- Form Column -->
+      <div class="form-container">
+        <div class="form-header">
+          <div class="badge-tag">Step 4 of 4</div>
+          <h1>Review & Final Submission</h1>
+          <p class="subtitle">Please review your claim pre-authorization details before submitting.</p>
+        </div>
+
+        <form id="claimForm" class="styled-form" novalidate>
+          <!-- STEP 4: Review & Final Submission -->
+          <div id="step-4-panel" class="step-panel active">
+            <div class="form-card">
+              <div class="section-title">
+                <span class="section-icon">📋</span>
+                <h2>Claim Pre-Authorization Summary Review</h2>
+              </div>
+
+              <div id="reviewSummaryContainer" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main); margin-bottom: 20px;">
+                <!-- Dynamically populated review summary -->
+              </div>
+
+              <div class="form-group" style="margin-top: 15px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                  <input type="checkbox" id="declarationCheck" name="declarationCheck" required style="width: 18px; height: 18px;" />
+                  <span>I hereby declare that the medical information and identity credentials submitted are true and authentic.</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Step 4 Action Buttons -->
+            <div class="form-actions">
+              <button type="button" id="step4BackBtn" class="btn btn-secondary" onclick="window.location.href='healthcare-step3.html'">
+                ⬅ Back to Step 3
+              </button>
+              <button type="button" id="submitBtn" class="btn btn-primary" style="background-color: #10b981; border-color: #059669;" onclick="window.location.href='healthcare-success.html'">
+                🚀 Submit Pre-Authorization Claim
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>ArogyaShield™ Mock Portal &bull; Designed for SIH 2026 ISRO Problem Statement Demo &bull; Privacy-Safe Synthetic Data</p>
+  </footer>
+
+  <script type="module" src="../src/app.js"></script>
+</body>
+</html>

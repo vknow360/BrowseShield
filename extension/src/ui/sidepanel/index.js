@@ -67,7 +67,17 @@ function renderAgentState(stateObj) {
   } else if (state === "error") {
     agentRunning = false;
     runAgentBtn.textContent = "▶️ Run Agent";
-    agentStatus.textContent = `❌ Error: ${errorReason}`;
+    let message = errorReason;
+    if (errorReason === "content-script-unreachable") {
+      message = "Page unreachable. Please refresh the web page (F5) and try again.";
+    } else if (errorReason === "restricted-page") {
+      message = "Cannot run on browser internal page. Please switch to a web tab (e.g. localhost:5173).";
+    } else if (errorReason === "no-active-tab") {
+      message = "No active web tab detected. Please click onto a web tab.";
+    } else if (errorReason === "network-error") {
+      message = "Server unreachable. Check server status or settings (⚙️).";
+    }
+    agentStatus.textContent = `❌ ${message}`;
     runAgentBtn.disabled = false;
   }
 }
@@ -85,9 +95,6 @@ function renderScanPayload(payload) {
   if (!payload) return;
   lastPayload = payload;
   const { candidates = [], nodes = [], tokenSummary } = payload;
-  
-  // Note: Since background tokenizes, we use the candidates + tokenSummary to display the PII
-  // We'll construct a simplified view based on what the tokenizer mapped.
   
   // 1. Update Connection Status
   if (statusBadge) {
@@ -148,6 +155,32 @@ function renderVlmPreview(reqBody) {
   if (reqBody.redactedImage) {
     document.getElementById("vlm-preview-container").style.display = "block";
     document.getElementById("vlm-redacted-image").src = reqBody.redactedImage;
+    if (reqBody.originalImage) {
+      document.getElementById("vlm-original-image").src = reqBody.originalImage;
+    }
+  }
+
+  // Render confidence overlays
+  const overlayContainer = document.getElementById("confidence-overlays");
+  if (overlayContainer && reqBody.uiBoxes) {
+    overlayContainer.innerHTML = "";
+    reqBody.uiBoxes.forEach(box => {
+      if (box.conf !== undefined) {
+        const div = document.createElement("div");
+        div.className = "conf-box";
+        div.style.left = `${box.x}px`;
+        div.style.top = `${box.y}px`;
+        div.style.width = `${box.w}px`;
+        div.style.height = `${box.h}px`;
+        
+        const label = document.createElement("div");
+        label.className = "conf-label";
+        label.textContent = `${Math.round(box.conf * 100)}%`;
+        div.appendChild(label);
+        
+        overlayContainer.appendChild(div);
+      }
+    });
   }
   
   const tokenizedInputs = (reqBody.sanitizedDom || []).filter(node => {
@@ -193,8 +226,42 @@ function renderViolationPayload(payload) {
 browser.runtime.onMessage.addListener((message) => {
   if (message.type === "privacy-violation") {
     renderViolationPayload(message.payload);
+  } else if (message.type === "AUDIT_EVENT") {
+    renderAuditEvent(message.payload);
   }
 });
+
+const auditFeed = document.getElementById("audit-log-feed");
+function renderAuditEvent(event) {
+  if (!auditFeed) return;
+  
+  // Remove empty state if present
+  const emptyState = auditFeed.querySelector(".empty-state");
+  if (emptyState) emptyState.remove();
+
+  const entry = document.createElement("div");
+  entry.style.borderBottom = "1px solid #2d3748";
+  entry.style.padding = "4px 0";
+  entry.style.marginBottom = "4px";
+
+  const time = new Date(event.timestamp).toLocaleTimeString();
+  let color = "#a0aec0";
+  if (event.event === "PRIVACY_GATE_BLOCKED") color = "#fc8181";
+  if (event.event === "PII_DETECTED") color = "#f6ad55";
+  if (event.event === "SERVER_REQUEST_SENT") color = "#68d391";
+
+  entry.innerHTML = `
+    <div style="color: ${color}; font-weight: bold;">[${time}] ${event.event}</div>
+    <div style="color: #cbd5e0; white-space: pre-wrap; font-family: monospace;">${JSON.stringify(event, (k, v) => (k === 'id' || k === 'timestamp' || k === 'event' ? undefined : v), 2)}</div>
+  `;
+  
+  auditFeed.prepend(entry);
+  
+  // Keep only last 50 in UI to prevent lag
+  if (auditFeed.children.length > 50) {
+    auditFeed.lastElementChild.remove();
+  }
+}
 
 const exportAuditBtn = document.getElementById("export-audit-btn");
 if (exportAuditBtn) {
@@ -204,6 +271,60 @@ if (exportAuditBtn) {
   });
 }
 
+// Settings logic
+const toggleSettingsBtn = document.getElementById("toggle-settings-btn");
+const settingsPanel = document.getElementById("settings-panel");
+const serverEndpointInput = document.getElementById("server-endpoint");
+const saveSettingsBtn = document.getElementById("save-settings-btn");
+const settingsStatus = document.getElementById("settings-status");
+
+if (toggleSettingsBtn && settingsPanel) {
+  toggleSettingsBtn.addEventListener("click", () => {
+    const isCollapsed = settingsPanel.classList.toggle("collapsed");
+    toggleSettingsBtn.classList.toggle("active", !isCollapsed);
+    if (!isCollapsed && serverEndpointInput) {
+      serverEndpointInput.focus();
+    }
+  });
+}
+
+browser.storage.local.get(["serverEndpoint"]).then((result) => {
+  if (result.serverEndpoint && serverEndpointInput) {
+    serverEndpointInput.value = result.serverEndpoint;
+  }
+});
+
+function handleSaveSettings() {
+  if (!serverEndpointInput) return;
+  const endpoint = serverEndpointInput.value.trim() || "http://localhost:8000";
+  browser.storage.local.set({ serverEndpoint: endpoint }).then(() => {
+    settingsStatus.textContent = "Saved!";
+    setTimeout(() => { settingsStatus.textContent = ""; }, 2000);
+  });
+}
+
+if (saveSettingsBtn) {
+  saveSettingsBtn.addEventListener("click", handleSaveSettings);
+}
+
+if (serverEndpointInput) {
+  serverEndpointInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      handleSaveSettings();
+    }
+  });
+}
+
+// Slider logic
+const imageSlider = document.getElementById("image-slider");
+const redactedImage = document.getElementById("vlm-redacted-image");
+
+if (imageSlider && redactedImage) {
+  imageSlider.addEventListener("input", (e) => {
+    const val = e.target.value;
+    redactedImage.style.clipPath = `inset(0 0 0 ${val}%)`;
+  });
+}
+
 // Request initial state on startup
 port.postMessage({ type: "request-current-state" });
-

@@ -71,13 +71,14 @@ export async function ocrRegion(imageBitmapOrCrop) {
         }
       }
 
-      // Sort words top-to-bottom, left-to-right
+      // Sort words top-to-bottom, left-to-right using a transitive band-based sort
       validWords.sort((a, b) => {
-        const aCenterY = (a.box.y0 + a.box.y1) / 2;
-        if (aCenterY >= b.box.y0 && aCenterY <= b.box.y1) {
+        const lineA = Math.round(a.box.y0 / 10);
+        const lineB = Math.round(b.box.y0 / 10);
+        if (lineA === lineB) {
           return a.box.x0 - b.box.x0;
         }
-        return a.box.y0 - b.box.y0;
+        return lineA - lineB;
       });
 
       // Merge adjacent words on the same line

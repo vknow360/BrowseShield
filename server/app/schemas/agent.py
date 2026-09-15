@@ -15,7 +15,7 @@ class AgentRequest(BaseModel):
 class AgentAction(BaseModel):
     action: str
     target: Optional[Any] = None
-    value: Optional[str] = None
+    value: Optional[Any] = None
     reasoning: str = ""
 
 class AgentPlan(BaseModel):

@@ -349,9 +349,11 @@ body {
 /* Content Grid */
 .content-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr;
   gap: 24px;
   align-items: start;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 /* Form Container */

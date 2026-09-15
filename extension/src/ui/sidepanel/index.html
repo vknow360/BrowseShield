@@ -14,10 +14,24 @@
       <span class="shield-icon">🛡️</span>
       <h1>BrowseShield</h1>
     </div>
-    <span id="status-badge" class="badge ready">Ready</span>
+    <div class="header-right">
+      <span id="status-badge" class="badge ready">Ready</span>
+      <button id="toggle-settings-btn" class="gear-btn" title="Toggle Server Settings" aria-label="Settings">⚙️</button>
+    </div>
   </header>
 
+  <!-- Collapsible Compact Settings Bar -->
+  <div id="settings-panel" class="settings-panel collapsed">
+    <div class="settings-compact-row">
+      <span class="settings-label">Server</span>
+      <input type="text" id="server-endpoint" class="settings-input" placeholder="http://localhost:8000" />
+      <button id="save-settings-btn" class="settings-save-btn">Save</button>
+    </div>
+    <span id="settings-status" class="settings-status"></span>
+  </div>
+
   <main class="content">
+
     <!-- Agent Control Panel -->
     <section class="card">
       <div class="card-header">
@@ -42,18 +56,42 @@
       </div>
     </section>
 
+    <!-- Real-Time Audit Log Feed -->
+    <section class="card">
+      <div class="card-header">
+        <h2>🧾 Real-Time Audit Trail</h2>
+      </div>
+      <div id="audit-log-feed" class="audit-feed" style="max-height: 200px; overflow-y: auto; font-size: 12px; background: var(--bg-dark); border-radius: 4px; padding: 8px;">
+        <p class="empty-state">No events logged yet.</p>
+      </div>
+    </section>
+
     <!-- What Server Sees (Sanitized Payload) -->
     <section class="card">
       <div class="card-header">
         <h2>📡 What the server sees</h2>
         <span id="gate-badge" class="badge ready">🔒 GATE: IDLE</span>
       </div>
-      <div id="vlm-preview-container" style="display: none; margin-bottom: 10px;">
-        <img id="vlm-redacted-image" style="max-width: 100%; border: 1px solid #3d4b60; border-radius: 4px;"
-          alt="Redacted Screenshot" />
+      
+      <!-- Before/After Slider UI -->
+      <div id="vlm-preview-container" class="slider-container" style="display: none;">
+        <div class="image-comparison">
+          <!-- The bottom image (Original) -->
+          <img id="vlm-original-image" class="comparison-image original-image" alt="Original Screenshot" />
+          <!-- The top image (Redacted) -->
+          <img id="vlm-redacted-image" class="comparison-image redacted-image" alt="Redacted Screenshot" />
+          <!-- The slider handle -->
+          <input type="range" min="0" max="100" value="50" class="slider" id="image-slider" />
+        </div>
+        <div id="confidence-overlays" class="confidence-overlays"></div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #a0aec0; margin-top: 4px;">
+          <span>Original</span>
+          <span>Redacted</span>
+        </div>
       </div>
+      
       <pre id="output-box" class="code-box">Waiting for webpage scan...</pre>
-      <button id="export-audit-btn" class="primary-btn" style="margin-top: 10px;">📄 Export Audit Report</button>
+      <button id="export-audit-btn" class="primary-btn" style="margin-top: 6px;">📄 Export Audit Report</button>
     </section>
   </main>
 

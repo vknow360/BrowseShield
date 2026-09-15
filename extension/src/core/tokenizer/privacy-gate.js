@@ -1,3 +1,5 @@
+import { auditLogger } from "../audit/audit-logger.js";
+
 const STRUCTURED_TYPES = new Set([
   "AADHAAR",
   "PAN",
@@ -60,13 +62,23 @@ export function privacyGate(outboundPayload, tokenMap, enforcement = "block") {
   const serialized = JSON.stringify(outboundPayload);
   const result = validateOutboundPayload(outboundPayload, tokenMap);
 
-  if (!result.allowed && enforcement === "block") {
-    console.error(
-      "[BrowseShield] 🔒 PRIVACY GATE BLOCKED — raw PII in outbound:",
-      result.violations.map(
-        (v) => `${v.entityType} "${v.realValue}" should be ${v.token}`,
-      ),
-    );
+  if (!result.allowed) {
+    if (enforcement === "block") {
+      console.error(
+        "[BrowseShield] 🔒 PRIVACY GATE BLOCKED — raw PII in outbound:",
+        result.violations.map(
+          (v) => `${v.entityType} "${v.realValue}" should be ${v.token}`,
+        ),
+      );
+    }
+    auditLogger.log("PRIVACY_GATE_BLOCKED", {
+      enforcement,
+      violations: result.violations
+    });
+  } else {
+    auditLogger.log("PRIVACY_GATE_PASSED", {
+      payloadSize: serialized.length
+    });
   }
 
   return { ...result, serialized };

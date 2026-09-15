@@ -1,0 +1,1790 @@
+[
+  {
+    "id": "tc_001_AADHAAR",
+    "value": "234123412346",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_002_AADHAAR",
+    "value": "123456789012",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_003_AADHAAR",
+    "value": "987654321012",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_004_AADHAAR",
+    "value": "555555555555",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_005_AADHAAR",
+    "value": "2341 2341 2346",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_006_AADHAAR",
+    "value": "1234-5678-9012",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_007_AADHAAR",
+    "value": "9876 5432 1012",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_008_AADHAAR",
+    "value": "5555-5555-5555",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_009_AADHAAR",
+    "value": "234123412346  ",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_010_AADHAAR",
+    "value": "  123456789012",
+    "label": "Aadhaar Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_011_decoy",
+    "value": "111111111111",
+    "label": "Aadhaar",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_012_decoy",
+    "value": "012345678901",
+    "label": "UID",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_013_decoy",
+    "value": "12345",
+    "label": "Aadhaar",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_014_decoy",
+    "value": "1234567890123",
+    "label": "Aadhaar",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_015_decoy",
+    "value": "Aadhaar12345",
+    "label": "UID",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_016_PAN",
+    "value": "ABCDE1234F",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_017_PAN",
+    "value": "XYZAB9876Z",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_018_PAN",
+    "value": "abcde1234f",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_019_PAN",
+    "value": " XYZAB9876Z ",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_020_PAN",
+    "value": "PKRST4567M",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_021_PAN",
+    "value": "HDFCB0001X",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_022_PAN",
+    "value": "AAAAA1111A",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_023_PAN",
+    "value": "BBBBB2222B",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_024_PAN",
+    "value": "CCCCC3333C",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_025_PAN",
+    "value": "DDDDD4444D",
+    "label": "PAN Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PAN"
+    }
+  },
+  {
+    "id": "tc_026_decoy",
+    "value": "HELLO1234X",
+    "label": "PAN",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_027_decoy",
+    "value": "ABCDE12345",
+    "label": "PAN Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_028_decoy",
+    "value": "12345ABCDE",
+    "label": "PAN",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_029_decoy",
+    "value": "ABCDEFG1234",
+    "label": "PAN",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_030_decoy",
+    "value": "XYZ1234F",
+    "label": "PAN",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_031_EMAIL",
+    "value": "rahul.sharma@example.com",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_032_EMAIL",
+    "value": "test@isro.gov.in",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_033_EMAIL",
+    "value": "user.name+tag@gmail.com",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_034_EMAIL",
+    "value": "admin@company.co.in",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_035_EMAIL",
+    "value": "hello@world.net",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_036_EMAIL",
+    "value": "a@b.com",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_037_EMAIL",
+    "value": "first.last@sub.domain.org",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_038_EMAIL",
+    "value": "123@numbers.com",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_039_EMAIL",
+    "value": "email-with-dash@domain.com",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_040_EMAIL",
+    "value": "underscore_email@domain.com",
+    "label": "Email Address",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "EMAIL"
+    }
+  },
+  {
+    "id": "tc_041_decoy",
+    "value": "not-an-email",
+    "label": "Email",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_042_decoy",
+    "value": "user@domain",
+    "label": "Email",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_043_decoy",
+    "value": "https://example.com",
+    "label": "Website",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_044_PHONE",
+    "value": "9876543210",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_045_PHONE",
+    "value": "+919876543210",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_046_PHONE",
+    "value": "09876543210",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_047_PHONE",
+    "value": "+91 98765 43210",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_048_PHONE",
+    "value": "6000000000",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_049_PHONE",
+    "value": "+91-98765-43210",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_050_PHONE",
+    "value": " 9876543210 ",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_051_PHONE",
+    "value": "7777777777",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_052_PHONE",
+    "value": "8888888888",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_053_PHONE",
+    "value": "9999999999",
+    "label": "Mobile Number",
+    "tagName": "INPUT",
+    "type": "tel",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PHONE"
+    }
+  },
+  {
+    "id": "tc_054_decoy",
+    "value": "12345",
+    "label": "Phone",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_055_decoy",
+    "value": "5000000000",
+    "label": "Phone",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_056_decoy",
+    "value": "987654321",
+    "label": "Phone",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_057_decoy",
+    "value": "ORD-9876543210",
+    "label": "Order",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_058_decoy",
+    "value": "abcdefghij",
+    "label": "Phone",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_059_PERSON",
+    "value": "Rahul Sharma",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_060_PERSON",
+    "value": "Priya Patel",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_061_PERSON",
+    "value": "Amit Kumar",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_062_PERSON",
+    "value": "Sneha Gupta",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_063_PERSON",
+    "value": "Vikram Singh",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_064_PERSON",
+    "value": "Anjali Desai",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_065_PERSON",
+    "value": "Rohan Mehta",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_066_PERSON",
+    "value": "Neha Reddy",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_067_PERSON",
+    "value": "Sanjay Joshi",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_068_PERSON",
+    "value": "Kavita Rao",
+    "label": "Full Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "name",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_069_decoy",
+    "value": "Apple iPhone 14",
+    "label": "Product Name",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_070_decoy",
+    "value": "Reliance Industries",
+    "label": "Company",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_071_decoy",
+    "value": "Blue T-Shirt",
+    "label": "Item",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_072_decoy",
+    "value": "Bangalore",
+    "label": "City",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_073_decoy",
+    "value": "Hello World",
+    "label": "Greeting",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_074_ADDRESS",
+    "value": "221B Baker Street, Bengaluru, Karnataka",
+    "label": "Residential Address",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "ADDRESS"
+    }
+  },
+  {
+    "id": "tc_075_ADDRESS",
+    "value": "Flat 402, Sea View Apts, Mumbai",
+    "label": "Residential Address",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "ADDRESS"
+    }
+  },
+  {
+    "id": "tc_076_ADDRESS",
+    "value": "10 Janpath, New Delhi",
+    "label": "Residential Address",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "ADDRESS"
+    }
+  },
+  {
+    "id": "tc_077_ADDRESS",
+    "value": "Sector 17, Chandigarh",
+    "label": "Residential Address",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "ADDRESS"
+    }
+  },
+  {
+    "id": "tc_078_ADDRESS",
+    "value": "MG Road, Pune, 411001",
+    "label": "Residential Address",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "ADDRESS"
+    }
+  },
+  {
+    "id": "tc_079_ADDRESS",
+    "value": "House 12, Gali 4, Ramesh Nagar",
+    "label": "Residential Address",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "ADDRESS"
+    }
+  },
+  {
+    "id": "tc_080_ADDRESS",
+    "value": "Tech Park, Electronic City, BLR",
+    "label": "Residential Address",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "ADDRESS"
+    }
+  },
+  {
+    "id": "tc_081_ADDRESS",
+    "value": "123 Main St, Springfield",
+    "label": "Residential Address",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "ADDRESS"
+    }
+  },
+  {
+    "id": "tc_082_decoy",
+    "value": "Turn left at the next signal",
+    "label": "Directions",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_083_decoy",
+    "value": "A beautiful place to live",
+    "label": "Description",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_084_decoy",
+    "value": "Lorem ipsum dolor sit amet",
+    "label": "Notes",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_085_CREDIT_CARD",
+    "value": "4111 1111 1111 1111",
+    "label": "Card Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CREDIT_CARD"
+    }
+  },
+  {
+    "id": "tc_086_CREDIT_CARD",
+    "value": "5500000000000004",
+    "label": "Card Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CREDIT_CARD"
+    }
+  },
+  {
+    "id": "tc_087_CREDIT_CARD",
+    "value": "4111-1111-1111-1111",
+    "label": "Card Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CREDIT_CARD"
+    }
+  },
+  {
+    "id": "tc_088_CREDIT_CARD",
+    "value": "4111111111111111",
+    "label": "Card Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CREDIT_CARD"
+    }
+  },
+  {
+    "id": "tc_089_CREDIT_CARD",
+    "value": "378282246310005",
+    "label": "Card Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CREDIT_CARD"
+    }
+  },
+  {
+    "id": "tc_090_CREDIT_CARD",
+    "value": "6011000000000000",
+    "label": "Card Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CREDIT_CARD"
+    }
+  },
+  {
+    "id": "tc_091_CREDIT_CARD",
+    "value": "4222222222222",
+    "label": "Card Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CREDIT_CARD"
+    }
+  },
+  {
+    "id": "tc_092_CREDIT_CARD",
+    "value": "5105105105105100",
+    "label": "Card Number",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CREDIT_CARD"
+    }
+  },
+  {
+    "id": "tc_093_decoy",
+    "value": "1234567890123456",
+    "label": "Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_094_decoy",
+    "value": "4111 1111 1111 111",
+    "label": "Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_095_decoy",
+    "value": "1111111111111111",
+    "label": "Card",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_096_decoy",
+    "value": "Order-1234567890123456",
+    "label": "Order",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_097_decoy",
+    "value": "Account 1234567890123",
+    "label": "Account",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_098_IFSC",
+    "value": "HDFC0001234",
+    "label": "IFSC Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "IFSC"
+    }
+  },
+  {
+    "id": "tc_099_IFSC",
+    "value": "SBIN0005678",
+    "label": "IFSC Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "IFSC"
+    }
+  },
+  {
+    "id": "tc_100_IFSC",
+    "value": "ICIC0009012",
+    "label": "IFSC Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "IFSC"
+    }
+  },
+  {
+    "id": "tc_101_IFSC",
+    "value": "PUNB0123400",
+    "label": "IFSC Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "IFSC"
+    }
+  },
+  {
+    "id": "tc_102_IFSC",
+    "value": "UTIB0005678",
+    "label": "IFSC Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "IFSC"
+    }
+  },
+  {
+    "id": "tc_103_IFSC",
+    "value": "CNRB0001234",
+    "label": "IFSC Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "IFSC"
+    }
+  },
+  {
+    "id": "tc_104_IFSC",
+    "value": "BKID0005678",
+    "label": "IFSC Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "IFSC"
+    }
+  },
+  {
+    "id": "tc_105_IFSC",
+    "value": "BARB0VJPUNE",
+    "label": "IFSC Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "IFSC"
+    }
+  },
+  {
+    "id": "tc_106_decoy",
+    "value": "HDFC1001234",
+    "label": "IFSC",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_107_decoy",
+    "value": "SBIN000567",
+    "label": "IFSC",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_108_decoy",
+    "value": "ICICI009012",
+    "label": "IFSC",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_109_DATE_OF_BIRTH",
+    "value": "1990-05-14",
+    "label": "Date of Birth",
+    "tagName": "INPUT",
+    "type": "date",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "DATE_OF_BIRTH"
+    }
+  },
+  {
+    "id": "tc_110_DATE_OF_BIRTH",
+    "value": "14/05/1990",
+    "label": "Date of Birth",
+    "tagName": "INPUT",
+    "type": "date",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "DATE_OF_BIRTH"
+    }
+  },
+  {
+    "id": "tc_111_DATE_OF_BIRTH",
+    "value": "14-05-1990",
+    "label": "Date of Birth",
+    "tagName": "INPUT",
+    "type": "date",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "DATE_OF_BIRTH"
+    }
+  },
+  {
+    "id": "tc_112_DATE_OF_BIRTH",
+    "value": "May 14, 1990",
+    "label": "Date of Birth",
+    "tagName": "INPUT",
+    "type": "date",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "DATE_OF_BIRTH"
+    }
+  },
+  {
+    "id": "tc_113_DATE_OF_BIRTH",
+    "value": "01/01/2000",
+    "label": "Date of Birth",
+    "tagName": "INPUT",
+    "type": "date",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "DATE_OF_BIRTH"
+    }
+  },
+  {
+    "id": "tc_114_DATE_OF_BIRTH",
+    "value": "2000-01-01",
+    "label": "Date of Birth",
+    "tagName": "INPUT",
+    "type": "date",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "DATE_OF_BIRTH"
+    }
+  },
+  {
+    "id": "tc_115_DATE_OF_BIRTH",
+    "value": "31-12-1999",
+    "label": "Date of Birth",
+    "tagName": "INPUT",
+    "type": "date",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "DATE_OF_BIRTH"
+    }
+  },
+  {
+    "id": "tc_116_DATE_OF_BIRTH",
+    "value": "12/31/1999",
+    "label": "Date of Birth",
+    "tagName": "INPUT",
+    "type": "date",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "DATE_OF_BIRTH"
+    }
+  },
+  {
+    "id": "tc_117_decoy",
+    "value": "100",
+    "label": "Age",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_118_decoy",
+    "value": "Tomorrow",
+    "label": "Date",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_119_decoy",
+    "value": "1990",
+    "label": "Year",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_120_PASSWORD",
+    "value": "SecretPass123!",
+    "label": "Password",
+    "tagName": "INPUT",
+    "type": "password",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PASSWORD"
+    }
+  },
+  {
+    "id": "tc_121_PASSWORD",
+    "value": "qwerty",
+    "label": "Password",
+    "tagName": "INPUT",
+    "type": "password",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PASSWORD"
+    }
+  },
+  {
+    "id": "tc_122_PASSWORD",
+    "value": "password123",
+    "label": "Password",
+    "tagName": "INPUT",
+    "type": "password",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PASSWORD"
+    }
+  },
+  {
+    "id": "tc_123_PASSWORD",
+    "value": "admin",
+    "label": "Password",
+    "tagName": "INPUT",
+    "type": "password",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PASSWORD"
+    }
+  },
+  {
+    "id": "tc_124_PASSWORD",
+    "value": "Hunter2",
+    "label": "Password",
+    "tagName": "INPUT",
+    "type": "password",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PASSWORD"
+    }
+  },
+  {
+    "id": "tc_125_decoy",
+    "value": "Normal text",
+    "label": "Notes",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_126_decoy",
+    "value": "12345",
+    "label": "Quantity",
+    "tagName": "INPUT",
+    "type": "number",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_127_decoy",
+    "value": "Secret",
+    "label": "Secret Key",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_128_PINCODE",
+    "value": "560001",
+    "label": "Pincode",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PINCODE"
+    }
+  },
+  {
+    "id": "tc_129_PINCODE",
+    "value": "110001",
+    "label": "Pincode",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PINCODE"
+    }
+  },
+  {
+    "id": "tc_130_PINCODE",
+    "value": "400001",
+    "label": "Pincode",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PINCODE"
+    }
+  },
+  {
+    "id": "tc_131_PINCODE",
+    "value": "600001",
+    "label": "Pincode",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PINCODE"
+    }
+  },
+  {
+    "id": "tc_132_PINCODE",
+    "value": "700001",
+    "label": "Pincode",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PINCODE"
+    }
+  },
+  {
+    "id": "tc_133_decoy",
+    "value": "012345",
+    "label": "Pin",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_134_decoy",
+    "value": "12345",
+    "label": "Zip",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_135_decoy",
+    "value": "1234567",
+    "label": "Code",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_136_CITY",
+    "value": "Bengaluru",
+    "label": "City",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CITY"
+    }
+  },
+  {
+    "id": "tc_137_CITY",
+    "value": "Mumbai",
+    "label": "City",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CITY"
+    }
+  },
+  {
+    "id": "tc_138_CITY",
+    "value": "Delhi",
+    "label": "City",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CITY"
+    }
+  },
+  {
+    "id": "tc_139_CITY",
+    "value": "Chennai",
+    "label": "City",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "CITY"
+    }
+  },
+  {
+    "id": "tc_140_STATE",
+    "value": "Karnataka",
+    "label": "State",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "STATE"
+    }
+  },
+  {
+    "id": "tc_141_STATE",
+    "value": "Maharashtra",
+    "label": "State",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "STATE"
+    }
+  },
+  {
+    "id": "tc_142_STATE",
+    "value": "Tamil Nadu",
+    "label": "State",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "STATE"
+    }
+  },
+  {
+    "id": "tc_143_STATE",
+    "value": "Gujarat",
+    "label": "State",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "STATE"
+    }
+  },
+  {
+    "id": "tc_144_AADHAAR",
+    "value": "234123412346",
+    "label": "\u0906\u0927\u093e\u0930 \u0928\u0902\u092c\u0930",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "AADHAAR"
+    }
+  },
+  {
+    "id": "tc_145_PERSON",
+    "value": "Rahul Sharma",
+    "label": "\u092a\u0942\u0930\u093e \u0928\u093e\u092e",
+    "tagName": "INPUT",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": true,
+      "entityType": "PERSON"
+    }
+  },
+  {
+    "id": "tc_146_decoy",
+    "value": "Submit",
+    "label": "Submit",
+    "tagName": "BUTTON",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_147_decoy",
+    "value": "",
+    "label": "Email",
+    "tagName": "INPUT",
+    "type": "email",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_148_decoy",
+    "value": "This is a very long paragraph of text that does not contain any sensitive information. It just goes on and on.",
+    "label": "",
+    "tagName": "P",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  },
+  {
+    "id": "tc_149_decoy",
+    "value": "The company was founded in 1923 by a group of visionaries.",
+    "label": "History",
+    "tagName": "DIV",
+    "type": "text",
+    "autocomplete": "",
+    "expected": {
+      "isPII": false,
+      "entityType": null
+    }
+  }
+]

@@ -1,17 +1,23 @@
 import argparse
 import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+
+try:
+    from .bridge.node_sidecar import run_smoke_test, NodeDetectorBridge
+    from .report.md_writer import write_md_report
+except (ImportError, ValueError):
+    from benchmark.py.piibench.bridge.node_sidecar import run_smoke_test, NodeDetectorBridge
+    from benchmark.py.piibench.report.md_writer import write_md_report
 
 def run(args):
     if args.smoke:
         print("Running smoke test harness...")
-        from .bridge.node_sidecar import run_smoke_test
         run_smoke_test()
     else:
         print(f"Running benchmark on {args.path}...")
         import json
-        import os
-        from .bridge.node_sidecar import NodeDetectorBridge
-        from .report.md_writer import write_md_report
         
         # Simple JSON DOM evaluation loop
         with open(args.path, 'r', encoding='utf-8') as f:
@@ -111,3 +117,8 @@ def main():
         list_datasets(args)
     
     return 0
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        sys.argv.extend(["run", "--smoke"])
+    sys.exit(main())

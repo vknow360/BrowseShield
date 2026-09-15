@@ -5,6 +5,14 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 global.chrome = {
     runtime: {
+        id: "benchmark",
+        getURL: (p) => path.join(__dirname, '../../extension/public', p).replace(/\\/g, '/')
+    }
+};
+global.browser = {
+    runtime: {
+        id: "benchmark",
+        sendMessage: async () => ({ success: true }),
         getURL: (p) => path.join(__dirname, '../../extension/public', p).replace(/\\/g, '/')
     }
 };
@@ -14,7 +22,7 @@ console.log = console.error;
 console.info = console.error;
 console.warn = console.error;
 
-import { initDetectors, scanPageForPII } from '../../extension/src/core/detector/index.js';
+const { initDetectors, scanPageForPII } = await import('../../extension/src/core/detector/index.js');
 
 async function main() {
     try {

@@ -1,42 +1,28 @@
 // src/core/detector/ner-pipeline.js
-import { pipeline, env } from "@xenova/transformers";
+import browser from "webextension-polyfill";
 
-// Enforce 100% offline, local execution. No remote fetches allowed.
-env.allowRemoteModels = false;
-env.useBrowserCache = false;
+let isInitialized = false;
 
-// Force single-threaded execution to prevent Service Worker crashes 
-// (MV3 Service Workers have poor/buggy support for spawning internal WebWorkers)
-env.backends.onnx.wasm.numThreads = 1;
-
-let nerPipeline = null;
-
-/**
- * Initializes the Transformers.js pipeline using the bundled ONNX model.
- */
 export async function initNERPipeline() {
-  if (nerPipeline) return;
-  console.log("[Detector] Initializing Xenova local NER pipeline...");
+  if (isInitialized) return;
+  console.log("[Detector] Initializing NER pipeline via background...");
   try {
-    // Point transformers to the public/models directory in the extension
-    env.localModelPath = chrome.runtime.getURL("models");
-
-    // Load the model from public/models/ner-int8/
-    nerPipeline = await pipeline("token-classification", "ner-int8", {
-      quantized: true,
+    const response = await browser.runtime.sendMessage({
+      target: "offscreen",
+      type: "INIT_NER"
     });
-    console.log("[Detector] Xenova local NER pipeline loaded successfully.");
+
+    if (response && response.success) {
+      isInitialized = true;
+      console.log("[Detector] NER pipeline ready (offscreen).");
+    } else if (response && response.error) {
+      console.warn("[Detector] NER pipeline initialization reported:", response.error);
+    }
   } catch (err) {
-    console.error(
-      "[Detector] Failed to load local NER pipeline. Ensure the model is bundled in public/models/ner/",
-      err,
-    );
+    console.error("[Detector] Failed to initialize offscreen NER pipeline:", err);
   }
 }
 
-/**
- * Pure function to aggregate B/I token classification results into entity spans.
- */
 export function aggregateNERTokens(results, input) {
   const entities = [];
   let currentSpan = null;
@@ -109,20 +95,22 @@ export function aggregateNERTokens(results, input) {
   return entities;
 }
 
-/**
- * Detects free-text PII (person names, locations, orgs) using the DistilBERT ONNX model.
- * @param {string} text
- * @returns {Promise<Array<{entityType: string, value: string, confidence: number}>>}
- */
 export async function detectSemanticPII(text) {
   const input = String(text || "").trim();
-  if (!input || input.length > 2000 || !nerPipeline) return [];
+  if (!input || input.length > 2000 || !isInitialized) return [];
 
   try {
-    const results = await nerPipeline(input);
-    return aggregateNERTokens(results, input);
+    const results = await browser.runtime.sendMessage({
+      target: "offscreen",
+      type: "RUN_NER",
+      input
+    });
+    
+    if (results && Array.isArray(results)) {
+      return aggregateNERTokens(results, input);
+    }
   } catch (err) {
-    console.warn("[Detector] NER Inference failed on text block:", err);
+    console.warn("[Detector] Offscreen NER Inference failed:", err);
   }
 
   return [];

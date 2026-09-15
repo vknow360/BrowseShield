@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from app.schemas.agent import AgentRequest, AgentAction, AgentPlan
 from app.services.vlm_service import get_action_plan_from_vlm
+import json
 
 router = APIRouter()
 
 def print_request_details(request: AgentRequest):
-    import json
     print(f"\n=======================================================")
     print(f"[FastAPI] Incoming request: '{request.taskInstruction}'")
     print(f"Page: {request.pageTitle} ({request.pageUrl})")
@@ -17,6 +17,36 @@ def print_request_details(request: AgentRequest):
         print(f"DETAILED SANITIZED PAYLOAD RECEIVED FROM EXTENSION:")
         print(json.dumps(request.sanitizedDom, indent=2))
         print(f"=======================================================\n")
+
+@router.websocket("/ws/plan")
+async def websocket_plan(websocket: WebSocket):
+    await websocket.accept()
+    print("[FastAPI] WebSocket connection established for /ws/plan")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            try:
+                request_dict = json.loads(data)
+                request = AgentRequest(**request_dict)
+                print_request_details(request)
+                
+                plan = await get_action_plan_from_vlm(request)
+                print(f"[VLM Output Plan] {len(plan.actions)} actions planned.")
+                
+                await websocket.send_json(plan.dict())
+            except WebSocketDisconnect:
+                print("[FastAPI] WebSocket disconnected during request processing.")
+                break
+            except Exception as e:
+                print(f"[Error processing WS message] {e}")
+                try:
+                    await websocket.send_json({"error": str(e)})
+                except Exception:
+                    break
+    except WebSocketDisconnect:
+        print("[FastAPI] WebSocket connection closed cleanly")
+    except Exception as e:
+        print(f"[FastAPI] WebSocket connection terminated: {e}")
 
 @router.post("/action", response_model=AgentAction)
 async def get_next_action(request: AgentRequest):
@@ -44,3 +74,4 @@ async def get_action_plan(request: AgentRequest):
     except Exception as e:
         print(f"[Error] {e}")
         raise HTTPException(status_code=500, detail=str(e))
+

@@ -9,6 +9,7 @@ import {
 } from "./regex.js";
 import { detectSemanticPII, initNERPipeline } from "./ner-pipeline.js";
 import { detectMedicalTerms } from "./medical-gazetteer.js";
+import { auditLogger } from "../audit/audit-logger.js";
 
 // Call this early in the content script lifecycle
 export async function initDetectors() {
@@ -198,18 +199,27 @@ export async function detectFieldPII(node) {
     };
   }
   // Name check (label matching or autocomplete)
-  if (
-    LABEL_PATTERNS.PERSON.some((kw) => label.includes(kw)) ||
-    autocomplete === "name" ||
-    (node.dataset?.syntheticOcr === "true" && LABEL_PATTERNS.PERSON.some((kw) => value.toLowerCase().includes(kw)))
-  ) {
-    return {
-      isPII: true,
-      entityType: "PERSON",
-      confidence: 0.85,
-      source: "dom-heuristic",
-    };
+  // Exclude explicit ID, policy, and card number fields from being tagged as PERSON
+  const isIdField =
+    /\b(member\s*id|policy\s*no|policy\s*number|card\s*number|beneficiary\s*id|customer\s*id|account\s*no|account\s*number)\b/i.test(label) ||
+    /(?:^|\s)(id|no|code|number)$/i.test(label.trim()) ||
+    /\b(memberid|policynumber|cardnumber)\b/i.test(id);
+
+  if (!isIdField) {
+    if (
+      LABEL_PATTERNS.PERSON.some((kw) => label.includes(kw)) ||
+      autocomplete === "name" ||
+      (node.dataset?.syntheticOcr === "true" && LABEL_PATTERNS.PERSON.some((kw) => value.toLowerCase().includes(kw)))
+    ) {
+      return {
+        isPII: true,
+        entityType: "PERSON",
+        confidence: 0.85,
+        source: "dom-heuristic",
+      };
+    }
   }
+
   // Aadhaar check (fallback for fake data)
   if (
     LABEL_PATTERNS.AADHAAR.some((kw) => label.includes(kw)) ||
@@ -222,11 +232,17 @@ export async function detectFieldPII(node) {
       source: "dom-heuristic",
     };
   }
-  // DOB check
-  if (
+
+  // DOB check: require explicit DOB label, autocomplete, or ID markers rather than any generic date picker
+  const isDobLabelOrMeta =
     LABEL_PATTERNS.DATE_OF_BIRTH.some((kw) => label.includes(kw)) ||
-    type === "date" ||
     autocomplete === "bday" ||
+    autocomplete.startsWith("bday") ||
+    /\b(dob|birth|bday)\b/i.test(id) ||
+    /\b(dob|birth|bday)\b/i.test(node.name || "");
+
+  if (
+    isDobLabelOrMeta ||
     (node.dataset?.syntheticOcr === "true" && LABEL_PATTERNS.DATE_OF_BIRTH.some((kw) => value.toLowerCase().includes(kw)))
   ) {
     return {
@@ -277,6 +293,17 @@ export async function scanPageForPII(nodes) {
   return Promise.all(
     nodes.map(async (node) => {
       const piiResult = await detectFieldPII(node);
+      
+      if (piiResult && piiResult.isPII) {
+        auditLogger.log("PII_DETECTED", {
+          entityType: piiResult.entityType,
+          confidence: piiResult.confidence,
+          source: piiResult.source,
+          nodeTag: node.tagName,
+          nodeType: node.type
+        });
+      }
+
       return {
         ...node,
         pii: piiResult, // will be null or { isPII: true, entityType: '...', ... }

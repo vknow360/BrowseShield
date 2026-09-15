@@ -66,84 +66,92 @@ async def get_action_plan_from_vlm(request: AgentRequest) -> AgentPlan:
     prompt = build_user_prompt(request)
     result = {}
     timeout_config = httpx.Timeout(180.0, connect=10.0)
-    try:
-        async with httpx.AsyncClient(timeout=timeout_config, trust_env=False) as client:
-            vlm_base_url = os.environ.get("VLM_BASE_URL", "http://localhost:11434/v1/chat/completions")
-            model_name = os.environ.get("VLM_MODEL", "qwen2.5-vl:3b")
-            vlm_api_key = os.environ.get("VLM_API_KEY", "")
-            
-            # Setup image payload and debug saving
-            b64_img = None
-            if request.redactedImage:
-                # Remove data URI prefix if present
-                print(f"Image received: {len(request.redactedImage)} chars (first 100: {request.redactedImage[:100]}...)")
-                b64_img = request.redactedImage.split("base64,")[-1] if "base64," in request.redactedImage else request.redactedImage
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            async with httpx.AsyncClient(timeout=timeout_config, trust_env=False) as client:
+                vlm_base_url = os.environ.get("VLM_BASE_URL", "http://localhost:11434/v1/chat/completions")
+                model_name = os.environ.get("VLM_MODEL", "qwen2.5-vl:3b")
+                vlm_api_key = os.environ.get("VLM_API_KEY", "")
                 
-                if os.getenv('AGENT_DEBUG') == 'true':
-                    # Save the image to disk for debugging/verification
-                    try:
-                        import base64
-                        from datetime import datetime
-                        debug_dir = os.path.join(os.path.dirname(__file__), "..", "..", "debug_images")
-                        os.makedirs(debug_dir, exist_ok=True)
-                        img_path = os.path.join(debug_dir, f"received_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
-                        with open(img_path, "wb") as f:
-                            f.write(base64.b64decode(b64_img))
-                        print(f"[VLM Server] Saved received image for verification: {img_path}")
-                    except Exception as img_err:
-                        print(f"[VLM Server] Failed to save debug image: {img_err}")
+                # Setup image payload and debug saving
+                b64_img = None
+                if request.redactedImage:
+                    b64_img = request.redactedImage.split("base64,")[-1] if "base64," in request.redactedImage else request.redactedImage
+                    
+                    if os.getenv('AGENT_DEBUG') == 'true' and attempt == 1:
+                        # Save the image to disk for debugging/verification
+                        try:
+                            import base64
+                            from datetime import datetime
+                            debug_dir = os.path.join(os.path.dirname(__file__), "..", "..", "debug_images")
+                            os.makedirs(debug_dir, exist_ok=True)
+                            img_path = os.path.join(debug_dir, f"received_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+                            with open(img_path, "wb") as f:
+                                f.write(base64.b64decode(b64_img))
+                            print(f"[VLM Server] Saved received image for verification: {img_path}")
+                        except Exception as img_err:
+                            print(f"[VLM Server] Failed to save debug image: {img_err}")
 
-            print(f"[VLM] Using endpoint: {vlm_base_url} (model: {model_name})")
-            
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": [{"type": "text", "text": prompt}]}
-            ]
-            
-            if b64_img:
-                messages[1]["content"].append({
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{b64_img}"}
-                })
+                if attempt == 1:
+                    print(f"[VLM] Using endpoint: {vlm_base_url} (model: {model_name})")
+                
+                messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": [{"type": "text", "text": prompt}]}
+                ]
+                
+                if b64_img:
+                    messages[1]["content"].append({
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{b64_img}"}
+                    })
 
-            headers = {
-                "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:3000",
-                "X-Title": "BrowseShield Local Relay"
-            }
-            if vlm_api_key:
-                headers["Authorization"] = f"Bearer {vlm_api_key}"
+                headers = {
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "BrowseShield Local Relay"
+                }
+                if vlm_api_key:
+                    headers["Authorization"] = f"Bearer {vlm_api_key}"
 
-            ollama_response = await client.post(
-                vlm_base_url,
-                headers=headers,
-                json={
-                    "model": model_name,
-                    "messages": messages
-                },
-                timeout=180.0
-            )
-            if ollama_response.status_code != 200:
-                print(f"[VLM Server] API returned status {ollama_response.status_code}: {ollama_response.text}")
-            ollama_response.raise_for_status()
-    except Exception as e:
-        import traceback
-        print(f"[VLM Server] Error calling VLM: {type(e).__name__} - {e}")
-        print("[VLM Server] VLM unreachable. Raising error to halt agent loop.")
-        raise ValueError(f"VLM server unreachable: {type(e).__name__} - {e}")
+                max_tokens = int(os.environ.get("VLM_MAX_TOKENS", 1024))
+                ollama_response = await client.post(
+                    vlm_base_url,
+                    headers=headers,
+                    json={
+                        "model": model_name,
+                        "messages": messages,
+                        "max_tokens": max_tokens,
+                        "temperature": 0.1
+                    },
+                    timeout=180.0
+                )
+                if ollama_response.status_code != 200:
+                    print(f"[VLM Server] API returned status {ollama_response.status_code}: {ollama_response.text}")
+                ollama_response.raise_for_status()
+                break # Success! Break out of the retry loop.
+        except Exception as e:
+            print(f"[VLM Server] Attempt {attempt} failed: {type(e).__name__} - {e}")
+            if attempt < max_retries:
+                await asyncio.sleep(2 ** attempt) # Exponential backoff
+            else:
+                print("[VLM Server] VLM unreachable after max retries. Raising error.")
+                raise ValueError(f"VLM server unreachable: {type(e).__name__} - {e}")
     
     try:
         result = ollama_response.json()
         # Support custom format, OpenAI format, and Ollama format
         if isinstance(result, dict):
-            if "choices" in result:
-                content = result["choices"][0]["message"]["content"].strip()
+            if "choices" in result and len(result["choices"]) > 0:
+                msg = result["choices"][0].get("message", {})
+                content = (msg.get("content") or "").strip()
             elif "message" in result and "content" in result["message"]:
-                content = result["message"]["content"].strip()
+                content = (result["message"].get("content") or "").strip()
             elif "response" in result:
-                content = result["response"].strip()
+                content = (result.get("response") or "").strip()
             elif "content" in result:
-                content = result["content"].strip()
+                content = (result.get("content") or "").strip()
             else:
                 # If the backend returns just the string in a weird key, try to stringify
                 content = json.dumps(result)
@@ -168,13 +176,17 @@ async def get_action_plan_from_vlm(request: AgentRequest) -> AgentPlan:
         # Fix trailing commas (common LLM hallucination)
         content = re.sub(r',\s*([\]}])', r'\1', content)
                 
+        if not content:
+            return AgentPlan(actions=[AgentAction(action="done", reasoning="VLM returned empty output")], reasoning="")
+
         action_json = json.loads(content)
         if "actions" not in action_json:
             return AgentPlan(actions=[AgentAction(**action_json)], reasoning="")
         return AgentPlan(**action_json)
     except Exception as e:
-        if type(result) == dict:
-            raw = result.get("choices", [{}])[0].get("message", {}).get("content") or result.get("message", {}).get("content")
+        if isinstance(result, dict):
+            choices = result.get("choices", [])
+            raw = choices[0].get("message", {}).get("content") if len(choices) > 0 else result.get("message", {}).get("content")
             print(f"[VLM Server] Error parsing VLM output: {e}\nRaw output: {raw}")
         else:
             print(f"[VLM Server] Error parsing VLM output: {e}\nRaw output: {result}")

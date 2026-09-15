@@ -41,8 +41,9 @@ export function validateAction(action, document) {
     return { valid: false, reason: `Unknown action type: "${action.action}"` };
   }
 
-  // 3. 'done' and 'wait' don't need target validation
+  // 3. 'done', 'wait', 'navigate', and 'scroll' don't need target validation (or have special targets)
   if (action.action === "done") return { valid: true };
+  if (action.action === "navigate") return { valid: true };
   if (action.action === "wait") {
     const ms = parseInt(action.value);
     if (isNaN(ms) || ms < 0 || ms > 30000) {
@@ -51,28 +52,32 @@ export function validateAction(action, document) {
     return { valid: true };
   }
 
-  // 4. Target must be a valid CSS selector AND exist in the DOM
-  // Note: we can skip the "exist in DOM" check if document is not provided (e.g. for unit tests)
-  // or we can allow the executor to handle "Element not found" errors natively.
-  // But for strict safety, we check if document is provided.
-  if (!action.target || typeof action.target !== "string") {
-    return { valid: false, reason: "Missing target selector" };
-  }
+  // 4. Target must be a valid CSS selector AND exist in the DOM (unless it's scroll window)
+  if (action.action === "scroll" && action.target === "window") {
+    // scroll window is valid
+  } else {
+    if (!action.target) {
+      return { valid: false, reason: "Missing target selector" };
+    }
+    if (typeof action.target !== "string" && typeof action.target !== "object") {
+      return { valid: false, reason: "Invalid target format" };
+    }
 
-  if (document) {
-    try {
-      const element = document.querySelector(action.target);
-      if (!element) {
+    if (document && typeof action.target === "string") {
+      try {
+        const element = document.querySelector(action.target);
+        if (!element) {
+          return {
+            valid: false,
+            reason: `Target not found in DOM: "${action.target}"`,
+          };
+        }
+      } catch (e) {
         return {
           valid: false,
-          reason: `Target not found in DOM: "${action.target}"`,
+          reason: `Invalid CSS selector: "${action.target}"`,
         };
       }
-    } catch (e) {
-      return {
-        valid: false,
-        reason: `Invalid CSS selector: "${action.target}"`,
-      };
     }
   }
 

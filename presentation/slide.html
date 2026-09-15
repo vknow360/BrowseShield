@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrowseShield - Technical Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Georgia:wght@700&family=Segoe+UI:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-slide: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            
+            --zone-green-bg: #f2f9f5;
+            --zone-green-border: #bbf7d0;
+            --zone-green-text: #047857;
+            
+            --zone-peach-bg: #fff7ed;
+            --zone-peach-border: #fed7aa;
+            --zone-peach-text: #c2410c;
+            
+            --node-1-color: #059669;
+            --node-2-color: #ea580c;
+            --node-3-color: #0284c7;
+            --node-4-color: #0d9488;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #94a3b8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        /* 1600x900 SLIDE CANVAS */
+        .slide-container {
+            width: 1600px;
+            height: 900px;
+            background: var(--bg-slide);
+            position: relative;
+            padding: 24px 34px 46px 34px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+        }
+
+        /* =================== HEADER =================== */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 72px;
+            margin-bottom: 12px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .team-badge {
+            border: 2px solid #3c3b54;
+            border-radius: 40px;
+            padding: 6px 28px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e1b4b;
+            background: #ffffff;
+        }
+
+        .title-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kicker {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .title-block h1 {
+            font-family: 'Georgia', serif;
+            font-size: 2.15rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: 0.3px;
+            line-height: 1.1;
+        }
+
+        .title-block p {
+            font-size: 0.95rem;
+            color: #475569;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sih-bulb-logo {
+            width: 52px;
+            height: 52px;
+        }
+
+        .sih-text {
+            text-align: left;
+            font-size: 1.05rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: #1e293b;
+        }
+
+        /* =================== MAIN SPLIT =================== */
+        .main-layout {
+            display: flex;
+            gap: 24px;
+            height: 735px;
+            width: 100%;
+        }
+
+        /* -------------------------------------------------------------
+           LEFT: 72% DUAL-HALO CIRCULAR ARCHITECTURE
+        ------------------------------------------------------------- */
+        .diagram-panel {
+            flex: 0 0 71.5%;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 18px;
+            padding: 16px 20px 14px 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+        }
+
+        .halos-wrapper {
+            flex: 1;
+            display: flex;
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            gap: 14px;
+        }
+
+        /* HALO 1: ON-DEVICE (TRUSTED) */
+        .halo-zone {
+            flex: 1;
+            border-radius: 14px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .halo-trusted {
+            background: var(--zone-green-bg);
+            border: 1.5px solid var(--zone-green-border);
+        }
+
+        .halo-untrusted {
+            background: var(--zone-peach-bg);
+            border: 1.5px solid var(--zone-peach-border);
+        }
+
+        .zone-header-title {
+            font-size: 1.1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .halo-trusted .zone-header-title { color: var(--zone-green-text); }
+        .halo-untrusted .zone-header-title { color: var(--zone-peach-text); text-align: right; }
+
+        .zone-header-subtitle {
+            font-size: 0.72rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .halo-untrusted .zone-header-subtitle { text-align: right; }
+
+        .zone-accent-line {
+            width: 38px;
+            height: 3px;
+            border-radius: 2px;
+            margin-top: 6px;
+        }
+        .halo-trusted .zone-accent-line { background: var(--zone-green-text); }
+        .halo-untrusted .zone-accent-line { background: var(--zone-peach-text); margin-left: auto; }
+
+        /* CENTER TRUST BOUNDARY & PRIVACY GATE PILLAR */
+        .trust-boundary-center {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        .boundary-top-tag {
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 3px 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        }
+        .boundary-top-tag h5 {
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .boundary-top-tag p {
+            font-size: 0.58rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .boundary-vertical-dash {
+            flex: 1;
+            width: 2px;
+            border-left: 2px dashed #94a3b8;
+            margin: 6px 0;
+        }
+
+        .privacy-gate-capsule {
+            width: 120px;
+            background: #ffffff;
+            border: 2px solid #0f172a;
+            border-radius: 28px;
+            padding: 14px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+            pointer-events: auto;
+            z-index: 30;
+        }
+
+        .capsule-badge {
+            width: 32px;
+            height: 32px;
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+
+        .capsule-title {
+            font-size: 0.8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #0f172a;
+            line-height: 1.15;
+        }
+
+        .capsule-rule {
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: #047857;
+            text-transform: uppercase;
+            margin-top: 4px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 1px 6px;
+            border-radius: 8px;
+        }
+
+        .capsule-text {
+            font-size: 0.58rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-top: 4px;
+            line-height: 1.2;
+            padding: 0 2px;
+        }
+
+        .boundary-bottom-tag {
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        }
+        .boundary-bottom-tag span {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: 0.4px;
+        }
+
+        /* SVG ORBIT LAYER */
+        .orbit-svg-plane {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 4 ORBIT NODE CARDS */
+        .orbit-node {
+            position: absolute;
+            width: 260px;
+            background: #ffffff;
+            border: 2px solid;
+            border-radius: 16px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+            z-index: 20;
+        }
+
+        /* Number Badge */
+        .node-number {
+            position: absolute;
+            top: -11px;
+            left: 14px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.74rem;
+            font-weight: 900;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .node-top-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .node-icon-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .node-title-group h4 {
+            font-size: 1.02rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+        }
+
+        .node-title-group p {
+            font-size: 0.68rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .node-bullets {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 6px;
+        }
+
+        .node-bullets li {
+            font-size: 0.68rem;
+            color: #334155;
+            display: flex;
+            align-items: flex-start;
+            gap: 5px;
+            line-height: 1.25;
+        }
+
+        .node-bullets li i {
+            margin-top: 1.5px;
+            flex-shrink: 0;
+        }
+
+        /* Specific Node Positions & Themes */
+        /* Node 01: Perceive (Top-Left) */
+        .node-pos-1 {
+            top: 72px;
+            left: 175px;
+            border-color: #86efac;
+        }
+        .node-pos-1 .node-number { background: var(--node-1-color); }
+        .node-pos-1 .node-icon-circle { background: #ecfdf5; color: var(--node-1-color); }
+
+        /* Node 02: Reason (Top-Right) */
+        .node-pos-2 {
+            top: 72px;
+            right: 35px;
+            border-color: #fdba74;
+        }
+        .node-pos-2 .node-number { background: var(--node-2-color); }
+        .node-pos-2 .node-icon-circle { background: #fff7ed; color: var(--node-2-color); }
+
+        /* Node 03: Validate & Rehydrate (Bottom-Right) */
+        .node-pos-3 {
+            bottom: 24px;
+            right: 35px;
+            border-color: #7dd3fc;
+        }
+        .node-pos-3 .node-number { background: var(--node-3-color); }
+        .node-pos-3 .node-icon-circle { background: #f0f9ff; color: var(--node-3-color); }
+
+        /* Node 04: Execute (Bottom-Left) */
+        .node-pos-4 {
+            bottom: 24px;
+            left: 175px;
+            border-color: #5eead4;
+        }
+        .node-pos-4 .node-number { background: var(--node-4-color); }
+        .node-pos-4 .node-icon-circle { background: #f0fdfa; color: var(--node-4-color); }
+
+        /* BROWSER CARD (Anchor on far-left) */
+        .browser-session-card {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 140px;
+            background: #ffffff;
+            border: 2px solid #059669;
+            border-radius: 14px;
+            padding: 12px 10px;
+            text-align: center;
+            box-shadow: 0 6px 16px rgba(5, 150, 105, 0.1);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .browser-icon-box {
+            width: 36px;
+            height: 36px;
+            background: #ecfdf5;
+            color: #059669;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+
+        .browser-title {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #0f172a;
+            text-transform: uppercase;
+        }
+
+        .browser-desc {
+            font-size: 0.62rem;
+            color: #64748b;
+            margin-top: 3px;
+            line-height: 1.25;
+            font-weight: 500;
+        }
+
+        /* BOTTOM BANNER */
+        .diagram-bottom-bar {
+            margin-top: 8px;
+            padding: 5px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        /* -------------------------------------------------------------
+           RIGHT: 28% TECHNOLOGY STACK SIDEBAR
+        ------------------------------------------------------------- */
+        .tech-panel {
+            flex: 0 0 26.5%;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 18px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+        }
+
+        .tech-panel-header {
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #0f172a;
+        }
+
+        .tech-kicker {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #0284c7;
+            text-transform: uppercase;
+        }
+
+        .tech-title {
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: 0.2px;
+            line-height: 1.1;
+            margin-top: 2px;
+        }
+
+        /* 4 STACK CARDS */
+        .tech-cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            justify-content: space-between;
+        }
+
+        .stack-row-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .stack-row-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stack-square-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stack-text-group h5 {
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+        }
+
+        .stack-text-group p {
+            font-size: 0.65rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stack-pills-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .spec-pill {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* SIDEBAR FOOTER REPO */
+        .tech-panel-footer {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #f1f5f9;
+            text-align: center;
+        }
+
+        .repo-link-btn {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #0070ba;
+            text-decoration: none;
+        }
+        .repo-link-btn:hover { text-decoration: underline; }
+
+        /* =================== FOOTER BAR =================== */
+        .slide-footer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 38px;
+            background: #0b66c3;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 35px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .slide-footer-bar .footer-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        .slide-footer-bar .slide-num {
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide-container">
+        
+        <!-- HEADER -->
+        <header>
+            <div class="header-left">
+                <div class="team-badge">Anlbot</div>
+                <div class="title-block">
+                    <span class="kicker">PRIVACY &middot; AUTONOMY &middot; A SAFER WEB</span>
+                    <h1>Technical Architecture</h1>
+                    <p>A privacy-preserving browser AI agent that perceives, reasons, and acts &mdash; with you in control.</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <svg class="sih-bulb-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 15 C32 15 20 28 20 44 C20 54 26 62 33 69 L33 77 L50 77 Z" fill="#ea580c"/>
+                    <path d="M50 15 C68 15 80 28 80 44 C80 54 74 62 67 69 L67 77 L50 77 Z" fill="#16a34a"/>
+                    <circle cx="14" cy="44" r="3.5" fill="#ea580c"/>
+                    <circle cx="86" cy="44" r="3.5" fill="#16a34a"/>
+                    <circle cx="30" cy="18" r="3" fill="#ea580c"/>
+                    <circle cx="70" cy="18" r="3" fill="#16a34a"/>
+                    <path d="M14 44 L25 44 M86 44 L75 44" stroke="#475569" stroke-width="2"/>
+                    <text x="58" y="32" font-family="monospace" font-size="7" font-weight="bold" fill="#ffffff">1010</text>
+                    <text x="58" y="42" font-family="monospace" font-size="7" font-weight="bold" fill="#ffffff">010101</text>
+                    <text x="58" y="52" font-family="monospace" font-size="7" font-weight="bold" fill="#ffffff">101010</text>
+                    <text x="58" y="62" font-family="monospace" font-size="7" font-weight="bold" fill="#ffffff">0101</text>
+                    <rect x="36" y="80" width="28" height="5" rx="1" fill="#475569"/>
+                    <rect x="40" y="87" width="20" height="4" rx="2" fill="#334155"/>
+                    <text x="50" y="99" font-family="Arial" font-size="9" font-weight="900" fill="#0f172a" text-anchor="middle">SIH</text>
+                </svg>
+                <div class="sih-text">
+                    SMART INDIA<br>HACKATHON<br>2026
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <div class="main-layout">
+            
+            <!-- LEFT: DUAL-HALO CIRCULAR ARCHITECTURE (~72%) -->
+            <div class="diagram-panel">
+                
+                <div class="halos-wrapper">
+                    
+                    <!-- SVG ORBIT & CONNECTORS -->
+                    <svg class="orbit-svg-plane" viewBox="0 0 1080 590" preserveAspectRatio="none">
+                        <defs>
+                            <marker id="arr-orange" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#ea580c"/>
+                            </marker>
+                            <marker id="arr-blue" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284c7"/>
+                            </marker>
+                            <marker id="arr-green" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+                            </marker>
+                        </defs>
+
+                        <!-- Orbit Ellipse Guideline (Faint) -->
+                        <ellipse cx="540" cy="295" rx="360" ry="195" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-dasharray="6,6"/>
+
+                        <!-- 01 -> 02 (Crosses Privacy Gate at top) -->
+                        <path d="M 435 140 Q 540 85 645 140" fill="none" stroke="#ea580c" stroke-width="2.5" marker-end="url(#arr-orange)"/>
+
+                        <!-- 02 -> 03 (Downward on Server side) -->
+                        <path d="M 775 250 L 775 350" fill="none" stroke="#ea580c" stroke-width="2.5" marker-end="url(#arr-orange)"/>
+
+                        <!-- 03 -> 04 (Returns across Privacy Gate at bottom) -->
+                        <path d="M 645 450 Q 540 505 435 450" fill="none" stroke="#0284c7" stroke-width="2.5" marker-end="url(#arr-blue)"/>
+
+                        <!-- 04 -> 01 (Upward on Client side) -->
+                        <path d="M 305 350 L 305 250" fill="none" stroke="#059669" stroke-width="2.5" marker-end="url(#arr-green)"/>
+
+                        <!-- Browser Anchor connecting dashed curves -->
+                        <path d="M 154 270 Q 210 190 305 175" fill="none" stroke="#059669" stroke-width="1.8" stroke-dasharray="4,4"/>
+                        <path d="M 305 415 Q 210 400 154 320" fill="none" stroke="#0d9488" stroke-width="1.8" stroke-dasharray="4,4"/>
+                    </svg>
+
+                    <!-- HALO 1: ON-DEVICE (TRUSTED) -->
+                    <div class="halo-zone halo-trusted">
+                        <div class="zone-header-title">ON-DEVICE (Trusted)</div>
+                        <div class="zone-header-subtitle">Your data. Your environment. Your control.</div>
+                        <div class="zone-accent-line"></div>
+                    </div>
+
+                    <!-- HALO 2: CLOUD / SERVER (UNTRUSTED) -->
+                    <div class="halo-zone halo-untrusted">
+                        <div class="zone-header-title">CLOUD / SERVER (Untrusted)</div>
+                        <div class="zone-header-subtitle">Process sanitized data only. No sensitive information.</div>
+                        <div class="zone-accent-line"></div>
+                    </div>
+
+                    <!-- CENTER TRUST BOUNDARY & PRIVACY GATE PILLAR -->
+                    <div class="trust-boundary-center">
+                        <div class="boundary-top-tag">
+                            <h5>TRUST BOUNDARY</h5>
+                            <p>On-device &nbsp;|&nbsp; Server-side</p>
+                        </div>
+
+                        <div class="boundary-vertical-dash"></div>
+
+                        <div class="privacy-gate-capsule">
+                            <div class="capsule-badge">
+                                <i data-lucide="shield-check" size="18"></i>
+                            </div>
+                            <div class="capsule-title">PRIVACY<br>GATE</div>
+                            <div class="capsule-rule">FAIL-CLOSED</div>
+                            <div class="capsule-text">Only sanitized data crosses</div>
+                        </div>
+
+                        <div class="boundary-vertical-dash"></div>
+
+                        <div class="boundary-bottom-tag">
+                            <i data-lucide="lock" size="12" color="#047857"></i>
+                            <span>Zero PII Transit</span>
+                        </div>
+                    </div>
+
+                    <!-- BROWSER SESSION CARD (Far-Left Anchor) -->
+                    <div class="browser-session-card">
+                        <div class="browser-icon-box">
+                            <i data-lucide="monitor" size="20"></i>
+                        </div>
+                        <div class="browser-title">BROWSER</div>
+                        <div style="font-size: 0.65rem; font-weight: 700; color: #047857;">(On Your Device)</div>
+                        <div class="browser-desc">Real web session in a secure, local sandbox environment.</div>
+                    </div>
+
+                    <!-- =================== NODE 01: PERCEIVE =================== -->
+                    <div class="orbit-node node-pos-1">
+                        <div class="node-number">01</div>
+                        <div class="node-top-bar">
+                            <div class="node-icon-circle">
+                                <i data-lucide="file-text" size="20"></i>
+                            </div>
+                            <div class="node-title-group">
+                                <h4>Perceive</h4>
+                                <p>Extract page context (DOM + Visual)</p>
+                            </div>
+                        </div>
+                        <ul class="node-bullets">
+                            <li><i data-lucide="code" size="12" color="var(--node-1-color)"></i> <span><strong>Structured:</strong> DOM &amp; Accessibility Tree</span></li>
+                            <li><i data-lucide="scan" size="12" color="var(--node-1-color)"></i> <span><strong>Visual AI:</strong> YOLOv8-nano (WebGPU) + Tesseract</span></li>
+                            <li><i data-lucide="layers" size="12" color="var(--node-1-color)"></i> <span><strong>5-Layer PII:</strong> Regex, DistilBERT, BlazeFace</span></li>
+                            <li><i data-lucide="shield" size="12" color="var(--node-1-color)"></i> <span><strong>Sanitize:</strong> Ephemeral tokens &amp; canvas blur</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- =================== NODE 02: REASON =================== -->
+                    <div class="orbit-node node-pos-2">
+                        <div class="node-number">02</div>
+                        <div class="node-top-bar">
+                            <div class="node-icon-circle">
+                                <i data-lucide="brain" size="20"></i>
+                            </div>
+                            <div class="node-title-group">
+                                <h4>Reason</h4>
+                                <p>Generate action plan (JSON)</p>
+                            </div>
+                        </div>
+                        <ul class="node-bullets">
+                            <li><i data-lucide="cpu" size="12" color="var(--node-2-color)"></i> <span><strong>Model:</strong> Qwen2.5-VL-3B Multimodal VLM</span></li>
+                            <li><i data-lucide="server" size="12" color="var(--node-2-color)"></i> <span><strong>Serving:</strong> Asynchronous FastAPI + Ollama</span></li>
+                            <li><i data-lucide="lock" size="12" color="var(--node-2-color)"></i> <span><strong>Zero Raw PII:</strong> Operates only on tokenized state</span></li>
+                            <li><i data-lucide="file-json" size="12" color="var(--node-2-color)"></i> <span><strong>Output:</strong> Synthesizes Structured Action JSON</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- =================== NODE 03: VALIDATE & REHYDRATE =================== -->
+                    <div class="orbit-node node-pos-3">
+                        <div class="node-number">03</div>
+                        <div class="node-top-bar">
+                            <div class="node-icon-circle">
+                                <i data-lucide="check-square" size="20"></i>
+                            </div>
+                            <div class="node-title-group">
+                                <h4>Validate &amp; Rehydrate</h4>
+                                <p>Apply safety rules &middot; Restore tokens</p>
+                            </div>
+                        </div>
+                        <ul class="node-bullets">
+                            <li><i data-lucide="shield-alert" size="12" color="var(--node-3-color)"></i> <span><strong>Safety Gate:</strong> Strict JSON schema verification</span></li>
+                            <li><i data-lucide="key" size="12" color="var(--node-3-color)"></i> <span><strong>Rehydrate:</strong> <code>[[EMAIL_1]]</code> &rarr; real local value</span></li>
+                            <li><i data-lucide="database" size="12" color="var(--node-3-color)"></i> <span><strong>Local Vault:</strong> Ephemeral in-memory key map</span></li>
+                            <li><i data-lucide="layers" size="12" color="var(--node-3-color)"></i> <span><strong>SPA Ready:</strong> Dispatches React/Vue synthetic events</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- =================== NODE 04: EXECUTE =================== -->
+                    <div class="orbit-node node-pos-4">
+                        <div class="node-number">04</div>
+                        <div class="node-top-bar">
+                            <div class="node-icon-circle">
+                                <i data-lucide="mouse-pointer-click" size="20"></i>
+                            </div>
+                            <div class="node-title-group">
+                                <h4>Execute</h4>
+                                <p>Perform browser actions natively</p>
+                            </div>
+                        </div>
+                        <ul class="node-bullets">
+                            <li><i data-lucide="mouse-pointer" size="12" color="var(--node-4-color)"></i> <span><strong>DOM Action:</strong> Trusted click &amp; navigation events</span></li>
+                            <li><i data-lucide="keyboard" size="12" color="var(--node-4-color)"></i> <span><strong>Form Automation:</strong> Typing &amp; <code>requestSubmit()</code></span></li>
+                            <li><i data-lucide="check-circle-2" size="12" color="var(--node-4-color)"></i> <span><strong>Task Done:</strong> Completed status verification</span></li>
+                            <li><i data-lucide="refresh-cw" size="12" color="var(--node-4-color)"></i> <span><strong>Closed Loop:</strong> Page changes trigger Node 01</span></li>
+                        </ul>
+                    </div>
+
+                </div>
+
+                <!-- BOTTOM BANNER -->
+                <div class="diagram-bottom-bar">
+                    <span style="font-weight: 800; color: #047857; display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="shield" size="14"></i> YOUR DATA STAYS IN YOUR CONTROL
+                    </span>
+                    <span style="font-weight: 600; color: #64748b;">
+                        Private by design &middot; Verifiable fail-closed boundary &middot; Useful by default
+                    </span>
+                </div>
+
+            </div>
+
+            <!-- RIGHT: 28% TECHNOLOGY STACK SIDEBAR -->
+            <div class="tech-panel">
+                
+                <div class="tech-panel-header">
+                    <div class="tech-kicker">BUILT WITH MODERN TECHNOLOGY</div>
+                    <div class="tech-title">Technology Stack</div>
+                </div>
+
+                <!-- 4 CATEGORY CARDS (Color-coded to match zones & nodes) -->
+                <div class="tech-cards-container">
+                    
+                    <!-- 1. Client & Browser (Green) -->
+                    <div class="stack-row-card" style="border-left: 3.5px solid var(--node-1-color);">
+                        <div class="stack-row-top">
+                            <div class="stack-square-icon" style="background: #ecfdf5; color: var(--node-1-color);">
+                                <i data-lucide="chrome" size="18"></i>
+                            </div>
+                            <div class="stack-text-group">
+                                <h5>Frontend &amp; Browser</h5>
+                                <p>Modern, responsive and secure</p>
+                            </div>
+                        </div>
+                        <div class="stack-pills-wrap">
+                            <span class="spec-pill">Chrome MV3</span>
+                            <span class="spec-pill">Vite</span>
+                            <span class="spec-pill">Vanilla JS</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. AI & Perception (Orange) -->
+                    <div class="stack-row-card" style="border-left: 3.5px solid var(--node-2-color);">
+                        <div class="stack-row-top">
+                            <div class="stack-square-icon" style="background: #fff7ed; color: var(--node-2-color);">
+                                <i data-lucide="brain" size="18"></i>
+                            </div>
+                            <div class="stack-text-group">
+                                <h5>AI / ML &amp; Perception</h5>
+                                <p>Perception, reasoning and safety</p>
+                            </div>
+                        </div>
+                        <div class="stack-pills-wrap">
+                            <span class="spec-pill">YOLOv8 nano (WebGPU)</span>
+                            <span class="spec-pill">Tesseract.js</span>
+                            <span class="spec-pill">DistilBERT</span>
+                            <span class="spec-pill">BlazeFace</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Server & Inference (Blue) -->
+                    <div class="stack-row-card" style="border-left: 3.5px solid var(--node-3-color);">
+                        <div class="stack-row-top">
+                            <div class="stack-square-icon" style="background: #f0f9ff; color: var(--node-3-color);">
+                                <i data-lucide="server" size="18"></i>
+                            </div>
+                            <div class="stack-text-group">
+                                <h5>Backend &amp; Infrastructure</h5>
+                                <p>Scalable, reliable and modular</p>
+                            </div>
+                        </div>
+                        <div class="stack-pills-wrap">
+                            <span class="spec-pill">FastAPI</span>
+                            <span class="spec-pill">Ollama</span>
+                            <span class="spec-pill">Qwen2.5-VL-3B</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Security & Privacy (Teal) -->
+                    <div class="stack-row-card" style="border-left: 3.5px solid var(--node-4-color);">
+                        <div class="stack-row-top">
+                            <div class="stack-square-icon" style="background: #f0fdfa; color: var(--node-4-color);">
+                                <i data-lucide="shield-check" size="18"></i>
+                            </div>
+                            <div class="stack-text-group">
+                                <h5>Security &amp; Privacy</h5>
+                                <p>Built for trust and compliance</p>
+                            </div>
+                        </div>
+                        <div class="stack-pills-wrap">
+                            <span class="spec-pill">Token Vault</span>
+                            <span class="spec-pill">Privacy Gate</span>
+                            <span class="spec-pill">5-Layer Engine</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SIDEBAR FOOTER -->
+                <div class="tech-panel-footer">
+                    <div style="font-size: 0.65rem; color: #64748b; margin-bottom: 2px;">SAME BROWSING &middot; MORE POSSIBILITIES</div>
+                    <a href="https://github.com/vknow360/BrowseShield" target="_blank" class="repo-link-btn">
+                        github.com/vknow360/BrowseShield
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- FOOTER BAR (Exact SIH Blue Bar) -->
+        <div class="slide-footer-bar">
+            <div class="footer-text">@SIH Idea submission- Template</div>
+            <div class="slide-num">3</div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

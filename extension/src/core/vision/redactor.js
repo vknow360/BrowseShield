@@ -68,7 +68,7 @@ export async function redactScreenshot(
     }
   }
 
-  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.88 });
+  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.75 });
   return blobToDataURL(blob);
 }
 

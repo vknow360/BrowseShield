@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArogyaShield Health Insurance — Cashless Claim Portal (Success)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">🏥</div>
+        <div class="brand-text">
+          <span class="brand-title">ArogyaShield</span>
+          <span class="brand-subtitle">National Health Insurance Network</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    <!-- Form Content Container -->
+    <div class="content-grid">
+      <!-- Form Column -->
+      <div class="form-container">
+        <!-- STEP SUCCESS: Final Confirmation -->
+        <div id="step-success-panel" class="step-panel active" style="text-align: center; padding: 40px 20px;">
+          <div style="font-size: 4rem; margin-bottom: 15px;">🎉</div>
+          <h2 style="color: #059669; font-size: 1.8rem; margin-bottom: 10px;">Claim Pre-Authorization Submitted!</h2>
+          <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 25px; line-height: 1.5;">
+            Your cashless health insurance claim ref <strong>#CLM-2026-9814</strong> has been securely pre-authorized with zero outbound privacy leakage.
+          </p>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px; display: inline-block; text-align: left; margin-bottom: 30px;">
+            <div>🛡️ <strong>BrowseShield Privacy Gate:</strong> <span style="color: #059669;">Zero PII Leaked</span></div>
+            <div>⚡ <strong>On-Device Tokenization:</strong> <span style="color: #059669;">100% Client-Side</span></div>
+            <div>📄 <strong>Status:</strong> Under TPA Review (ETA: 45 mins)</div>
+          </div>
+          <div>
+            <button type="button" id="restartClaimBtn" class="btn btn-primary" onclick="sessionStorage.clear(); window.location.href='healthcare-step1.html'">
+              🔄 Start Another Claim Demo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>ArogyaShield™ Mock Portal &bull; Designed for SIH 2026 ISRO Problem Statement Demo &bull; Privacy-Safe Synthetic Data</p>
+  </footer>
+</body>
+</html>

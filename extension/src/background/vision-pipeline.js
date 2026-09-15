@@ -1,129 +1,84 @@
-import { FaceDetector, FilesetResolver } from "@mediapipe/tasks-vision";
 import browser from "webextension-polyfill";
-import * as ort from "onnxruntime-web";
-import { preprocessYOLO, postprocessYOLO } from "../core/vision/yolo.js";
+import { setupOffscreenDocument } from "./offscreen-setup.js";
+import { detectSemanticPII, initNERPipeline } from "../core/detector/ner-pipeline.js";
 
-let faceDetector = null;
-let yoloSession = null;
 let isInitialized = false;
 
 export async function initVisionPipeline() {
   if (isInitialized) return;
-  console.log("[Vision] Initializing Vision Pipeline...");
+  console.log("[Vision] Initializing Vision Pipeline in Offscreen Document...");
 
   try {
-    const vision = await FilesetResolver.forVisionTasks(
-      browser.runtime.getURL("wasm"),
-    );
-    faceDetector = await FaceDetector.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath: browser.runtime.getURL(
-          "models/blaze_face_short_range.tflite",
-        ),
-        delegate: "CPU",
-      },
-      runningMode: "IMAGE",
+    await setupOffscreenDocument('src/offscreen/index.html');
+    
+    const response = await browser.runtime.sendMessage({
+      target: "offscreen",
+      type: "INIT_VISION"
     });
 
-    ort.env.wasm.numThreads = typeof SharedArrayBuffer !== "undefined" ? 4 : 1;
-    ort.env.wasm.wasmPaths = browser.runtime.getURL("wasm/");
-
-    try {
-      yoloSession = await ort.InferenceSession.create(
-        browser.runtime.getURL("models/yolov8n.onnx"),
-        { executionProviders: ["wasm"] },
-      );
-      console.log("[Vision] YOLOv8-nano loaded");
-    } catch (e) {
-      console.error(
-        "[Vision] YOLOv8 model failed to load — UI element perception disabled. " +
-          "Ensure public/models/yolov8n.onnx is present.",
-        e,
-      );
+    if (response && response.success) {
+      isInitialized = true;
+      console.log("[Vision] Vision Pipeline ready (offscreen).");
+    } else {
+      throw new Error(response ? response.error : "Unknown error");
     }
-
-    isInitialized = true;
-    console.log("[Vision] Vision Pipeline ready (fully on-device).");
   } catch (error) {
     console.error("[Vision] Failed to initialize pipeline:", error);
   }
 }
 
-/**
- * Perceives the screen image and returns a screen-state classification plus UI/face boxes.
- * @param {ImageBitmap} imageBitmap - the captured (optionally downscaled) screenshot
- * @param {Array} [nodes] - sanitized DOM nodes from the page (for screen-state classification)
- * @returns {Promise<{screenType: string, uiBoxes: Array, faceBoxes: Array}>}
- */
 export async function perceiveScreen(imageBitmap, nodes = []) {
   if (!isInitialized) await initVisionPipeline();
 
   let uiBoxes = [];
   let faceBoxes = [];
 
-  if (yoloSession) {
-    const { tensor, scale, offsetX, offsetY } =
-      await preprocessYOLO(imageBitmap);
-    const results = await yoloSession.run({ images: tensor });
-    const outputTensor = results[yoloSession.outputNames[0]];
-    uiBoxes = postprocessYOLO(
-      outputTensor,
-      scale,
-      offsetX,
-      offsetY,
-      imageBitmap.width,
-      imageBitmap.height,
-    );
-    tensor.dispose();
-    if (outputTensor && typeof outputTensor.dispose === 'function') {
-      outputTensor.dispose();
-    }
-  }
+  // Convert ImageBitmap to Data URL to send across message port
+  const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(imageBitmap, 0, 0);
+  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.75 });
+  
+  const reader = new FileReader();
+  const dataUrl = await new Promise((resolve) => {
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
 
-  if (faceDetector) {
-    const detections = faceDetector.detect(imageBitmap);
-    if (detections && detections.detections) {
-      faceBoxes = detections.detections.map((d) => ({
-        x: d.boundingBox.originX,
-        y: d.boundingBox.originY,
-        w: d.boundingBox.width,
-        h: d.boundingBox.height,
-        conf: d.categories[0].score,
-      }));
+  try {
+    const response = await browser.runtime.sendMessage({
+      target: "offscreen",
+      type: "PERCEIVE_SCREEN",
+      dataUrl,
+      width: imageBitmap.width,
+      height: imageBitmap.height
+    });
+
+    if (response) {
+      uiBoxes = response.uiBoxes || [];
+      faceBoxes = response.faceBoxes || [];
     }
+  } catch (e) {
+    console.error("[Vision] Failed to perceive screen via offscreen:", e);
   }
 
   const { screenType, piiVisionBoxes } = classifyScreenType(nodes, faceBoxes, uiBoxes);
   return { screenType, uiBoxes, faceBoxes, piiVisionBoxes };
 }
 
-/**
- * Derives a meaningful screen-state label from the perceived UI composition:
- * DOM field types (password / input / button counts) combined with vision box counts.
- * @param {Array} nodes - sanitized DOM nodes
- * @param {Array} faceBoxes - detected face boxes
- * @param {Array} uiBoxes - detected UI/object boxes from YOLO
- * @returns {'login'|'form'|'dashboard'|'page'}
- */
 export function classifyScreenType(nodes = [], faceBoxes = [], uiBoxes = []) {
-  const isField = (n) =>
-    n.tagName === "INPUT" || n.tagName === "SELECT" || n.tagName === "TEXTAREA";
+  const isField = (n) => n.tagName === "INPUT" || n.tagName === "SELECT" || n.tagName === "TEXTAREA";
   const fields = nodes.filter(isField);
-  const hasPassword = nodes.some(
-    (n) => String(n.type || "").toLowerCase() === "password",
-  );
+  const hasPassword = nodes.some((n) => String(n.type || "").toLowerCase() === "password");
   
-  // DOM based counters
   const buttons = nodes.filter((n) => n.tagName === "BUTTON").length;
 
-  // Vision based counters
   const visionPasswords = uiBoxes.filter(b => b.className === 'password').length;
   const visionButtons = uiBoxes.filter(b => b.className === 'button').length;
   const visionInputs = uiBoxes.filter(b => 
     ['input', 'email-input', 'first-name', 'last-name', 'phone-num', 'username'].includes(b.className)
   ).length;
 
-  // Auto-detect PII-sensitive UI elements from vision
   const PII_CLASSES = new Set(['password', 'email-input', 'phone-num', 'DOB', 'address', 'name', 'first-name', 'last-name', 'otp', 'zip code']);
   const piiVisionBoxes = uiBoxes.filter(b => PII_CLASSES.has(b.className));
 
@@ -136,15 +91,118 @@ export function classifyScreenType(nodes = [], faceBoxes = [], uiBoxes = []) {
 }
 
 export function detectFaces(imageBitmap) {
-  if (!faceDetector) return [];
-  const detections = faceDetector.detect(imageBitmap);
-  if (!detections || !detections.detections) return [];
-  return detections.detections.map((d) => ({
-    boundingBox: {
-      originX: d.boundingBox.originX,
-      originY: d.boundingBox.originY,
-      width: d.boundingBox.width,
-      height: d.boundingBox.height,
-    },
-  }));
+  // Deprecated for direct synchronous use, handled via offscreen now
+  return [];
+}
+
+export async function detectVisualPII(imageBitmap, tokenMap = {}) {
+  if (!isInitialized) await initVisionPipeline();
+  // We no longer need to initialize NER here because it's handled in agent-loop and we just use tokenMap.
+
+  const MAX_EDGE = 800;
+  const longest = Math.max(imageBitmap.width, imageBitmap.height);
+  const f = longest > MAX_EDGE ? MAX_EDGE / longest : 1;
+  
+  let ocrBitmap = imageBitmap;
+  if (f < 1) {
+    ocrBitmap = await createImageBitmap(imageBitmap, {
+      resizeWidth: Math.round(imageBitmap.width * f),
+      resizeHeight: Math.round(imageBitmap.height * f),
+      resizeQuality: "high",
+    });
+  }
+
+  const canvas = new OffscreenCanvas(ocrBitmap.width, ocrBitmap.height);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(ocrBitmap, 0, 0);
+  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.75 });
+  
+  const reader = new FileReader();
+  const dataUrl = await new Promise((resolve) => {
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+
+  if (f < 1) ocrBitmap.close();
+
+  try {
+    const ocrWords = await browser.runtime.sendMessage({
+      target: "offscreen",
+      type: "RUN_OCR",
+      dataUrl
+    });
+
+    if (!ocrWords || ocrWords.length === 0) return [];
+
+    // Extract all known PII values from the tokenMap
+    const knownPiiValues = Object.values(tokenMap).map(v => String(v.realValue || v).toLowerCase());
+    
+    // Also run regex and NER directly on the OCR text to catch completely static PII (e.g. in navbars)
+    const fullText = ocrWords.map(w => w.text).join(" ");
+    
+    // Find PII using semantic NER
+    const semanticEntities = await detectSemanticPII(fullText);
+    
+    // Find PII using regex
+    const promptRegexes = [
+      { type: "AADHAAR", regex: /\b\d{4}\s?\d{4}\s?\d{4}\b/g },
+      { type: "EMAIL", regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g },
+      { type: "PHONE", regex: /\b(?:\+91|0)?[6-9]\d{9}\b/g },
+      { type: "PAN", regex: /\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b/g },
+      { type: "CREDIT_CARD", regex: /\b(?:\d[ -]*?){13,16}\b/g },
+      { type: "PINCODE", regex: /\b[1-9]\d{5}\b/g },
+      { type: "IFSC", regex: /\b[A-Z]{4}0[A-Z0-9]{6}\b/g }
+    ];
+    
+    for (const { type, regex } of promptRegexes) {
+      const matches = [...fullText.matchAll(regex)];
+      for (const match of matches) {
+        knownPiiValues.push(String(match[0]).trim().toLowerCase());
+      }
+    }
+    
+    for (const ent of semanticEntities) {
+      knownPiiValues.push(String(ent.value).trim().toLowerCase());
+    }
+
+    // Break down known PII values into individual words to match against OCR words
+    const knownPiiWords = new Set();
+    for (const val of knownPiiValues) {
+      const words = val.split(/\s+/);
+      for (const w of words) {
+        if (w.length > 2) {
+          knownPiiWords.add(w);
+        }
+      }
+    }
+
+    const piiBoxes = [];
+    
+    // Match any OCR word against our known PII words
+    for (const w of ocrWords) {
+      if (!w || !w.box) continue;
+      const text = w.text.toLowerCase();
+      // If the word matches exactly, or is included in a known word (or vice versa), box it
+      for (const known of knownPiiWords) {
+        if ((text.includes(known) || known.includes(text)) && text.length > 2) {
+           const box = {
+             x: (w.box.x0 ?? w.box.x ?? 0) / f,
+             y: (w.box.y0 ?? w.box.y ?? 0) / f,
+             w: ((w.box.x1 ?? (w.box.x + w.box.w)) - (w.box.x0 ?? w.box.x ?? 0)) / f,
+             h: ((w.box.y1 ?? (w.box.y + w.box.h)) - (w.box.y0 ?? w.box.y ?? 0)) / f
+           };
+           piiBoxes.push(box);
+           console.log(`[Vision] Visual PII Matched: "${w.text}" via known PII "${known}" -> Box:`, box);
+           break; // Boxed this word, move to next
+        }
+      }
+    }
+    
+    console.log(`[Vision] Visual PII Total Boxes:`, piiBoxes.length);
+    return piiBoxes;
+
+  } catch (e) {
+    console.error("[Vision] Visual PII detection failed:", e);
+    return [];
+  }
 }

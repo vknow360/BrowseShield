@@ -6,11 +6,14 @@ import numpy as np
 from PIL import Image
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../scripts')))
 import verify_yolo_ui
 
 GT_DIR = os.path.join(os.path.dirname(__file__), 'ground_truth')
 IMG_DIR = os.path.join(os.path.dirname(__file__), 'screenshots')
-MODEL_PATH = "e:/SIH26/extension/public/models/yolov8n.onnx"
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../extension/public/models/yolov8n_quantized.onnx')
+if not os.path.exists(MODEL_PATH):
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../extension/archive/yolov8n.onnx')
 
 def compute_iou(boxA, boxB):
     xA = max(boxA[0], boxB[0])

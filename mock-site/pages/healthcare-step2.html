@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArogyaShield Health Insurance — Cashless Claim Portal (Step 2)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">🏥</div>
+        <div class="brand-text">
+          <span class="brand-title">ArogyaShield</span>
+          <span class="brand-subtitle">National Health Insurance Network</span>
+        </div>
+      </div>
+      <div class="nav-controls">
+        <div class="profile-quick-switch">
+          <label for="profileSelect" class="quick-label">⚡ Pre-fill Profile:</label>
+          <select id="profileSelect" class="profile-select">
+            <option value="profile-1">Rahul Sharma (Bengaluru)</option>
+            <option value="profile-2">Dr. Ananya Iyer (Chennai)</option>
+            <option value="profile-3">Vikramjit Singh (New Delhi)</option>
+            <option value="empty">-- Empty Form --</option>
+          </select>
+        </div>
+        <div class="user-badge">
+          <span class="pulse-dot"></span>
+          <span>Claim Ref: <strong>#CLM-2026-9814</strong></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    <!-- Stepper Progress Bar -->
+    <section class="stepper-section">
+      <div class="stepper">
+        <div class="step-item completed">
+          <div class="step-circle">1</div>
+          <div class="step-meta">
+            <span class="step-name">Personal Info</span>
+            <span class="step-status">Completed</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item active">
+          <div class="step-circle">2</div>
+          <div class="step-meta">
+            <span class="step-name">Medical History</span>
+            <span class="step-status">In Progress</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-circle">3</div>
+          <div class="step-meta">
+            <span class="step-name">Documents</span>
+            <span class="step-status">Upcoming</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-circle">4</div>
+          <div class="step-meta">
+            <span class="step-name">Review & Submit</span>
+            <span class="step-status">Upcoming</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form Content Container -->
+    <div class="content-grid">
+      <!-- Form Column -->
+      <div class="form-container">
+        <div class="form-header">
+          <div class="badge-tag">Step 2 of 4</div>
+          <h1>Hospitalization & Medical Treatment</h1>
+          <p class="subtitle">Please provide medical and hospitalization details for the claim.</p>
+        </div>
+
+        <form id="claimForm" class="styled-form" novalidate>
+          <!-- STEP 2: Medical History & Hospitalization -->
+          <div id="step-2-panel" class="step-panel active">
+            <div class="form-card highlight-card">
+              <div class="section-title">
+                <span class="section-icon">🏥</span>
+                <h2>Hospitalization & Medical Treatment</h2>
+                <span class="pii-indicator-pill">🔒 Health Data</span>
+              </div>
+
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="hospitalName">Network Hospital / Clinic Name <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="hospitalName" 
+                    name="hospitalName" 
+                    placeholder="e.g. Manipal Hospital, Bengaluru" 
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="admissionDate">Date of Admission <span class="req">*</span></label>
+                  <input 
+                    type="date" 
+                    id="admissionDate" 
+                    name="admissionDate" 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="diagnosis">Primary Diagnosis / Clinical Reason <span class="req">*</span></label>
+                <input 
+                  type="text" 
+                  id="diagnosis" 
+                  name="diagnosis" 
+                  placeholder="e.g. Acute Appendicitis (Laparoscopic Appendectomy)" 
+                  required
+                />
+              </div>
+
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="physicianName">Attending Physician / Surgeon <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="physicianName" 
+                    name="physicianName" 
+                    placeholder="e.g. Dr. Arvind Swaminathan" 
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="treatmentCost">Estimated Pre-Auth Amount (₹ INR) <span class="req">*</span></label>
+                  <input 
+                    type="number" 
+                    id="treatmentCost" 
+                    name="treatmentCost" 
+                    placeholder="e.g. 145000" 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="preExisting">Pre-Existing Conditions / Co-morbidities</label>
+                <input 
+                  type="text" 
+                  id="preExisting" 
+                  name="preExisting" 
+                  placeholder="e.g. None / Hypertension / Diabetes Type 2" 
+                />
+              </div>
+            </div>
+
+            <!-- Step 2 Action Buttons -->
+            <div class="form-actions">
+              <button type="button" id="step2BackBtn" class="btn btn-secondary" onclick="window.location.href='healthcare-step1.html'">
+                ⬅ Back to Step 1
+              </button>
+              <button type="button" id="step2NextBtn" class="btn btn-primary" onclick="window.location.href='healthcare-step3.html'">
+                Proceed to Step 3: Banking Details ➔
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>ArogyaShield™ Mock Portal &bull; Designed for SIH 2026 ISRO Problem Statement Demo &bull; Privacy-Safe Synthetic Data</p>
+  </footer>
+
+  <script type="module" src="../src/app.js"></script>
+</body>
+</html>

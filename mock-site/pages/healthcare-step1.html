@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArogyaShield Health Insurance — Cashless Claim Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../src/styles.css" />
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">🏥</div>
+        <div class="brand-text">
+          <span class="brand-title">ArogyaShield</span>
+          <span class="brand-subtitle">National Health Insurance Network</span>
+        </div>
+      </div>
+      <div class="nav-controls">
+        <div class="profile-quick-switch">
+          <label for="profileSelect" class="quick-label">⚡ Pre-fill Profile:</label>
+          <select id="profileSelect" class="profile-select">
+            <option value="profile-1">Rahul Sharma (Bengaluru)</option>
+            <option value="profile-2">Dr. Ananya Iyer (Chennai)</option>
+            <option value="profile-3">Vikramjit Singh (New Delhi)</option>
+            <option value="empty">-- Empty Form --</option>
+          </select>
+        </div>
+        <div class="user-badge">
+          <span class="pulse-dot"></span>
+          <span>Claim Ref: <strong>#CLM-2026-9814</strong></span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    <!-- Stepper Progress Bar -->
+    <section class="stepper-section">
+      <div class="stepper">
+        <div class="step-item active">
+          <div class="step-circle">1</div>
+          <div class="step-meta">
+            <span class="step-name">Personal Info</span>
+            <span class="step-status">In Progress</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-circle">2</div>
+          <div class="step-meta">
+            <span class="step-name">Medical History</span>
+            <span class="step-status">Upcoming</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-circle">3</div>
+          <div class="step-meta">
+            <span class="step-name">Documents</span>
+            <span class="step-status">Upcoming</span>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-circle">4</div>
+          <div class="step-meta">
+            <span class="step-name">Review & Submit</span>
+            <span class="step-status">Upcoming</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form Content Container -->
+    <div class="content-grid">
+      <!-- Form Column -->
+      <div class="form-container">
+        <div class="form-header">
+          <div class="badge-tag">Step 1 of 4</div>
+          <h1>Primary Beneficiary & Policy Details</h1>
+          <p class="subtitle">Please provide government identity records and verified contact details to proceed with claim pre-authorization.</p>
+        </div>
+
+        <!-- Patient Photo for Face Detection testing -->
+        <div style="text-align: center; margin-bottom: 20px; position: relative; display: inline-block;">
+          <div style="position: relative;">
+            <img id="patient-photo" src="https://picsum.photos/id/64/200/200" alt="Patient Photo" width="200" height="200" style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); object-fit: cover;" crossorigin="anonymous" />
+            <label for="photo-upload" class="upload-btn" style="position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+              📷 Upload Photo
+            </label>
+            <input type="file" id="photo-upload" accept="image/*" style="display: none;" />
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 25px;">Patient ID Photo</p>
+        </div>
+
+        <form id="claimForm" class="styled-form" novalidate>
+          
+          <!-- STEP 1: Personal Info & Policy Identification -->
+          <div id="step-1-panel" class="step-panel active">
+            <!-- Section 1: Policy Identification -->
+            <div class="form-card">
+              <div class="section-title">
+                <span class="section-icon">📑</span>
+                <h2>Policy Identification</h2>
+              </div>
+              
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="policyNumber">Policy / Card Number <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="policyNumber" 
+                    name="policyNumber" 
+                    placeholder="e.g. POL-AYUSH-984210" 
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="memberId">Beneficiary Member ID <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="memberId" 
+                    name="memberId" 
+                    placeholder="e.g. MEM-88421" 
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: Personal Identity (High PII Density) -->
+            <div class="form-card highlight-card">
+              <div class="section-title">
+                <span class="section-icon">👤</span>
+                <h2>Beneficiary Identity Details</h2>
+                <span class="pii-indicator-pill">🔒 Sensitive PII</span>
+              </div>
+
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="fullName">Full Legal Name (as per Aadhaar) <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="fullName" 
+                    name="fullName" 
+                    autocomplete="name" 
+                    placeholder="e.g. Rahul Sharma" 
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="dob">Date of Birth <span class="req">*</span></label>
+                  <input 
+                    type="date" 
+                    id="dob" 
+                    name="dob" 
+                    autocomplete="bday" 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="grid-3">
+                <div class="form-group">
+                  <label for="gender">Gender <span class="req">*</span></label>
+                  <select id="gender" name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="aadhaar">Aadhaar Number (12 Digits) <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="aadhaar" 
+                    name="aadhaar" 
+                    placeholder="XXXX XXXX XXXX" 
+                    maxlength="14"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="pan">PAN Card Number <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="pan" 
+                    name="pan" 
+                    placeholder="ABCDE1234F" 
+                    maxlength="10"
+                    style="text-transform: uppercase;"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 3: Contact & Communication -->
+            <div class="form-card">
+              <div class="section-title">
+                <span class="section-icon">📞</span>
+                <h2>Contact & Communication</h2>
+              </div>
+
+              <div class="grid-2">
+                <div class="form-group">
+                  <label for="phone">Primary Mobile Number <span class="req">*</span></label>
+                  <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone" 
+                    autocomplete="tel" 
+                    placeholder="+91 98765 43210" 
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="email">Personal Email Address <span class="req">*</span></label>
+                  <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    autocomplete="email" 
+                    placeholder="name@example.com" 
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: Residential Address -->
+            <div class="form-card">
+              <div class="section-title">
+                <span class="section-icon">📍</span>
+                <h2>Residential Address</h2>
+              </div>
+
+              <div class="form-group">
+                <label for="address">Street Address / House No / Locality <span class="req">*</span></label>
+                <input 
+                  type="text" 
+                  id="address" 
+                  name="address" 
+                  autocomplete="street-address" 
+                  placeholder="Flat / House No, Street name, Locality" 
+                  required
+                />
+              </div>
+
+              <div class="grid-3">
+                <div class="form-group">
+                  <label for="city">City / District <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="city" 
+                    name="city" 
+                    autocomplete="address-level2" 
+                    placeholder="e.g. Bengaluru" 
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="state">State <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="state" 
+                    name="state" 
+                    autocomplete="address-level1" 
+                    placeholder="e.g. Karnataka" 
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="pincode">PIN Code <span class="req">*</span></label>
+                  <input 
+                    type="text" 
+                    id="pincode" 
+                    name="pincode" 
+                    autocomplete="postal-code" 
+                    placeholder="e.g. 560095" 
+                    maxlength="6"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 5: Emergency Contact Person -->
+            <div class="form-card">
+              <div class="section-title">
+                <span class="section-icon">🚨</span>
+                <h2>Emergency Contact / Nominee</h2>
+              </div>
+
+              <div class="grid-3">
+                <div class="form-group">
+                  <label for="emergencyContactName">Contact Person Name</label>
+                  <input 
+                    type="text" 
+                    id="emergencyContactName" 
+                    name="emergencyContactName" 
+                    placeholder="e.g. Priya Sharma"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="emergencyContactPhone">Contact Person Phone</label>
+                  <input 
+                    type="tel" 
+                    id="emergencyContactPhone" 
+                    name="emergencyContactPhone" 
+                    placeholder="+91 98765 43219"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="relation">Relationship</label>
+                  <select id="relation" name="relation">
+                    <option value="Spouse">Spouse</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Child">Child</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 1 Action Buttons -->
+            <div class="form-actions">
+              <button type="button" id="resetBtn" class="btn btn-secondary">
+                🔄 Clear All Fields
+              </button>
+              <button type="button" id="step1NextBtn" class="btn btn-primary" onclick="window.location.href='healthcare-step2.html'">
+                Proceed to Step 2: Medical History ➔
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>ArogyaShield™ Mock Portal &bull; Designed for SIH 2026 ISRO Problem Statement Demo &bull; Privacy-Safe Synthetic Data</p>
+  </footer>
+
+  <script type="module" src="../src/app.js"></script>
+</body>
+</html>

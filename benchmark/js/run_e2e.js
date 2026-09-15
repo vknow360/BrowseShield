@@ -251,6 +251,8 @@ async function benchOne(browser, url, swInfo) {
         const pageHeapMB = jsHeap ? Number((jsHeap.value / 1048576).toFixed(2)) : null;
         const swHeapMB = await sampleSwHeapMB(swInfo);
 
+        const domNodeCount = await page.evaluate(() => document.querySelectorAll('*').length);
+
         const initial = scans[0] || null;
         const final = scans[scans.length - 1] || null;
 
@@ -263,6 +265,7 @@ async function benchOne(browser, url, swInfo) {
             endToEndMs,
             pageHeapMB,
             swHeapMB,
+            domNodeCount,
             piiFound: final ? final.piiFound : null,
             piiFoundInitial: initial ? initial.piiFound : null,
             scans: scans.length,
